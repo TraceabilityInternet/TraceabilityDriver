@@ -1,3 +1,5 @@
+![](https://github.com/TraceabilityInternet/TraceabilityDriver/raw/main/Images/Traceability%20Internet%20Organization-A2-cropped.png)
+
 # Traceability Driver
 
 The Traceability Driver is a service that can be installed into an existing Traceability Solution or any software that stores or needs to receive traceability data.
