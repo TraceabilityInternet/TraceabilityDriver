@@ -23,4 +23,4 @@ Coming soon...
 At the core of the Traceability Driver is your mapper. Your mapper is what takes your local data format and converts it into the common C# models provided. Your mapper should be written in C# and implements the `ITETraceabilityMapper` interface provided in the `TEInterfaces.dll` provided in installation package. 
 
 ### Help Writing the Mapper
-If you would like to hire the Traceability Internet to write and manage your Mapper for you. Please submit an email to `mappers@traceabilityinternet.org` and we will assist you in the matter.
+If you would like to hire the Traceability Internet to write and manage your Mapper for you. Please reach out to us and we would be happy to help any way we can.
