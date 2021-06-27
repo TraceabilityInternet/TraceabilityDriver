@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ProductYieldTypeCodes>
+  <ProductYieldTypeCode Key="gs1:ProductYieldTypeCode-AFTER_COOKING" Name="After Cooking" />
+  <ProductYieldTypeCode Key="gs1:ProductYieldTypeCode-AFTER_DILUTION" Name="After Dilution" />
+  <ProductYieldTypeCode Key="gs1:ProductYieldTypeCode-DRAINED_WEIGHT" Name="Drained Weight" />
+  <ProductYieldTypeCode Key="gs1:ProductYieldTypeCode-UNSPECIFIED" Name="Unspecified" />
+</ProductYieldTypeCodes>

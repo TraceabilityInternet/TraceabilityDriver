@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<GrowingMethods>
+  <GrowMethod Key="gs1:GrowingMethodCode-CAGE_FREE" Name="Cage Free" />
+  <GrowMethod Key="gs1:GrowingMethodCode-CLONED_FOODS" Name="Cloned Foods" />
+  <GrowMethod Key="gs1:GrowingMethodCode-CONVENTIONAL" Name="Conventional" />
+  <GrowMethod Key="gs1:GrowingMethodCode-FARM_RAISED" Name="Farm Raised" />
+  <GrowMethod Key="gs1:GrowingMethodCode-FIELD_GROWN" Name="Field Grown" />
+  <GrowMethod Key="gs1:GrowingMethodCode-FLY_FREE" Name="Fly Free" />
+  <GrowMethod Key="gs1:GrowingMethodCode-FREE_RANGE" Name="Free Range" />
+  <GrowMethod Key="gs1:GrowingMethodCode-GRASS_FED" Name="Grass Fed" />
+  <GrowMethod Key="gs1:GrowingMethodCode-GREENHOUSE" Name="Greenhouse" />
+  <GrowMethod Key="gs1:GrowingMethodCode-HUMANELY_RAISED" Name="Humanely Raised" />
+  <GrowMethod Key="gs1:GrowingMethodCode-HYDROPONIC" Name="Hydroponic" />
+  <GrowMethod Key="gs1:GrowingMethodCode-INTEGRATED_PEST_MANAGEMENT" Name="Integrated Pest Management" />
+  <GrowMethod Key="gs1:GrowingMethodCode-ORGANIC" Name="Organic" />
+  <GrowMethod Key="gs1:GrowingMethodCode-SHADE_GROWN" Name="Shade Grown" />
+  <GrowMethod Key="gs1:GrowingMethodCode-SUSTAINABLE" Name="Sustainable" />
+  <GrowMethod Key="gs1:GrowingMethodCode-WILD" Name="Wild" />
+</GrowingMethods>

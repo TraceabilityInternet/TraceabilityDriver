@@ -1,0 +1,21 @@
+﻿@page "/"
+@attribute [Authorize]
+
+<h1>Traceability Internet Directory Service</h1>
+<br />
+<p>
+    This service allows traceability service providers to register accounts and search for other accounts managed by different service providers.
+    You can manage accounts on the "Accounts" page and manage service providers on the "Service Providers" page.
+</p>
+
+@helloString
+
+@code {
+    MarkupString helloString;
+
+    void SayHelloHandler()
+    {
+        string msg = string.Format("Hello from <strong>Telerik Blazor</strong> at {0}.<br /> Now you can use C# to write front-end!", DateTime.Now);
+        helloString = new MarkupString(msg);
+    }
+}

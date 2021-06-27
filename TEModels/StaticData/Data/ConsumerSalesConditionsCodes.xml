@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ConsumerSalesConditionsCodes>
+  <ConsumerSalesConditionsCode Key="gs1:ConsumerSalesConditionsCode-BTC" Name="Behind the Counter" />
+  <ConsumerSalesConditionsCode Key="gs1:ConsumerSalesConditionsCode-OTC" Name="Over the Counter" />
+  <ConsumerSalesConditionsCode Key="gs1:ConsumerSalesConditionsCode-PRESCRIPTION_REQUIRED" Name="Prescription Required" />
+  <ConsumerSalesConditionsCode Key="gs1:ConsumerSalesConditionsCode-RESTRICTED_TO_SELL_16" Name="Restricted To Sell 16" />
+  <ConsumerSalesConditionsCode Key="gs1:ConsumerSalesConditionsCode-RESTRICTED_TO_SELL_18" Name="Restricted To Sell 18" />
+  <ConsumerSalesConditionsCode Key="gs1:ConsumerSalesConditionsCode-RESTRICTED_TO_SELL_21" Name="Restricted To Sell 21" />
+</ConsumerSalesConditionsCodes>

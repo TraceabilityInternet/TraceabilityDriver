@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<PackageAccreditationCodes>
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-LABEL_OF_THE_ALLERGY_AND_ASTHMA_FEDERATION" Name="Label of the Allergy and Asthma Federation" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-TUNNUSTATUD_EESTI_MAITSE" Name="Tunnustatud Eesti Maitse" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-AUS_KAUP_ESTONIA" Name="Aus Kaup Estonia" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-AMA_ORGANIC_SEAL" Name="AMA Organic Seal" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BDIH_LOGO" Name="BDIH Logo" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-EESTI_PARIM_TOIDUAINE" Name="Eesti Parim Toidauine" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BETER_LEVEN_1_STER" Name="Beter Leven 1 Ster" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BETER_LEVEN_2_STER" Name="Beter Level 2 Ster" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BETER_LEVEN_3_STER" Name="Beter Leven 3 Ster" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BIO_AUSTRIA_LABEL" Name="Bio Austria Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BLUE_ANGEL" Name="Blue Angel" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BORD_BIA_APPROVED_MEAT" Name="Bord Bia Approved Meat" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BORD_BIA_APPROVED" Name="Bord Bia Approved" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BRA_MILJOVAL_LABEL_SWEDISH" Name="Bra Miljoval Label Swedish" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-OEKO_TEX_LABEL" Name="Oeko Tex Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-CROSSED_GRAIN_SYMBOL" Name="Crossed Grain Symbol" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-DEMETER_LABEL" Name="Demeter Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-EC_NATIONAL_HEALTH_MARK" Name="EC National Health Mark" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-ECOCERT_CERTIFICATE" Name="EcoCert Certificate" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-EU_ORGANIC_FARMING" Name="EU Organic Farming" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-ECO_LABEL_LADYBUG" Name="Eco Label LadyBug" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-EU_ECO_LABEL" Name="EU Eco Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-FALKEN" Name="Falken" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-GOODS_FROM_FINLAND_BLUE_SWAN" Name="Goods from Finland Blue Swan" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-FINNISH_HEART_SYMBOL" Name="Finnish Heart Symbol" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-FOREST_STEWARDSHIP_COUNCIL_LABEL" Name="Forest Stewardship Council Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-GMO_MARKED" Name="GMO Marked" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BIO_LABEL_GERMAN" Name="Bio Label German" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-GREEN_DOT" Name="Green Dot" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-NYCKELHALET" Name="Nyckelhalet" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-GREEN_RESTAURANT_ASSOCIATION_ENDORSED" Name="Green Restaurant Association Endorsed" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-GREEN_SEAL_CERTIFIED" Name="Green Seal Certified" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-GUARANTEED_IRISH" Name="Guaranteed Irish" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-KRAV_MARK" Name="Krav Mark" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-LEAPING_BUNNY" Name="Leaping Bunny" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-LOODUSSOBRALIK_TOODE_ESTONIA" Name="Loodussobralik Toode Estonia" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-LOVE_IRISH_FOOD" Name="Love Irish Food" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-OFFICIAL_ECO_LABEL_SUN" Name="Official Eco Label Sun" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-MADE_IN_FINLAND_FLAG_WITH_KEY" Name="Made in Finland Flag with Key" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-MARINE_STEWARDSHIP_COUNCIL_LABEL" Name="Marine Stewardship Council Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-MAX_HAVELAAR" Name="Max Havelaar" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-NATRUE_LABEL" Name="Nature Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-PEFC" Name="PEFC" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-PROTECTED_DESIGNATION_OF_ORIGIN" Name="Protected Designation of Origin" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-PROTECTED_GEOGRAPHICAL_INDICATION" Name="Protected Geographical Indication" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-PROTECTED_HARVEST_CERTIFIED" Name="Protected Harvest Certified" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-QUALITY_MARK_IRELAND" Name="Quality Mark Ireland" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-RAINFOREST_ALLIANCE" Name="Rainforest Alliance" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-BIO_SUISSE_BUD_SEAL" Name="Bio Suisse Bud Seal" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-SCHARRELVLEES" Name="Scharrelvlees" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-EKO" Name="EKO" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-SOIL_ASSOCIATION_ORGANIC_SYMBOL" Name="Soil Association Organic Symbol" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-SUSTAINABLE_PALM_OIL_RSPO" Name="Sustainable Palm Oil RSPO" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-SVANEN" Name="Svanen" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-SWEDISH_SEAL_OF_QUALITY" Name="Swedish Seal of Quality" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-FAIR_TRADE_MARK" Name="Fair Trade Mark" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-TRADITIONAL_SPECIALTY_GUARANTEED" Name="Traditional Specialty Guarenteed" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-TUNNUSTATUD_MAITSE" Name="Tunnustatud Maitse" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-USDA" Name="USDA" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-UTZ_CERTIFIED" Name="UTZ Certified" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-UNIQUELY_FINNISH" Name="Uniquely Finnish" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-VAELG_FULDKORN_FORST" Name="Vaelg Fuldkorn Forst" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-WWF_PANDA_LABEL" Name="WWF Panda Label" />
+  <Code Key="gs1:PackagingMarkedLabelAccreditationCode-EESTI_OKOMARK" Name="Eesti Okomark" />
+</PackageAccreditationCodes>

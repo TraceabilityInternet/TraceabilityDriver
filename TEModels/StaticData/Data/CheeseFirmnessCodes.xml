@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<CheeseFirmnessCodes>
+  <CheeseFirmnessCode Key="gs1:CheeseFirmnessCode-EXTRA_HARD" Name="Extra Hard" />
+  <CheeseFirmnessCode Key="gs1:CheeseFirmnessCode-FIRM_SEMIHARD" Name="Firm Semi Hard" />
+  <CheeseFirmnessCode Key="gs1:CheeseFirmnessCode-HARD" Name="Hard" />
+  <CheeseFirmnessCode Key="gs1:CheeseFirmnessCode-SOFT" Name="Soft" />
+  <CheeseFirmnessCode Key="gs1:CheeseFirmnessCode-UNIDENTIFIED" Name="Unidentified" />
+</CheeseFirmnessCodes>
+

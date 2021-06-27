@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<PackagingFunctions>
+  <PackagingFunction Key="gs1:PackagingFunctionCode-ANTI_TAMPERING" Name="Anti-Tampering" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-ANTISEPTIC" Name="Antispetic" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-COATED" Name="Coated" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-COMPRESSED" Name="Compressed" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-DISPENSER" Name="Dispenser" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-ISOTHERMIC" Name="Isothermic" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-MODIFIED_ATMOSPHERE" Name="Modified Atmosphere" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-OXYGEN_INFUSED" Name="Oxygen Infused" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-PEEL_OFF" Name="Peel Off" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-PINPACK" Name="Pinpack" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-PROTECTED" Name="Protected" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-REINFORCED" Name="Reinforced" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-SIFT_PROOF" Name="Sift Proof" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-TAMPER_EVIDENT" Name="Tamper Evident" />
+  <PackagingFunction Key="gs1:PackagingFunctionCode-WATER_RESISTANT" Name="Water Resistant" />
+</PackagingFunctions>

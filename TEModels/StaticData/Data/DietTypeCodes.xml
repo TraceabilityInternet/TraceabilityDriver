@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DietTypeCodes>
+  <DietTypeCode Key="gs1:DietTypeCode-COELIAC" Name="Coeliac" />
+  <DietTypeCode Key="gs1:DietTypeCode-DIETETIC" Name="Dietetic" />
+  <DietTypeCode Key="gs1:DietTypeCode-FREE_FROM_GLUTEN" Name="Free From Gluten" />
+  <DietTypeCode Key="gs1:DietTypeCode-HALAL" Name="Halal" />
+  <DietTypeCode Key="gs1:DietTypeCode-KOSHER" Name="Kosher" />
+  <DietTypeCode Key="gs1:DietTypeCode-ORGANIC" Name="Organic" />
+  <DietTypeCode Key="gs1:DietTypeCode-VEGAN" Name="Vegan" />
+  <DietTypeCode Key="gs1:DietTypeCode-VEGETARIAN" Name="Vegetarian" />
+  <DietTypeCode Key="gs1:DietTypeCode-WITHOUT_BEEF" Name="Without Beef" />
+  <DietTypeCode Key="gs1:DietTypeCode-WITHOUT_PORK" Name="Without Pork" />
+</DietTypeCodes>
+

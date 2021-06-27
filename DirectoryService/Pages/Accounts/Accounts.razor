@@ -1,0 +1,88 @@
+﻿@page "/accounts"
+
+@inject AccountService AccountService
+@inject IDBService DBService
+@inject IJSRuntime JSRuntime
+
+
+<h3>Accounts</h3>
+<div>
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        PGLN
+                    </th>
+                    <th style="width: 100px;">
+
+                    </th>
+                    <th style="width: 100px;">
+
+                    </th>
+                    <th style="width: 100px;">
+
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var acc in this.accounts)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(acc.Name))
+                            {
+                                <span>@acc.Name</span>
+                            }
+                            else
+                            {
+                                <i style="color: red;">No Name</i>
+                            }
+                        </td>
+                        <td>
+                            <span>@acc.PGLN</span>
+                        </td>
+                        <td>
+                            <button class="k-button" @onclick="(() => DownloadDID(acc))">Download DID</button>
+                        </td>
+                        <td>
+                            <button class="k-button">Regenerate DID</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+@code {
+    
+
+    bool loading = false;
+    List<ITEDirectoryAccount> accounts = new List<ITEDirectoryAccount>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Refresh();
+    }
+
+    private async Task Refresh()
+    {
+        loading = true;
+        accounts = await DBService.LoadAccountList();
+        StateHasChanged();
+        loading = false;
+    }
+
+    private async Task DownloadDID(ITEDirectoryAccount acc)
+    {
+        string fileName = $"{acc.PGLN}.did";
+        string base64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(acc.DID.ToString()));
+        await JSRuntime.InvokeVoidAsync("downloadFromByteArray", base64, fileName, "application/text");
+    }
+}

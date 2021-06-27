@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  
+  <PropertyGroup Label="Globals">
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.6" />
+    <PackageReference Include="Telerik.UI.for.Blazor" Version="2.22.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\TEClients\TEClients.csproj" />
+    <ProjectReference Include="..\TEInterfaces\TEInterfaces.csproj" />
+    <ProjectReference Include="..\TEServiceUtil\TEServiceUtil.csproj" />
+    <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
+  </ItemGroup>
+
+</Project>

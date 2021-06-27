@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Codes>
+  <Code Key="gs1:FoodBeverageTargetUseCode-ANY_MEAL" Name="Any Meal" />
+  <Code Key="gs1:FoodBeverageTargetUseCode-BREAKFAST" Name="Breakfast"/>
+  <Code Key="gs1:FoodBeverageTargetUseCode-MAIN_MEAL" Name="Main Meal" />
+  <Code Key="gs1:FoodBeverageTargetUseCode-PORTABLE_MEAL" Name="Portable Meal" />
+  <Code Key="gs1:FoodBeverageTargetUseCode-SNACK" Name="Snack" />
+  <Code Key="gs1:FoodBeverageTargetUseCode-UNCLASSIFIED" Name="Unclassified" />
+</Codes>

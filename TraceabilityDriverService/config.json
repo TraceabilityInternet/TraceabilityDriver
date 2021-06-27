@@ -1,0 +1,18 @@
+{
+    "DefaultProfile": {
+
+    },
+    "ComputerProfiles": [
+        {
+            "PHILIP-LAPTOP2": {
+                "DirectoryURL": "",
+                "MapperDLL": "",
+                "MapperClass": "",
+                "APIKey": "",
+                "ServiceProviderDID": "",
+                "ServiceProviderPGLN": "",
+                "ConnectionString": ""
+            }
+        }
+    ]
+}

@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<CertificateTypes>
+  <CertificateType Name="3rd Party Certificate"                     Key="CERT001.Certs.TraceRegister.com"                               FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Aggregators License"                       Key="urn:gdst:certType:aggregatorLicense"                           FactType="Location" Condition="Processor"/>
+  <CertificateType Name="ASC Farm"                                  Key="ASCFarm.Certs.TraceRegister.com"                               FactType="Location" Condition="FishFarm"/>
+  <CertificateType Name="ASC Chain of Custody"                      Key="ASCCoC.Certs.TraceRegister.com"                                FactType="Location" Condition="FishFarm"/>
+  <CertificateType Name="BAP Farm"                                  Key="BAPFarm.Certs.TraceRegister.com"                               FactType="Location" Condition="FishFarm"/>
+  <CertificateType Name="BAP Feedmill"                              Key="BAPFeedMill.Certs.TraceRegister.com"                           FactType="Location" Condition="FeedMill"/>
+  <CertificateType Name="BAP Hatchery"                              Key="BAPHatchery.Certs.TraceRegister.com"                           FactType="Location" Condition="Hatchery"/>
+  <CertificateType Name="BAP Processor"                             Key="BAPProcessor.Certs.TraceRegister.com"                          FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Blue Ocean Ranking"                        Key="BlueOceanRanking.Certs.TraceRegister.com"                      FactType="Location" Condition="Processor"/>
+  <CertificateType Name="BRC Certification"                         Key="BRCCertificaiton.Certs.TraceRegister.com"                      FactType="Product" Condition=""/>
+  <CertificateType Name="Canadian Organic Shellfish certification"  Key="CanadianOrganicShellfishcertification.Certs.TraceRegister.com" FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Canadian Organic Aquaculture"              Key="CanadianOrganicAquaculture.Certs.TraceRegister.com"            FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Code Of Conduct"                           Key="CodeOfConduct.Certs.TraceRegister.com"                         FactType="TradingParty" Condition=""/>
+  <CertificateType Name="Dolphin Safe Certificate"                  Key="DolphinSafeCertificate.Certs.TraceRegister.com"                FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Farm Certificate"                          Key="FarmCertificate.Certs.TraceRegister.com"                       FactType="Location" Condition="FishFarm"/>
+  <CertificateType Name="Farm Permit"                               Key="FarmPermit.Certs.TraceRegister.com"                            FactType="Location" Condition="FishFarm"/>
+  <CertificateType Name="FIP"                                       Key="FIP.Certs.TraceRegister.com"                                   FactType="Product" Condition=""/>
+  <CertificateType Name="Friend of the Sea Certificate"             Key="FriendoftheSeasustainableFisheries.Certs.TraceRegister.com"    FactType="Location" Condition="Vessel"/>
+  <CertificateType Name="Fishing Permit"                            Key="urn:gdst:certType:fishingAuth"                                 FactType="Location" Condition="Vessel" />
+  <CertificateType Name="FishWise ranking"                          Key="FishWiseRanking.Certs.TraceRegister.com"                       FactType="Product" Condition=""/>
+  <CertificateType Name="Fair Trade Certificate"                    Key="FairTradeCertificate.Certs.TraceRegister.com"                  FactType="TradingParty" Condition=""/>
+  <CertificateType Name="Food Defense Plan (5420-6)"                Key="FoodDefensePlan.Certs.TraceRegister.com"                       FactType="Location" Condition="FishFarm;Processor"/>
+  <CertificateType Name="Food Safety Certificate"                   Key="FoodSafetyCertification.Certs.TraceRegister.com"               FactType="Location" Condition="FishFarm;Processor"/>
+  <CertificateType Name="Halal Certificate"                         Key="HalalCertificate.Certs.TraceRegister.com"                      FactType="Product" Condition=""/>
+  <CertificateType Name="Human Welfare Policy"                      Key="urn:gdst:certType:humanPolicy"                                 FactType="Location" Condition="FishFarm;Vessel;Processor"/>
+  <CertificateType Name="GFSI Audit Report"                         Key="GFSIAuditReport.Certs.TraceRegister.com"                       FactType="Location" Condition="FishFarm;Vessel;Processor"/>
+  <CertificateType Name="GFSI Audit Certiciate"                     Key="GFSIAuditCertificate.Certs.TraceRegister.com"                  FactType="Location" Condition="FishFarm;Vessel;Processor"/>
+  <CertificateType Name="GSSI Certiciate"                           Key="GSSICerticiate.Certs.TraceRegister.com"                        FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Global Gap Cert"                           Key="GlobalGapCert.Certs.TraceRegister.com"                         FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Government Farm Certificate"               Key="GovernmentFarmCertificate.Certs.TraceRegister.com"             FactType="Location" Condition="FishFarm"/>
+  <CertificateType Name="HACCP Plan"                                Key="HACCPPlan.Certs.TraceRegister.com"                             FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Harvest Certificate"                       Key="urn:gdst:certType:harvestCert"                                 FactType="Location" Condition=""/>
+  <CertificateType Name="Harvest Chain of Custody"                  Key="urn:gdst:certType:harvestCoC"                                  FactType="Location" Condition=""/>
+  <CertificateType Name="Humane Policy ECC"                         Key="urn:gdst:certType:humanePolicyCert"                            FactType="Location" Condition=""/>
+  <CertificateType Name="IFS International Featured Standards"      Key="IFS.Certs.TraceRegister.com"                                   FactType="Location" Condition="Processor" />
+  <CertificateType Name="ISO 14001 Cert"                            Key="ISO14001Cert.Certs.TraceRegister.com"                          FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Kosher Certificate"                        Key="KosherCertificate.Certs.TraceRegister.com"                     FactType="Product" Condition=""/>
+  <CertificateType Name="Low Mercury Claim"                         Key="LowMercuryClaim.Certs.TraceRegister.com"                       FactType="Product" Condition=""/>
+  <CertificateType Name="Landing Authorization"                     Key="urn:gdst:certType:landingAuth"                                 FactType="Location"       Condition="Landing"/>
+  <CertificateType Name="MBA Ranking"                               Key="MBARanking.Certs.TraceRegister.com"                            FactType="Product" Condition=""/>
+  <CertificateType Name="MSC Cert"                                  Key="MSCCert.Certs.TraceRegister.com"                               FactType="FishingArea" Condition="FishingArea"/>
+  <CertificateType Name="MSC CoC Certification"                     Key="MSCFacility.Certs.TraceRegister.com"                           FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Naturland Organic Cert"                    Key="NaturlandOrganicCert.Certs.TraceRegister.com"                  FactType="Location" Condition="Processor"/>
+  <CertificateType Name="National Vessel Permit"                    Key="NationalVesselPermit.Certs.TraceRegister.com"                  FactType="Location" Condition="Vessel" />
+  <CertificateType Name="No Shark Finning Certificate"              Key="NoSharkFinning.Certs.TraceRegister.com"                        FactType="Location" Condition="Vessel"/>
+  <CertificateType Name="No Shark Gear Certificate"                 Key="NoSharkGear.Certs.TraceRegister.com"                           FactType="Location" Condition="Vessel"/>
+  <CertificateType Name="Ocean Wise Ranking"                        Key="OceanWiseRanking.Certs.TraceRegister.com"                      FactType="Product" Condition=""/>
+  <CertificateType Name="Processor Certificate"                     Key="ProcessorCertificate.Certs.TraceRegister.com"                  FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Processor License"                         Key="urn:gdst:certType:processorLicense"                            FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Proof of Insurance"                        Key="ProofOfInsurance.Certs.TraceRegister.com"                      FactType="TradingParty" Condition=""/>
+  <CertificateType Name="Raised Without Antibiotics"                Key="RaisedWithoutAntibiotics.Certs.TraceRegister.com"              FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Social Accountability Cert"                Key="SocialAccountabilityCert.Certs.TraceRegister.com"              FactType="Location" Condition="FishFarm;Processor"/>
+  <CertificateType Name="SQF 1000 Cert"                             Key="SQF1000Cert.Certs.TraceRegister.com"                           FactType="Location" Condition="Processor"/>
+  <CertificateType Name="SQF 2000 Cert"                             Key="SQF2000Cert.Certs.TraceRegister.com"                           FactType="Location" Condition="Processor"/>
+  <CertificateType Name="Sustainability Cert"                       Key="Sustainability.Certs.TraceRegister.com"                        FactType="Location" Condition="Processor"/>
+  <CertificateType Name="TransShipment Authorization"               Key="urn:gdst:certType:transshipmentAuth"                           FactType="Location" Condition="" />
+  <CertificateType Name="WFM Responsibly Farmed"                    Key="WFMResponsiblyFarmed.Certs.wholefoodsmarket.com"               FactType="Location" Condition="FishFarm"/>
+</CertificateTypes>

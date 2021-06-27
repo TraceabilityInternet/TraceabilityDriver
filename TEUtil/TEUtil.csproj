@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="StaticData\Data\Countries.xml" />
+    <None Remove="StaticData\Data\UnitDescriptors.xml" />
+    <None Remove="StaticData\Data\UnitSystems.xml" />
+    <None Remove="StaticData\Data\UOMs.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="StaticData\Data\Countries.xml" />
+    <EmbeddedResource Include="StaticData\Data\UnitDescriptors.xml" />
+    <EmbeddedResource Include="StaticData\Data\UnitSystems.xml" />
+    <EmbeddedResource Include="StaticData\Data\UOMs.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Crc32.NET" Version="1.2.0" />
+    <PackageReference Include="MongoDB.Bson" Version="2.12.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+</Project>

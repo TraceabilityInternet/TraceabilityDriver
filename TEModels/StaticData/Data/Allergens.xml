@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Allergens>
+  <Allergen Key="gs1:AllergenTypeCode-ALMONDS" Name="Almonds" />
+  <Allergen Key="gs1:AllergenTypeCode-ALPHA-ISOMETHYL_IONONE" Name="Alpha-Isomethyl Ionone" />
+  <Allergen Key="gs1:AllergenTypeCode-AMYLCINNAMYL_ALCOHOL" Name="Amyl Cinnamyl Alcohol" />
+  <Allergen Key="gs1:AllergenTypeCode-AMYL_CINNAMAL" Name="Amyl Cinnamal" />
+  <Allergen Key="gs1:AllergenTypeCode-ANISE_ALCOHOL" Name="Anise Alcohol" />
+  <Allergen Key="gs1:AllergenTypeCode-BENZYL_ALCOHOL" Name="Benzyl Alcohol" />
+  <Allergen Key="gs1:AllergenTypeCode-BENZYL_BENZOATE" Name="Benzyl Benzoate" />
+  <Allergen Key="gs1:AllergenTypeCode-BENZYL_CINNAMATE" Name="Benzyl Cinnamate" />
+  <Allergen Key="gs1:AllergenTypeCode-BENZYL_SALICYLATE" Name="Benzyl Salicylate" />
+  <Allergen Key="gs1:AllergenTypeCode-BRAZIL_NUTS" Name="Brazil Nuts" />
+  <Allergen Key="gs1:AllergenTypeCode-BUTYLPHENYL_METHYLPROPIONATE" Name="Butylphenyl Methylpropionate" />
+  <Allergen Key="gs1:AllergenTypeCode-CARROTS" Name="Carrots" />
+  <Allergen Key="gs1:AllergenTypeCode-CASHEW_NUTS" Name="Cashew Nuts" />
+  <Allergen Key="gs1:AllergenTypeCode-CELERY" Name="Celery" />
+  <Allergen Key="gs1:AllergenTypeCode-CEREALS_CONTAINING_GLUTEN" Name="Cereals Containg Gluten" />
+  <Allergen Key="gs1:AllergenTypeCode-CINNAMAL" Name="Cinnamal" />
+  <Allergen Key="gs1:AllergenTypeCode-CINNAMYL_ALCOHOL" Name="Cinnamyl Alcohol" />
+  <Allergen Key="gs1:AllergenTypeCode-CITRAL" Name="Citral" />
+  <Allergen Key="gs1:AllergenTypeCode-CITRONELLOL" Name="Citronellol" />
+  <Allergen Key="gs1:AllergenTypeCode-COCOA" Name="Cocoa" />
+  <Allergen Key="gs1:AllergenTypeCode-CORIANDER" Name="Coriander" />
+  <Allergen Key="gs1:AllergenTypeCode-COUMARIN" Name="Coumarin" />
+  <Allergen Key="gs1:AllergenTypeCode-CRUSTACEANS" Name="Crustaceans" />
+  <Allergen Key="gs1:AllergenTypeCode-EGGS" Name="Eggs" />
+  <Allergen Key="gs1:AllergenTypeCode-EUGENOL" Name="Eugenol" />
+  <Allergen Key="gs1:AllergenTypeCode-EVERNIA_FURFURACEA" Name="Evernia Furfuracea" />
+  <Allergen Key="gs1:AllergenTypeCode-EVERNIA_PRUNASTRI" Name="Evernia Prunastri" />
+  <Allergen Key="gs1:AllergenTypeCode-FARNESOL" Name="Farnesol" />
+  <Allergen Key="gs1:AllergenTypeCode-FISH" Name="Fish" />
+  <Allergen Key="gs1:AllergenTypeCode-GERANIOL" Name="Geranoil" />
+  <Allergen Key="gs1:AllergenTypeCode-GLUTEN" Name="Gluten" />
+  <Allergen Key="gs1:AllergenTypeCode-HAZELNUTS" Name="Hazelnuts" />
+  <Allergen Key="gs1:AllergenTypeCode-HEXYL_CINNAMAL" Name="Hexyl Cinnamal" />
+  <Allergen Key="gs1:AllergenTypeCode-HYDROXYCITRONELLAL" Name="Hydroxy Citronellal" />
+  <Allergen Key="gs1:AllergenTypeCode-HYDROXYISOHEXYL_3-CYCLOHEXENE_CARBOXALDEHYDE_ISOEUGENOL_LIMONENE_LINAL" Name="Hydroxyisohexyl 3-Cyclohexene Carboxaldehyde Isoeugenol Limonene Linal" />
+  <Allergen Key="gs1:AllergenTypeCode-KAMUT" Name="Kamut" />
+  <Allergen Key="gs1:AllergenTypeCode-LACTOSE" Name="Lactose" />
+  <Allergen Key="gs1:AllergenTypeCode-LUPINE" Name="Lupine" />
+  <Allergen Key="gs1:AllergenTypeCode-MACADAMIA_NUTS" Name="Macadamia Nuts" />
+  <Allergen Key="gs1:AllergenTypeCode-METHYL_2-OCTYNOATE" Name="Methyl 2-Octynoate" />
+  <Allergen Key="gs1:AllergenTypeCode-MILK" Name="Milk" />
+  <Allergen Key="gs1:AllergenTypeCode-MOLLUSCS" Name="Molluscs" />
+  <Allergen Key="gs1:AllergenTypeCode-MUSTARD" Name="Mustard" />
+  <Allergen Key="gs1:AllergenTypeCode-OAT" Name="Oat" />
+  <Allergen Key="gs1:AllergenTypeCode-PEANUTS" Name="Peanuts" />
+  <Allergen Key="gs1:AllergenTypeCode-PEAS" Name="Peas" />
+  <Allergen Key="gs1:AllergenTypeCode-PECAN_NUTS" Name="Pecan Nuts" />
+  <Allergen Key="gs1:AllergenTypeCode-PISTACHIOS" Name="Pistachios" />
+  <Allergen Key="gs1:AllergenTypeCode-POD_FRUITS" Name="Pod Fruits" />
+  <Allergen Key="gs1:AllergenTypeCode-QUEENSLAND_NUTS" Name="Queensland Nuts" />
+  <Allergen Key="gs1:AllergenTypeCode-RYE" Name="Rye" />
+  <Allergen Key="gs1:AllergenTypeCode-SESAME_SEEDS" Name="Sesame Seeds" />
+  <Allergen Key="gs1:AllergenTypeCode-SOYBEANS" Name="Soy Beans" />
+  <Allergen Key="gs1:AllergenTypeCode-SPELT" Name="Spelt" />
+  <Allergen Key="gs1:AllergenTypeCode-SULPHUR_DIOXIDE" Name="Sulphur Dioxide / Sulphites" />
+  <Allergen Key="gs1:AllergenTypeCode-TREE_NUTS" Name="Tree Nuts" />
+  <Allergen Key="gs1:AllergenTypeCode-TREE_NUT_TRACES" Name="Tree Nut Traces" />
+  <Allergen Key="gs1:AllergenTypeCode-WALNUTS" Name="Walnuts" />
+  <Allergen Key="gs1:AllergenTypeCode-WHEAT" Name="Wheat" />
+  <Allergen Key="gs1:AllergenTypeCode-X99" Name="X99" />
+</Allergens>
+
+

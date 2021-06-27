@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<OrganicLabels>
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-BIOLAND" Name="Bioland" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-BFA" Name="Biological Farmers of Australia" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-BIOPARK" Name="Biopark" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-DEMETER_INTERNATIONAL" Name="Demeter International" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-DEMETER_BUND" Name="Demeter-Bund" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-ECOLAND" Name="Ecoland" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-ECOVIN" Name="Ecovin" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-FDA" Name="FDA - US Food and Drug Agency" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-FSA" Name="FSA" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-GAA" Name="GAA" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-IFOAM" Name="International Federation of Organic Agriculture Movements" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-IFOA" Name="International Foundation for Organic Agriculture" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-NATURLAND" Name="Naturland" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-QAI" Name="Quality Assurance International" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-SUDITIROL" Name="Südtirol Bioland" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-USDA" Name="US Department of Agriculture" />
+  <OrganicLabel Key="gs1:OrganicClaimAgencyCode-EPA" Name="US Environmental Protection Agency" />
+</OrganicLabels>

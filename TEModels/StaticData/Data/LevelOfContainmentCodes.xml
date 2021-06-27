@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Levels>
+  <LevelOfContainment Key="gs1:LevelOfContainmentCode-CONTAINS" Name="Contains" />
+  <LevelOfContainment Key="gs1:LevelOfContainmentCode-MAY_CONTAIN" Name="May Contain" />
+  <LevelOfContainment Key="gs1:LevelOfContainmentCode-FREE_FROM" Name="Free Form" />
+</Levels>
