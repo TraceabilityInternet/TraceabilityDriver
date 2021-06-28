@@ -73,17 +73,19 @@ namespace TraceabilityDriverService.Controllers
                     account.DID = DID.GenerateNew(); // first setting of DID.
                 }
 
-
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
                     await driverDB.SaveAccountAsync(account, configURL);
                 }
 
-                // now we are going to register the account with the directory
-                using (ITEDirectoryClient client = TEClientFactory.DirectoryClient(_configuration.ServiceProviderDID, _configuration.DirectoryURL))
+                // now we are going to register the account with the directory service if we have it configured
+                if (!string.IsNullOrWhiteSpace(_configuration.DirectoryURL))
                 {
-                    ITEDirectoryNewAccount newAccount = account.ToDirectoryAccount(_configuration.ServiceProviderDID, _configuration.ServiceProviderPGLN);
-                    await client.RegisterAccountAsync(newAccount);
+                    using (ITEDirectoryClient client = TEClientFactory.DirectoryClient(_configuration.ServiceProviderDID, _configuration.DirectoryURL))
+                    {
+                        ITEDirectoryNewAccount newAccount = account.ToDirectoryAccount(_configuration.ServiceProviderDID, _configuration.ServiceProviderPGLN);
+                        await client.RegisterAccountAsync(newAccount);
+                    }
                 }
 
                 return new AcceptedResult("", account);

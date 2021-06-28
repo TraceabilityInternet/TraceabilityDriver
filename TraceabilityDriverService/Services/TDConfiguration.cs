@@ -30,8 +30,14 @@ namespace TraceabilityDriverService.Services
             this.URL = configuration["URL"];
             this.ConnectionString = _configuration["ConnectionString"];
             this.DirectoryURL = _configuration["DirectoryURL"];
-            this.ServiceProviderDID = DIDFactory.Parse(_configuration["ServiceProviderDID"]);
-            this.ServiceProviderPGLN = IdentifierFactory.ParsePGLN(_configuration["ServiceProviderPGLN"]);
+            if (!string.IsNullOrWhiteSpace(_configuration["ServiceProviderDID"]))
+            {
+                this.ServiceProviderDID = DIDFactory.Parse(_configuration["ServiceProviderDID"]);
+            }
+            if (!string.IsNullOrWhiteSpace(_configuration["ServiceProviderPGLN"]))
+            {
+                this.ServiceProviderPGLN = IdentifierFactory.ParsePGLN(_configuration["ServiceProviderPGLN"]);
+            }
             this.APIKey = _configuration["APIKey"];
             this.RequiresTradingPartnerAuthorization = _configuration.GetValue<bool>("RequiresTradingPartnerAuthorization");
             this.EventURLTemplate = _configuration["EventURLTemplate"];

@@ -49,8 +49,6 @@ namespace UnitTests
 
         public static async Task<ITDConfiguration> GetConfiguration(string url, string directoryURL, string solutionProviderURL=null)
         {
-            ITEDirectoryServiceProvider serviceProvider = await CreateServiceProvider();
-
             ITDConfiguration configuration = new TDConfiguration();
             configuration.APIKey = Guid.NewGuid().ToString();
             configuration.ConnectionString = ConnectionString01;
@@ -59,8 +57,12 @@ namespace UnitTests
             configuration.MapperDLLPath = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             configuration.Mapper = DriverUtil.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
             configuration.RequiresTradingPartnerAuthorization = false;
-            configuration.ServiceProviderDID = serviceProvider.DID;
-            configuration.ServiceProviderPGLN = serviceProvider.PGLN;
+            if (!string.IsNullOrWhiteSpace(directoryURL))
+            {
+                ITEDirectoryServiceProvider serviceProvider = await CreateServiceProvider();
+                configuration.ServiceProviderDID = serviceProvider.DID;
+                configuration.ServiceProviderPGLN = serviceProvider.PGLN;
+            }
             configuration.URL = url;
             if (solutionProviderURL != null)
             {

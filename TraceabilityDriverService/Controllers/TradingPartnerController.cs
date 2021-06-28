@@ -84,6 +84,46 @@ namespace TraceabilityDriverService.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("{accountID}/add_manually")]
+        public async Task<IActionResult> Post(long accountID, [FromBody] ITEDriverTradingPartner tradingPartner)
+        {
+            try
+            {
+                // convert to driver trading partner and save it
+                using (ITEDriverDB driverDB = _configuration.GetDB())
+                {
+                    // validate the account
+                    if (await driverDB.LoadAccountAsync(accountID) == null)
+                    {
+                        return new NotFoundResult();
+                    }
+                    
+                    // validate the trading partner
+                    if (tradingPartner == null)
+                    {
+                        return new BadRequestResult();
+                    }
+                    else if (IPGLN.IsNullOrEmpty(tradingPartner.PGLN) 
+                        || IDID.IsNullOrEmpty(tradingPartner.DID) 
+                        || string.IsNullOrWhiteSpace(tradingPartner.DigitalLinkURL) 
+                        || string.IsNullOrWhiteSpace(tradingPartner.Name))
+                    {
+                        return new BadRequestResult();
+                    }
+
+                    tradingPartner.AccountID = accountID;
+                    await driverDB.SaveTradingPartnerAsync(tradingPartner);
+                    return new AcceptedResult("", tradingPartner);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+        }
+
         [HttpDelete]
         [Route("{accountID}/{tradingPartnerID}")]
         public async Task Delete(long accountID, long tradingPartnerID)

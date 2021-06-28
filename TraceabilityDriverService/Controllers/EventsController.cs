@@ -39,7 +39,7 @@ namespace TraceabilityDriverService.Controllers
 
         [HttpGet]
         [Route("{accountID}/{tradingPartnerID}/{epcStr}")]
-        public async Task<string> GetEvents(long accountID, long tradingPartnerID, string epcStr, [FromQuery] DateTime? minEventTime = null, [FromQuery] DateTime? maxEventTime = null)
+        public async Task<ActionResult<string>> GetEvents(long accountID, long tradingPartnerID, string epcStr, [FromQuery] DateTime? minEventTime = null, [FromQuery] DateTime? maxEventTime = null)
         {
             if (string.IsNullOrEmpty(epcStr))
             {
@@ -64,33 +64,47 @@ namespace TraceabilityDriverService.Controllers
                     client.DefaultRequestHeaders.Clear();
                     client.DefaultRequestHeaders.Add("Authorization", authHeader);
                     var response = await client.GetAsync(url);
-                    string linkJson = await response.Content.ReadAsStringAsync();
-                    //JObject jObj = JObject.Parse(linkJson);
-                    //string epcisURL = jObj.Value<string>("url") + "/queries/SimpleEventQuery";
-                    JArray jArr = JArray.Parse(linkJson);
-                    string epcisURL = jArr[0].Value<string>("link") + "/queries/SimpleEventQuery";
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string linkJson = await response.Content.ReadAsStringAsync();
+                        //JObject jObj = JObject.Parse(linkJson);
+                        //string epcisURL = jObj.Value<string>("url") + "/queries/SimpleEventQuery";
+                        JArray jArr = JArray.Parse(linkJson);
+                        string epcisURL = jArr[0].Value<string>("link") + "/queries/SimpleEventQuery";
 
-                    // now we have the link to the master data
-                    client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                        // now we have the link to the master data
+                        client.DefaultRequestHeaders.Clear();
+                        client.DefaultRequestHeaders.Add("Authorization", authHeader);
 
-                    // build the body of the request in a C# object
-                    SimpleEventQuery seQuery = new SimpleEventQuery();
-                    seQuery.query = new SimpleEventQuery_Query();
-                    seQuery.query.MATCH_anyEPC.Add(epc?.ToString());
-                    string bodyJSON = JsonConvert.SerializeObject(seQuery);
-                    authHeader = TradingPartnerRequestAuthorizer.GenerateAuthHeader(bodyJSON, account, tp);
-                    StringContent content = new StringContent(bodyJSON, Encoding.UTF8, "application/json");
+                        // build the body of the request in a C# object
+                        SimpleEventQuery seQuery = new SimpleEventQuery();
+                        seQuery.query = new SimpleEventQuery_Query();
+                        seQuery.query.MATCH_anyEPC.Add(epc?.ToString());
+                        string bodyJSON = JsonConvert.SerializeObject(seQuery);
+                        authHeader = TradingPartnerRequestAuthorizer.GenerateAuthHeader(bodyJSON, account, tp);
+                        StringContent content = new StringContent(bodyJSON, Encoding.UTF8, "application/json");
 
-                    // make a post against the EPCIS Query Controller "/queries/SimpleEventQuery" method
-                    var response2 = await client.PostAsync(epcisURL, content); // bad request 400
-                    string gs1Format = await response2.Content.ReadAsStringAsync();
+                        // make a post against the EPCIS Query Controller "/queries/SimpleEventQuery" method
+                        var response2 = await client.PostAsync(epcisURL, content); // bad request 400
+                        string gs1Format = await response2.Content.ReadAsStringAsync();
 
-                    // convert the events from the EPCIS format to the local format
-                    ITEEventMapper mapper = new EPCISJsonMapper_2_0();
-                    List<ITEEvent> events = mapper.ConvertToEvents(gs1Format);
-                    string localFormat = _configuration.Mapper.MapToLocalEvents(events, null);
-                    return localFormat;
+                        // convert the events from the EPCIS format to the local format
+                        ITEEventMapper mapper = new EPCISJsonMapper_2_0();
+                        List<ITEEvent> events = mapper.ConvertToEvents(gs1Format);
+                        string localFormat = _configuration.Mapper.MapToLocalEvents(events, null);
+                        return localFormat;
+                    }
+                    else
+                    {
+                        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            return new NotFoundResult();
+                        }
+                        else
+                        {
+                            return new BadRequestResult();
+                        }
+                    }
                 }
             }
         }
