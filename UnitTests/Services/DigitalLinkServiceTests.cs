@@ -201,6 +201,7 @@ namespace UnitTests.Services
                 Assert.AreEqual(products.Count, 1);
             }
         }
+
         [TestMethod]
         public async Task Location()
         {
@@ -241,7 +242,5 @@ namespace UnitTests.Services
                 Assert.AreEqual(locations.Count, 1);
             }
         }
-        
-
     }
 }

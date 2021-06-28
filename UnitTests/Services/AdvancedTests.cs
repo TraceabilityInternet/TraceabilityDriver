@@ -97,9 +97,9 @@ namespace UnitTests.Services
             await CreateLinks();
 
             // setup the directory service
-            string td01URL = "http://localhost:1367";
-            string td02URL = "http://localhost:1368";
-            string solutionProviderURL = "http://localhost:1360";
+            string td01URL = "http://localhost:1377";
+            string td02URL = "http://localhost:1378";
+            string solutionProviderURL = "http://localhost:1370";
 
             ITDConfiguration config01 = await UnitTests.GetConfiguration(td01URL, null, solutionProviderURL);
             ITDConfiguration config02 = await UnitTests.GetConfiguration(td02URL, null, solutionProviderURL);

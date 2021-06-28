@@ -66,7 +66,21 @@ namespace TraceabilityDriverService.Controllers
             try
             {
                 string configURL = _configuration.URL;
-                if (account == null) throw new ArgumentNullException(nameof(account));
+
+                if (account == null)
+                {
+                    return new BadRequestObjectResult("The account is not provided.");
+                }
+
+                if (IPGLN.IsNullOrEmpty(account.PGLN))
+                {
+                    return new BadRequestObjectResult("The account is required to have a PGLN. If you are providing a PGLN, ensure it is in the correct format.");
+                }
+
+                if (string.IsNullOrWhiteSpace(account.Name))
+                {
+                    return new BadRequestObjectResult("The account must have a name.");
+                }
 
                 if (IDID.IsNullOrEmpty(account.DID))
                 {
