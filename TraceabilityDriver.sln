@@ -16,6 +16,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TEMappers", "TEMappers\TEMappers.csproj", "{715E1C58-F116-40EB-8B71-1DAC83FCC04F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{9C12513D-DB2B-4F1E-90DE-8D5540DD0CCF}"
+	ProjectSection(SolutionItems) = preProject
+		TDS Security.docx = TDS Security.docx
+		Traceability Driver.docx = Traceability Driver.docx
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TEMongoDB", "TEMongoDB\TEMongoDB.csproj", "{171CB8FB-30FE-40BB-BD4F-4BFBFAB03D53}"
 EndProject
@@ -42,6 +46,27 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TraceabilityDriverService", "TraceabilityDriverService\TraceabilityDriverService.csproj", "{4AC4CB6B-6FCC-4C62-B6F2-EE416DCE8C4B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirectoryService", "DirectoryService\DirectoryService.csproj", "{63B1C973-6B7F-4E16-A054-FF2041CB8F0A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{97AAFDA3-69A9-40B9-97EF-27B5563C34C7}"
+	ProjectSection(SolutionItems) = preProject
+		Images\Traceability Internet Organization-A1 3D  Black BG Mockup.jpg = Images\Traceability Internet Organization-A1 3D  Black BG Mockup.jpg
+		Images\Traceability Internet Organization-A1.jpg = Images\Traceability Internet Organization-A1.jpg
+		Images\Traceability Internet Organization-A1.png = Images\Traceability Internet Organization-A1.png
+		Images\Traceability Internet Organization-A2-cropped.png = Images\Traceability Internet Organization-A2-cropped.png
+		Images\Traceability Internet Organization-A2.jpg = Images\Traceability Internet Organization-A2.jpg
+		Images\Traceability Internet Organization-A2.png = Images\Traceability Internet Organization-A2.png
+		Images\Traceability Internet Organization-B1 3D  Mockup.jpg = Images\Traceability Internet Organization-B1 3D  Mockup.jpg
+		Images\Traceability Internet Organization-B1.jpg = Images\Traceability Internet Organization-B1.jpg
+		Images\Traceability Internet Organization-B1.png = Images\Traceability Internet Organization-B1.png
+		Images\Traceability Internet Organization-C1 3D  Mockup.jpg = Images\Traceability Internet Organization-C1 3D  Mockup.jpg
+		Images\Traceability Internet Organization-C1.jpg = Images\Traceability Internet Organization-C1.jpg
+		Images\Traceability Internet Organization-C1.png = Images\Traceability Internet Organization-C1.png
+		Images\Traceability Internet Organization-D1 3D  Mockup.jpg = Images\Traceability Internet Organization-D1 3D  Mockup.jpg
+		Images\Traceability Internet Organization-D1.jpg = Images\Traceability Internet Organization-D1.jpg
+		Images\Traceability Internet Organization-D1.png = Images\Traceability Internet Organization-D1.png
+		Images\Traceability Internet Organization-D2.jpg = Images\Traceability Internet Organization-D2.jpg
+		Images\Traceability Internet Organization-D2.png = Images\Traceability Internet Organization-D2.png
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -119,6 +144,7 @@ Global
 		{0E5F3B1C-40E8-4929-AF93-5EA3FB32156C} = {CA6A1318-6AF2-47A7-8990-3E5EB74A1E17}
 		{4AC4CB6B-6FCC-4C62-B6F2-EE416DCE8C4B} = {A270A487-1C1C-4C2E-A7AB-B0AE5A5CAE24}
 		{63B1C973-6B7F-4E16-A054-FF2041CB8F0A} = {A270A487-1C1C-4C2E-A7AB-B0AE5A5CAE24}
+		{97AAFDA3-69A9-40B9-97EF-27B5563C34C7} = {9C12513D-DB2B-4F1E-90DE-8D5540DD0CCF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {57FCBB48-1DBE-462E-B2FC-867762F754FA}
