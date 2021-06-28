@@ -66,24 +66,40 @@ namespace TraceabilityDriverService.Controllers
             try
             {
                 string configURL = _configuration.URL;
-                if (account == null) throw new ArgumentNullException(nameof(account));
+
+                if (account == null)
+                {
+                    return new BadRequestObjectResult("The account is not provided.");
+                }
+
+                if (IPGLN.IsNullOrEmpty(account.PGLN))
+                {
+                    return new BadRequestObjectResult("The account is required to have a PGLN. If you are providing a PGLN, ensure it is in the correct format.");
+                }
+
+                if (string.IsNullOrWhiteSpace(account.Name))
+                {
+                    return new BadRequestObjectResult("The account must have a name.");
+                }
 
                 if (IDID.IsNullOrEmpty(account.DID))
                 {
                     account.DID = DID.GenerateNew(); // first setting of DID.
                 }
 
-
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
                     await driverDB.SaveAccountAsync(account, configURL);
                 }
 
-                // now we are going to register the account with the directory
-                using (ITEDirectoryClient client = TEClientFactory.DirectoryClient(_configuration.ServiceProviderDID, _configuration.DirectoryURL))
+                // now we are going to register the account with the directory service if we have it configured
+                if (!string.IsNullOrWhiteSpace(_configuration.DirectoryURL))
                 {
-                    ITEDirectoryNewAccount newAccount = account.ToDirectoryAccount(_configuration.ServiceProviderDID, _configuration.ServiceProviderPGLN);
-                    await client.RegisterAccountAsync(newAccount);
+                    using (ITEDirectoryClient client = TEClientFactory.DirectoryClient(_configuration.ServiceProviderDID, _configuration.DirectoryURL))
+                    {
+                        ITEDirectoryNewAccount newAccount = account.ToDirectoryAccount(_configuration.ServiceProviderDID, _configuration.ServiceProviderPGLN);
+                        await client.RegisterAccountAsync(newAccount);
+                    }
                 }
 
                 return new AcceptedResult("", account);

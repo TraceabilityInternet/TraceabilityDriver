@@ -27,8 +27,19 @@ namespace TraceabilityEngine.Models.Driver
         public IPGLN PGLN { get; set; }
         public string DigitalLinkURL { get; set; }
         public IDID DID { get; set; }
-        public string RequestingAPIKey { get; set; }
-        public string ReceivingAPIKey { get; set; }
+
+        public TEDriverTradingPartner()
+        {
+
+        }
+
+        public TEDriverTradingPartner(ITEDriverAccount account)
+        {
+            this.Name = account.Name;
+            this.PGLN = account.PGLN;
+            this.DigitalLinkURL = account.DigitalLinkURL;
+            this.DID = account.DID;
+        }
 
         public string ToJson()
         {

@@ -176,6 +176,13 @@ namespace UnitTests.Services
             account2.DigitalLinkURL = "www.google.com";
             await accountController.Post(account2);
 
+            // create a third account
+            ITEDriverAccount account3 = new TEDriverAccount();
+            account3.Name = "Test Account #3";
+            account3.PGLN = IdentifierFactory.ParsePGLN("urn:epc:id:sgln:08600031303.3.0");
+            account3.DigitalLinkURL = "www.google.com";
+            await accountController.Post(account3);
+
             // add second account as a trading partner to the first account
             IActionResult result = await controller.Post(account.ID, account2.PGLN?.ToString());
             Assert.IsTrue((result is AcceptedResult));
@@ -185,6 +192,27 @@ namespace UnitTests.Services
 
             // load the trading partner
             ITEDriverTradingPartner loadedTP = await controller.Get(account.ID, tp.ID);
+            Assert.AreEqual(tp.ID, loadedTP.ID);
+            Assert.AreEqual(tp.Name, loadedTP.Name);
+            Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
+            Assert.AreEqual(tp.PGLN, loadedTP.PGLN);
+            Assert.AreEqual(tp.DigitalLinkURL, loadedTP.DigitalLinkURL);
+
+            // delete the trading partner
+            await controller.Delete(tp.AccountID, tp.ID);
+            loadedTP = await controller.Get(account.ID, tp.ID);
+            Assert.IsNull(loadedTP);
+
+            // add third account as a manual trading partner to the first account
+            tp = new TEDriverTradingPartner(account3);
+            result = await controller.Post(account.ID, tp);
+            Assert.IsTrue((result is AcceptedResult));
+            acceptedResult = result as AcceptedResult;
+            tp = acceptedResult.Value as ITEDriverTradingPartner;
+            Assert.IsNotNull(tp);
+
+            // load the trading partner
+            loadedTP = await controller.Get(account.ID, tp.ID);
             Assert.AreEqual(tp.ID, loadedTP.ID);
             Assert.AreEqual(tp.Name, loadedTP.Name);
             Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
