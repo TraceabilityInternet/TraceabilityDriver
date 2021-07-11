@@ -118,6 +118,7 @@ namespace UnitTests.Services
             // create the account
             ITEDriverAccount account = new TEDriverAccount();
             account.Name = "Test Account #1";
+            account.PGLN = IdentifierFactory.ParsePGLN($"urn:epc:id:sgln:08600031303.0.0");
             account.DigitalLinkURL = "www.google.com";
 
             // start the directory serivce
@@ -132,6 +133,7 @@ namespace UnitTests.Services
 
             // load the account
             ITEDriverAccount loadedAccount = await controller.Get(account.ID.ToString());
+            Assert.IsNotNull(loadedAccount);
             Assert.AreEqual(account.ID, loadedAccount.ID);
             Assert.AreEqual(account.Name, loadedAccount.Name);
             Assert.AreEqual(account.DID.ToString(), loadedAccount.DID.ToString());

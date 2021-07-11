@@ -72,11 +72,6 @@ namespace TraceabilityDriverService.Controllers
                     return new BadRequestObjectResult("The account is not provided.");
                 }
 
-                if (IPGLN.IsNullOrEmpty(account.PGLN))
-                {
-                    return new BadRequestObjectResult("The account is required to have a PGLN. If you are providing a PGLN, ensure it is in the correct format.");
-                }
-
                 if (string.IsNullOrWhiteSpace(account.Name))
                 {
                     return new BadRequestObjectResult("The account must have a name.");

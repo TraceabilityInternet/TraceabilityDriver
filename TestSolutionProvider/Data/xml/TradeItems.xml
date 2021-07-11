@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Products>
+  <Product>
+    <Name>Yellowfin Tuna</Name>
+    <GTIN>urn:epc:idpat:sgtin:08600031303.00</GTIN>
+    <Description>This is a whole yellow fin tuna.</Description>
+  </Product>
+</Products>

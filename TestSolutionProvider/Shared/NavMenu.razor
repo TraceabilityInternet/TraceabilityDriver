@@ -1,0 +1,46 @@
+﻿@using TestSolutionProvider.Services 
+
+@inject ISolutionProviderService SolutionProviderService 
+
+<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">@SolutionProviderService.DataURL.ToUpper() Solution Provider</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Events
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="tradeitems">
+                <span class="oi oi-plus" aria-hidden="true"></span> Trade Items
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="locations">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Locations
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="tradingparties">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Trading Parties
+            </NavLink>
+        </li>
+    </ul>
+</div>
+
+@code {
+    bool collapseNavMenu = true;
+
+    string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

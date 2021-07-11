@@ -17,9 +17,9 @@ namespace TestDriver
     {
         public List<ITEEvent> MapToGS1Events(string localEvents, Dictionary<string, object> parameters)
         {
+            List<ITEEvent> events = new List<ITEEvent>();
             try
             {
-                List<ITEEvent> events = new List<ITEEvent>();
                 JArray jArray = JArray.Parse(localEvents);
                 foreach (JObject jEvent in jArray)
                 {
@@ -38,7 +38,7 @@ namespace TestDriver
                                 foreach (JObject jProduct in jEvent["Outputs"])
                                 {
                                     IEPC epc = IdentifierFactory.ParseEPC(jProduct.Value<string>("EPC"), out string epcError);
-                                    if (!string.IsNullOrWhiteSpace(epcError))
+                                    if (string.IsNullOrWhiteSpace(epcError))
                                     {
                                         double weight = jProduct["NetWeight"]?.Value<double>("Value") ?? 0;
                                         string uom = jProduct["NetWeight"]?.Value<string>("UoM");
@@ -49,7 +49,7 @@ namespace TestDriver
                                 foreach (JObject jProduct in jEvent["Inputs"])
                                 {
                                     IEPC epc = IdentifierFactory.ParseEPC(jProduct.Value<string>("EPC"), out string epcError);
-                                    if (!string.IsNullOrWhiteSpace(epcError))
+                                    if (string.IsNullOrWhiteSpace(epcError))
                                     {
                                         double weight = jProduct["NetWeight"]?.Value<double>("Value") ?? 0;
                                         string uom = jProduct["NetWeight"]?.Value<string>("UoM");
@@ -63,13 +63,13 @@ namespace TestDriver
                             {
                                 cte = new TEObjectEvent();
                                 cte.Action = TEEventAction.ADD;
-                                cte.BusinessStep = "urn:gdst:bizStep:fishing";
+                                cte.BusinessStep = "urn:gdst:bizStep:fishingEvent";
 
                                 ITEObjectEvent oEvent = cte as ITEObjectEvent;
                                 foreach (JObject jProduct in jEvent["Products"])
                                 {
                                     IEPC epc = IdentifierFactory.ParseEPC(jProduct.Value<string>("EPC"), out string epcError);
-                                    if (!string.IsNullOrWhiteSpace(epcError))
+                                    if (string.IsNullOrWhiteSpace(epcError))
                                     {
                                         double weight = jProduct["NetWeight"]?.Value<double>("Value") ?? 0;
                                         string uom = jProduct["NetWeight"]?.Value<string>("UoM");
@@ -86,17 +86,17 @@ namespace TestDriver
                     cte.EventTime = eventTime;
                     cte.EventTimeOffset = jEvent.Value<double>("EventTimeOffset");
 
-                    IGLN gln = IdentifierFactory.ParseGLN(jEvent["Location"]?.Value<string>("GLN"), out string error);
+                    IGLN gln = IdentifierFactory.ParseGLN(jEvent.Value<string>("Location"), out string error);
                     if (gln != null)
                     {
                         cte.Location = new TEEventLocation(gln);
                     }
 
-                    string dataOwnerStr = jEvent["DataOwner"]?.Value<string>("PGLN");
+                    string dataOwnerStr = jEvent.Value<string>("DataOwner");
                     IPGLN dataOwner = IdentifierFactory.ParsePGLN(dataOwnerStr, out error);
                     cte.DataOwner = dataOwner;
 
-                    string ownerStr = jEvent["Owner"]?.Value<string>("PGLN");
+                    string ownerStr = jEvent.Value<string>("Owner");
                     IPGLN owner = IdentifierFactory.ParsePGLN(dataOwnerStr, out error);
                     cte.DataOwner = owner;
 
@@ -108,8 +108,8 @@ namespace TestDriver
             catch (Exception Ex)
             {
                 TELogger.Log(0, Ex);
-                throw;
             }
+            return events;
         }
 
         public List<ITELocation> MapToGS1Locations(string localLocations)
@@ -129,14 +129,14 @@ namespace TestDriver
 
         public string MapToLocalEvents(List<ITEEvent> gs1Events, Dictionary<string, object> parameters)
         {
+            JArray jEvents = new JArray();
             try
             {
-                JArray jEvents = new JArray();
                 foreach (ITEEvent cte in gs1Events)
                 {
                     JObject jEvent = new JObject();
 
-                    if (cte is ITEObjectEvent && cte.Action == TEEventAction.ADD && cte.BusinessStep == "urn:gdst:bizStep:fishing")
+                    if (cte is ITEObjectEvent && cte.Action == TEEventAction.ADD && cte.BusinessStep == "urn:gdst:bizStep:fishingEvent")
                     {
                         ITEObjectEvent oEvent = cte as ITEObjectEvent;
                         jEvent["EventType"] = "FishingEvent";
@@ -157,20 +157,17 @@ namespace TestDriver
 
                     if (cte.DataOwner != null)
                     {
-                        JToken jTP = jEvent["DataOwner"];
-                        jTP["PGLN"] = cte.DataOwner.ToString();
+                        jEvent["DataOwner"] = cte.DataOwner?.ToString();
                     }
 
                     if (cte.Owner != null)
                     {
-                        JToken jTP = jEvent["Owner"];
-                        jTP["PGLN"] = cte.Owner.ToString();
+                        jEvent["Owner"] = cte.Owner?.ToString();
                     }
 
                     if (cte.Location?.GLN != null)
                     {
-                        JToken jTP = jEvent["Location"];
-                        jTP["GLN"] = cte.Owner.ToString();
+                        jEvent["Location"] = cte.Location?.GLN?.ToString();
                     }
 
                     if (cte is ITETransformationEvent)
@@ -181,9 +178,10 @@ namespace TestDriver
                         {
                             JObject jInput = new JObject();
                             jInput["EPC"] = input.EPC?.ToString();
-                            jInput["NetWeight"]["Value"] = input.Quantity.Value.ToString();
-                            jInput["NetWeight"]["UoM"] = input.Quantity.UoM.UNCode;
-
+                            JObject jNetWeight = new JObject();
+                            jNetWeight["Value"] = input.Quantity.Value.ToString();
+                            jNetWeight["UoM"] = input.Quantity.UoM.UNCode;
+                            jInput["NetWeight"] = jNetWeight;
                             jInputs.Add(jInput);
                         }
                         jEvent["Inputs"] = jInputs;
@@ -193,8 +191,10 @@ namespace TestDriver
                         {
                             JObject jOutput = new JObject();
                             jOutput["EPC"] = output.EPC?.ToString();
-                            jOutput["NetWeight"]["Value"] = output.Quantity.Value.ToString();
-                            jOutput["NetWeight"]["UoM"] = output.Quantity.UoM.UNCode;
+                            JObject jNetWeight = new JObject();
+                            jNetWeight["Value"] = output.Quantity.Value.ToString();
+                            jNetWeight["UoM"] = output.Quantity.UoM.UNCode;
+                            jOutput["NetWeight"] = jNetWeight;
                             jOutputs.Add(jOutput);
                         }
                         jEvent["Outputs"] = jInputs;
@@ -208,8 +208,10 @@ namespace TestDriver
                         {
                             JObject jProduct = new JObject();
                             jProduct["EPC"] = product.EPC?.ToString();
-                            jProduct["NetWeight"]["Value"] = product.Quantity.Value.ToString();
-                            jProduct["NetWeight"]["UoM"] = product.Quantity.UoM.UNCode;
+                            JObject jNetWeight = new JObject();
+                            jNetWeight["Value"] = product.Quantity.Value.ToString();
+                            jNetWeight["UoM"] = product.Quantity.UoM.UNCode;
+                            jProduct["NetWeight"] = jNetWeight;
                             jProducts.Add(jProduct);
                         }
                         jEvent["Products"] = jProducts;
@@ -222,8 +224,8 @@ namespace TestDriver
             catch (Exception Ex)
             {
                 TELogger.Log(0, Ex);
-                throw;
             }
+            return jEvents.ToString();
         }
 
         public string MapToLocalLocations(List<ITELocation> gs1Locations)

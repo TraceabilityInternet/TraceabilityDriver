@@ -1,0 +1,89 @@
+﻿@page "/"
+
+@inject ISolutionProviderService SolutionProviderService; 
+
+<div style="height: 100%;">
+    <TelerikGrid Data="@EventsList" Height="100%"
+                 Pageable="true" Sortable="true"
+                 Resizable="true" Reorderable="true">
+        <GridToolBar>
+            <GridCommandButton OnClick="@OpenRequestData" Primary="true">Request Traceability Data</GridCommandButton>
+        </GridToolBar>
+        <GridColumns>
+            <GridCommandColumn Width="100px">
+                <GridCommandButton OnClick="@ViewRaw" Primary="true">View Raw Data</GridCommandButton>
+            </GridCommandColumn>
+            <GridColumn Field="EventType" Width="200px" />
+            <GridColumn Field="Action" Width="200px" />
+            <GridColumn Field="BusinessStep" Width="200px" />
+            <GridColumn Field="Disposition" Width="200px" />
+        </GridColumns>
+    </TelerikGrid>
+
+    <TelerikWindow @bind-Visible="@showRawData">
+        <WindowTitle>
+            <strong>Raw Data</strong>
+        </WindowTitle>
+        <WindowContent>
+            <textarea style="height: 500px; width: 500px;">
+                @rawData
+            </textarea>
+            <center style="margin-top: 1.0em;">
+                <button class="k-button" @onclick="() => { this.showRawData = false; }" style="width: 150px; margin-left: 0.2em;">Close</button>
+            </center>
+        </WindowContent>
+    </TelerikWindow>
+
+    <TelerikWindow @bind-Visible="@showRequestData">
+        <WindowTitle>
+            <strong>Raw Data</strong>
+        </WindowTitle>
+        <WindowContent>
+            <center>
+                <h6 style="text-align: left;">EPC</h6>
+                <TelerikTextBox @bind-Value="@requestEPC" />
+            </center>
+            <center style="margin-top: 1.0em;">
+                <button class="k-button k-primary" @onclick="@RequestData" style="width: 150px; margin-left: 0.2em;">Request</button>
+            </center>
+        </WindowContent>
+    </TelerikWindow>
+</div>
+
+@code {
+    bool showRequestData = false;
+    bool showRawData = false;
+    string rawData = null;
+    string requestEPC = null;
+
+    ObservableCollection<ITEEvent> EventsList = new ObservableCollection<ITEEvent>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.EventsList = new ObservableCollection<ITEEvent>(await SolutionProviderService.GetEventsAsync());
+        base.OnInitialized();
+    }
+
+    private async Task ViewRaw(GridCommandEventArgs args)
+    {
+        ITEEvent row = (ITEEvent)args.Item;
+        this.rawData = await this.SolutionProviderService.GetRawData(row.EventID);
+        this.showRawData = true;
+    }
+
+    private void OpenRequestData(GridCommandEventArgs args)
+    {
+        this.showRequestData = true;
+        StateHasChanged();
+    }
+    
+    private async Task RequestData()
+    {
+        if (!string.IsNullOrWhiteSpace(this.requestEPC))
+        {
+            await this.SolutionProviderService.RequestData(this.requestEPC);
+            this.showRequestData = false;
+            StateHasChanged();
+        }
+    }
+}

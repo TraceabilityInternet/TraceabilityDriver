@@ -27,8 +27,9 @@ namespace TraceabilityEngine.Service.Util.DB
         private string _accountIDSequence = "AccountID";
         private string _digitalLinkTblName = "DigitalLink";
 
-        public TEDriverDB(string mongoConnectionString)
+        public TEDriverDB(string mongoConnectionString, string dbName = "TraceabilityDriver")
         {
+            _mongoDBName = dbName;
             _mongoConnectionString = mongoConnectionString;
             if (!BsonClassMap.IsClassMapRegistered(typeof(TEDriverTradingPartner)))
             {
@@ -185,6 +186,7 @@ namespace TraceabilityEngine.Service.Util.DB
                     ITEDriverAccount existingAccount = await LoadAccountAsync(account.PGLN);
                     if (existingAccount != null)
                     {
+                        account.ObjectID = existingAccount.ObjectID;
                         account.ID = existingAccount.ID;
                         account.DID = existingAccount.DID; // Second edit of account.DID
                     }
@@ -225,15 +227,19 @@ namespace TraceabilityEngine.Service.Util.DB
                     }
 
                     // try to load the existing account...
-                    ITEDriverTradingPartner existingTP = await LoadTradingPartnerAsync(tradingPartner.AccountID, tradingPartner.ID);
+                    ITEDriverTradingPartner existingTP = await LoadTradingPartnerAsync(tradingPartner.AccountID, tradingPartner.PGLN);
                     if (existingTP != null)
                     {
+                        tradingPartner.ObjectID = existingTP.ObjectID;
                         tradingPartner.ID = existingTP.ID;
                         tradingPartner.DID = existingTP.DID;
                     }
 
-                    // save the account
-                    await docDB.SaveAsync<ITEDriverTradingPartner>(tradingPartner, "PGLN", tradingPartner.PGLN?.ToString(), _tpTblName);
+                    // we need to save the trading partner by the account id and the trading partner pgln
+                    List<KeyValuePair<string, object>> filters = new List<KeyValuePair<string, object>>();
+                    filters.Add(new KeyValuePair<string, object>("AccountID", tradingPartner.AccountID));
+                    filters.Add(new KeyValuePair<string, object>("PGLN", tradingPartner.PGLN?.ToString()));
+                    await docDB.SaveAsync<ITEDriverTradingPartner>(tradingPartner, filters, _tpTblName);
                 }
             }
             catch (Exception Ex)
