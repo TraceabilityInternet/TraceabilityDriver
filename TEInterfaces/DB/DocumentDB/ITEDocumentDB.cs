@@ -17,6 +17,8 @@ namespace TraceabilityEngine.Interfaces.DB.DocumentDB
 
         public Task SaveAsync<T>(T obj, string field, object value, string table) where T : ITEDocumentObject;
 
+        public Task SaveAsync<T>(T obj, List<KeyValuePair<string, object>> filters, string table) where T : ITEDocumentObject;
+
         public Task UpdateField<T>(string matchField, object matchValue, string field, object value, string table) where T : ITEDocumentObject;
 
         public Task<T> LoadAsync<T>(string ID, string table) where T : ITEDocumentObject;

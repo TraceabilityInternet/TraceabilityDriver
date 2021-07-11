@@ -1,0 +1,57 @@
+﻿<Events>
+    <FishingEvent>
+      <Guid>8782C640-D9DA-480C-8093-B3F913F1C5DC</Guid>
+        <EventTime>5/18/2021 1:28:29 AM +00:00</EventTime>
+        <EventTimeOffset>0</EventTimeOffset>
+        <DataOwner>
+            <PGLN>urn:epc:id:sgln:08600031303.4</PGLN>
+        </DataOwner>
+        <Owner>
+            <PGLN>urn:epc:id:sgln:08600031303.4</PGLN>
+        </Owner>
+        <Location>
+            <GLN>urn:epc:id:sgln:08600031303.0</GLN>
+        </Location>
+        <Products>
+            <Product>
+                <EPC>urn:epc:class:lgtin:08600031303.00.METAL</EPC>
+                <NetWeight>
+                    <Value>100</Value>
+                    <UoM>KGM</UoM>
+                </NetWeight>
+            </Product>
+        </Products>
+    </FishingEvent>
+    <FarmHarvestEvent>
+      <Guid>EDCD80D9-99D8-4A2C-9528-F586C9F1F0D3</Guid>
+        <EventTime>5/19/2021 1:28:29 AM +00:00</EventTime>
+        <EventTimeOffset>0</EventTimeOffset>
+        <DataOwner>
+            <PGLN>urn:epc:id:sgln:08600031303.5</PGLN>
+        </DataOwner>
+        <Owner>
+            <PGLN>urn:epc:id:sgln:08600031303.5</PGLN>
+        </Owner>
+        <Location>
+            <GLN>urn:epc:id:sgln:08600031303.1</GLN>
+        </Location>
+        <Inputs>
+            <Product>
+                <EPC>urn:epc:class:lgtin:08600031303.00.METAL</EPC>
+                <NetWeight>
+                    <Value>100</Value>
+                    <UoM>KGM</UoM>
+                </NetWeight>
+            </Product>
+        </Inputs>
+        <Outputs>
+            <Product>
+                <EPC>urn:epc:class:lgtin:08600031303.01.STEEL</EPC>
+                <NetWeight>
+                    <Value>75</Value>
+                    <UoM>KGM</UoM>
+                </NetWeight>
+            </Product>
+        </Outputs>
+    </FarmHarvestEvent>
+</Events>

@@ -49,6 +49,26 @@ namespace TraceabilityDriverService.Controllers
             }
         }
 
+        //[HttpGet]
+        //[Route("{accountID}/search/{name}")]
+        //public async Task<ITEDriverTradingPartnerSearchResult> Search(long accountID, string name)
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrWhiteSpace(name) || name.Length < 3)
+        //        {
+        //            return new BadRequestObjectResult("Must provide a name of at least 3 characters long.");
+        //        }
+
+        //        throw new NotImplementedException();
+        //    }
+        //    catch (Exception Ex)
+        //    {
+        //        TELogger.Log(0, Ex);
+        //        throw;
+        //    }
+        //}
+
         [HttpPost]
         [Route("{accountID}/{pglnStr}")]
         public async Task<IActionResult> Post(long accountID, string pglnStr)

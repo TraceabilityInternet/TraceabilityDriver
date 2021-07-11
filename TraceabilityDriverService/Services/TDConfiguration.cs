@@ -44,6 +44,7 @@ namespace TraceabilityDriverService.Services
             this.LocationURLTemplate = _configuration["LocationURLTemplate"];
             this.TradeItemURLTemplate = _configuration["TradeItemURLTemplate"];
             this.TradingPartnerURLTemplate = _configuration["TradingPartnerURLTemplate"];
+            this.DatabaseName = _configuration["DatabaseName"] ?? "TraceabilityDriver";
 
             MapperDLLPath = _configuration.GetValue<string>("MapperDLLPath");
             MapperClassName = _configuration.GetValue<string>("MapperClassName");
@@ -64,10 +65,11 @@ namespace TraceabilityDriverService.Services
         public string TradeItemURLTemplate { get; set; }
         public string LocationURLTemplate { get; set; }
         public string TradingPartnerURLTemplate { get; set; }
+        public string DatabaseName { get; set; }
 
         public ITEDriverDB GetDB()
         {
-            return new TEDriverDB(this.ConnectionString);
+            return new TEDriverDB(this.ConnectionString, this.DatabaseName);
         }
     }
 }

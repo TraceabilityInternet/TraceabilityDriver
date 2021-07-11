@@ -57,6 +57,7 @@ namespace UnitTests
             configuration.MapperDLLPath = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             configuration.Mapper = DriverUtil.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
             configuration.RequiresTradingPartnerAuthorization = false;
+            configuration.DatabaseName = "TraceabilityDriver";
             if (!string.IsNullOrWhiteSpace(directoryURL))
             {
                 ITEDirectoryServiceProvider serviceProvider = await CreateServiceProvider();
@@ -83,9 +84,9 @@ namespace UnitTests
             DirectoryService.Program.Start(url, ConnectionString01);
         }
 
-        public static void StartTestSolutionProvider(string url)
+        public static void StartTestSolutionProvider(string url, string dataURL = "xml", string mapperDLLPath = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll", string mapperClassName = "TestDriver.XmlTestDriver")
         {
-            TestSolutionProviderService.Program.Start(url);
+            TestSolutionProvider.Program.Start(url, mapperDLLPath, mapperClassName, dataURL, 0, 0, null, null);
         }
 
         public static ITEDocumentDB GetDocumentDB(string dbName)

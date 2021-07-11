@@ -12,6 +12,7 @@ namespace TraceabilityDriverService.Services.Interfaces
     {
         ITETraceabilityMapper Mapper { get; set; }
         string ConnectionString { get; set; }
+        string DatabaseName { get; set; }
         string URL { get; set; }
         string DirectoryURL { get; set; }
         IDID ServiceProviderDID { get; set; }

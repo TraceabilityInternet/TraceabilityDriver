@@ -1,0 +1,52 @@
+﻿@page "/locations"
+
+@inject ISolutionProviderService SolutionProviderService;
+
+<div style="height: 100%;">
+    <TelerikGrid Data="@LocationsList" Height="100%"
+                 Pageable="true" Sortable="true"
+                 Resizable="true" Reorderable="true">
+        <GridColumns>
+            <GridCommandColumn Width="100px">
+                <GridCommandButton OnClick="@ViewRaw" Primary="true">View Raw Data</GridCommandButton>
+            </GridCommandColumn>
+            <GridColumn Field="Name" Width="200px" />
+            <GridColumn Field="GLN" Width="200px" />
+            <GridColumn Field="Description" Width="400px" />
+        </GridColumns>
+    </TelerikGrid>
+
+    <TelerikWindow @bind-Visible="@showRawData">
+        <WindowTitle>
+            <strong>Raw Data</strong>
+        </WindowTitle>
+        <WindowContent>
+            <textarea style="height: 500px; width: 500px;">
+                @rawData
+            </textarea>
+            <center style="margin-top: 1.0em;">
+                <button class="k-button" @onclick="() => { this.showRawData = false; }" style="width: 150px; margin-left: 0.2em;">Close</button>
+            </center>
+        </WindowContent>
+    </TelerikWindow>
+</div>
+
+@code {
+    bool showRawData = false;
+    string rawData = null;
+
+    ObservableCollection<ITELocation> LocationsList = new ObservableCollection<ITELocation>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.LocationsList = new ObservableCollection<ITELocation>(await SolutionProviderService.GetLocationsAsync());
+        base.OnInitialized();
+    }
+
+    private async Task ViewRaw(GridCommandEventArgs args)
+    {
+        ITELocation row = (ITELocation)args.Item;
+        this.rawData = await this.SolutionProviderService.GetRawData(row.GLN?.ToString());
+        this.showRawData = true;
+    }
+}

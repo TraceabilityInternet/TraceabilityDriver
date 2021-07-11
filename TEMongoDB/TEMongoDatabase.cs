@@ -171,6 +171,32 @@ namespace TraceabilityEngine.Databases.Mongo
             ReplaceOneResult result = await collection.ReplaceOneAsync(filters, obj, options);
         }
 
+        public async Task SaveAsync<T>(T obj, List<KeyValuePair<string, object>> filters, string table) where T : ITEDocumentObject
+        {
+            if (filters == null || filters.Count < 1)
+            {
+                throw new ArgumentException(nameof(filters));
+            }
+
+            if (string.IsNullOrWhiteSpace(obj.ObjectID))
+            {
+                obj.ObjectID = ObjectId.GenerateNewId().ToString();
+            }
+
+            var collection = _db.GetCollection<T>(table);
+            List<FilterDefinition<T>> filterList = new List<FilterDefinition<T>>();
+            foreach (var kvp in filters)
+            {
+                filterList.Add(Builders<T>.Filter.Eq(kvp.Key, kvp.Value));
+            }
+            var mongoFilters = Builders<T>.Filter.And(filterList);
+            ReplaceOptions options = new ReplaceOptions()
+            {
+                IsUpsert = true
+            };
+            ReplaceOneResult result = await collection.ReplaceOneAsync(mongoFilters, obj, options);
+        }
+
         public async Task UpdateField<T>(string matchField, object matchValue, string field, object value, string collectionName) where T : ITEDocumentObject
         {
             var collection = _db.GetCollection<T>(collectionName);
