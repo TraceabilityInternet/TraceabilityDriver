@@ -242,5 +242,47 @@ namespace UnitTests.Services
                 Assert.AreEqual(locations.Count, 1);
             }
         }
+
+        [TestMethod]
+        public async Task TradingPartner()
+        {
+            await CreateLinks();
+
+            string directoryServiceURL = "http://localhost:1350";
+            string solutionProviderURL = "http://localhost:1351";
+            string traceDriveURL = "http://localhost:1352";
+
+
+            // start the directory service URL
+            UnitTests.StartDirectoryService(directoryServiceURL);
+
+            // start the trace drive service
+            ITDConfiguration config = await UnitTests.GetConfiguration(traceDriveURL, directoryServiceURL, solutionProviderURL);
+            UnitTests.StartTraceabilityDriverService(config);
+
+
+            // start the solution provider service
+            UnitTests.StartTestSolutionProvider(solutionProviderURL);
+
+            // instantiate the internal api client
+            using (ITEInternalClient client = TEClientFactory.InternalClient(traceDriveURL, config.APIKey))
+            {
+                // create two accounts and add account #2 as a trading partner to account #1
+                ITEDriverAccount account01 = await CreateAccount(client, 1);
+                ITEDriverAccount account02 = await CreateAccount(client, 2);
+                ITEDriverTradingPartner tp = await AddTradingPartner(client, account01, account02.PGLN);
+
+                // request the location
+                string json = await client.GetTradingPartyAsync(account01.ID, tp.ID, "urn:epc:id:sgln:08600031303.4.0"); // EPCIS URN format is 13 digits?
+
+                // this request returned the JSON in GS1 Web Vocab format
+                // we are going to map that into the ITEProduct models
+                var tps = config.Mapper.MapToGS1TradingPartners(json);
+                Assert.IsNotNull(tps);
+                Assert.AreEqual(tps.Count, 1);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(tps.First().Name));
+                Assert.IsNotNull(tps.First().PGLN);
+            }
+        }
     }
 }

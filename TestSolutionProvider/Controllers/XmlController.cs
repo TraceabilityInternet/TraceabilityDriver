@@ -11,18 +11,18 @@ namespace TestSolutionProvider.Controllers
     [Route("xml")]
     public class XmlController
     {
-        public static TEXML xEvents = new TEXML();
-        public static TEXML xProducts = new TEXML();
-        public static TEXML xLocations = new TEXML();
-        public static TEXML xTradingParties = new TEXML();
+        public static TEXML xEvents = null;
+        public static TEXML xProducts = null;
+        public static TEXML xLocations = null;
+        public static TEXML xTradingParties = null;
 
         public XmlController()
         {
             EmbeddedResourceLoader loader = new EmbeddedResourceLoader();
-            xEvents = loader.ReadXML("TestSolutionProvider.Data.xml.Events.xml");
-            xProducts = loader.ReadXML("TestSolutionProvider.Data.xml.TradeItems.xml");
-            xLocations = loader.ReadXML("TestSolutionProvider.Data.xml.Locations.xml");
-            xTradingParties = loader.ReadXML("TestSolutionProvider.Data.xml.TradingParties.xml");
+            if (xEvents == null) xEvents = loader.ReadXML("TestSolutionProvider.Data.xml.Events.xml");
+            if (xProducts == null) xProducts = loader.ReadXML("TestSolutionProvider.Data.xml.TradeItems.xml");
+            if (xLocations == null) xLocations = loader.ReadXML("TestSolutionProvider.Data.xml.Locations.xml");
+            if (xTradingParties == null) xTradingParties = loader.ReadXML("TestSolutionProvider.Data.xml.TradingParties.xml");
         }
 
         [HttpGet]
@@ -102,7 +102,7 @@ namespace TestSolutionProvider.Controllers
             try
             {
                 TEXML xml = new TEXML("TradingParties");
-                foreach (TEXML xTI in xTradingParties[$"TradingParty[GLN='{pglnStr}']"])
+                foreach (TEXML xTI in xTradingParties.Elements($"TradingParty[PGLN='{pglnStr}']"))
                 {
                     xml.AddChild(xTI);
                 }

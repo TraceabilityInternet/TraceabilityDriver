@@ -54,7 +54,7 @@ namespace UnitTests
             configuration.ConnectionString = ConnectionString01;
             configuration.DirectoryURL = directoryURL;
             configuration.MapperClassName = "TestDriver.XmlTestDriver";
-            configuration.MapperDLLPath = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            configuration.MapperDLLPath = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             configuration.Mapper = DriverUtil.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
             configuration.RequiresTradingPartnerAuthorization = false;
             configuration.DatabaseName = "TraceabilityDriver";
@@ -69,6 +69,7 @@ namespace UnitTests
             {
                 configuration.TradeItemURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradeitem/{{gtin}}";
                 configuration.LocationURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/location/{{gln}}";
+                configuration.TradingPartnerURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradingpartner/{{pgln}}";
                 configuration.EventURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/events/{{epc}}"; // John Edit
             }
             return configuration;
@@ -84,7 +85,7 @@ namespace UnitTests
             DirectoryService.Program.Start(url, ConnectionString01);
         }
 
-        public static void StartTestSolutionProvider(string url, string dataURL = "xml", string mapperDLLPath = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll", string mapperClassName = "TestDriver.XmlTestDriver")
+        public static void StartTestSolutionProvider(string url, string dataURL = "xml", string mapperDLLPath = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll", string mapperClassName = "TestDriver.XmlTestDriver")
         {
             TestSolutionProvider.Program.Start(url, mapperDLLPath, mapperClassName, dataURL, 0, 0, null, null);
         }

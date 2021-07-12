@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Clients;
 using TraceabilityEngine.Interfaces.Driver;
+using TraceabilityEngine.Interfaces.Models.DigitalLink;
 using TraceabilityEngine.Interfaces.Models.Identifiers;
+using TraceabilityEngine.Models.DigitalLink;
 using TraceabilityEngine.Models.Driver;
 using TraceabilityEngine.Models.Identifiers;
+using TraceabilityEngine.Service.Util.DB;
 
 namespace TraceabilityDriverDemo
 {
@@ -23,6 +27,10 @@ namespace TraceabilityDriverDemo
 
                 // clear the databases
                 await Utility.ClearDatabases();
+
+                // create the digital links
+                await CreateLinks(Utility.ConnectionString01, Utility.TraceabilityDriverDB01);
+                await CreateLinks(Utility.ConnectionString01, Utility.TraceabilityDriverDB02);
 
                 // launch the directory service
                 Utility.StartDirectoryService(directoryServiceURL);
@@ -61,7 +69,7 @@ namespace TraceabilityDriverDemo
                 TestSolutionProvider.Program.Start(solutionProviderURL01, TD_config01.MapperDLLPath, TD_config01.MapperClassName, "xml", account01.ID, tp01.ID, traceDriveURL01, TD_config01.APIKey);
 
                 // launch test solution provider #2
-                TestSolutionProvider.Program.Start(solutionProviderURL02, TD_config02.MapperDLLPath, TD_config02.MapperClassName, "json", account02.ID, account02.ID, traceDriveURL02, TD_config02.APIKey);
+                TestSolutionProvider.Program.Start(solutionProviderURL02, TD_config02.MapperDLLPath, TD_config02.MapperClassName, "json", account02.ID, tp02.ID, traceDriveURL02, TD_config02.APIKey);
 
                 //System.Threading.Thread.Sleep(3000);
                 //System.Diagnostics.Process.Start($"microsoft-edge:{solutionProviderURL01}");
@@ -91,6 +99,44 @@ namespace TraceabilityDriverDemo
             // add second account as a trading partner to the first account
             ITEDriverTradingPartner tp = await client.AddTradingPartnerAsync(account.ID, pgln);
             return tp;
+        }
+
+        private static async Task CreateLinks(string connectionString, string dbName)
+        {
+            // create and save the digital links
+            List<ITEDigitalLink> digitalLinks = new List<ITEDigitalLink>();
+            digitalLinks.Add(new TEDigitalLink()
+            {
+                linkType = "gs1:masterData",
+                link = "{url}/{account_id}/masterdata/tradeitem/{gtin}",
+                identifier = "gtin"
+            });
+            digitalLinks.Add(new TEDigitalLink()
+            {
+                linkType = "gs1:masterData",
+                link = "{url}/{account_id}/masterdata/location/{gln}",
+                identifier = "gln"
+            });
+            digitalLinks.Add(new TEDigitalLink()
+            {
+                linkType = "gs1:masterData",
+                link = "{url}/{account_id}/masterdata/tradingparty/{pgln}",
+                identifier = "pgln"
+            });
+            digitalLinks.Add(new TEDigitalLink()
+            {
+                linkType = "gs1:epcis",
+                link = "{url}/{account_id}/epcis",
+                identifier = "epc"
+            });
+
+            using (ITEDriverDB driverDB = new TEDriverDB(connectionString, dbName))
+            {
+                foreach (var dl in digitalLinks)
+                {
+                    await driverDB.SaveDigitalLink(dl);
+                }
+            }
         }
     }
 }

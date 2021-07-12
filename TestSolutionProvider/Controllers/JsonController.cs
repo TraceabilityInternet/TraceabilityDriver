@@ -3,7 +3,9 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using TraceabilityEngine.Util;
 
@@ -13,10 +15,10 @@ namespace TestSolutionProvider.Controllers
     [Route("json")]
     public class JsonController : ControllerBase
     {
-        private JArray jEvents = new JArray();
-        private JArray jProducts = new JArray();
-        private JArray jLocations = new JArray();
-        private JArray jTradingParties = new JArray();
+        private static JArray jEvents = new JArray();
+        private static JArray jProducts = new JArray();
+        private static JArray jLocations = new JArray();
+        private static JArray jTradingParties = new JArray();
 
         public JsonController()
         {
@@ -216,18 +218,101 @@ namespace TestSolutionProvider.Controllers
 
         [HttpPost]
         [Route("save/{type}")]
-        public void SaveData(string type, [FromBody] string dataStr)
+        public async Task SaveData(string type)
         {
             JObject json = null;
             try
             {
-                json = JObject.Parse(dataStr);
+                string dataStr = "";
+                using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+                {
+                    dataStr = await reader.ReadToEndAsync();
+                }
                 switch (type.ToLower())
                 {
                     case "event":
                     case "events":
                         {
-                            jEvents.Add(json);
+                            JArray jArr = JArray.Parse(dataStr);
+                            foreach (var jObj in jArr)
+                            {
+                                bool found = false;
+                                foreach (var cte in jEvents)
+                                {
+                                    if (cte.Value<string>("Guid") == jObj.Value<string>("Guid"))
+                                    {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found == false)
+                                {
+                                    jEvents.Add(jObj);
+                                }
+                            }
+                            break;
+                        }
+                    case "tradeitem":
+                        {
+                            JArray jArr = JArray.Parse(dataStr);
+                            foreach (var jObj in jArr)
+                            {
+                                bool found = false;
+                                foreach (var cte in jProducts)
+                                {
+                                    if (cte.Value<string>("GTIN") == jObj.Value<string>("GTIN"))
+                                    {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found == false)
+                                {
+                                    jProducts.Add(jObj);
+                                }
+                            }
+                            break;
+                        }
+                    case "tradingparty":
+                        {
+                            JArray jArr = JArray.Parse(dataStr);
+                            foreach (var jObj in jArr)
+                            {
+                                bool found = false;
+                                foreach (var cte in jTradingParties)
+                                {
+                                    if (cte.Value<string>("PGLN") == jObj.Value<string>("PGLN"))
+                                    {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found == false)
+                                {
+                                    jTradingParties.Add(jObj);
+                                }
+                            }
+                            break;
+                        }
+                    case "location":
+                        {
+                            JArray jArr = JArray.Parse(dataStr);
+                            foreach (var jObj in jArr)
+                            {
+                                bool found = false;
+                                foreach (var cte in jLocations)
+                                {
+                                    if (cte.Value<string>("GLN") == jObj.Value<string>("GLN"))
+                                    {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found == false)
+                                {
+                                    jLocations.Add(jObj);
+                                }
+                            }
                             break;
                         }
                 }
