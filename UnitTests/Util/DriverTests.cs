@@ -129,7 +129,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void Load()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -138,7 +138,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_Events()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -171,7 +171,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_Locations()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -208,7 +208,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_TradeItems()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -245,7 +245,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_TradingParty()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);

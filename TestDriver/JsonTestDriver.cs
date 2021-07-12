@@ -9,6 +9,9 @@ using TraceabilityEngine.Interfaces.Models.Products;
 using TraceabilityEngine.Interfaces.Models.TradingParty;
 using TraceabilityEngine.Models.Events;
 using TraceabilityEngine.Models.Identifiers;
+using TraceabilityEngine.Models.Locations;
+using TraceabilityEngine.Models.Products;
+using TraceabilityEngine.Models.TradingParty;
 using TraceabilityEngine.Util;
 
 namespace TestDriver
@@ -98,7 +101,7 @@ namespace TestDriver
 
                     string ownerStr = jEvent.Value<string>("Owner");
                     IPGLN owner = IdentifierFactory.ParsePGLN(dataOwnerStr, out error);
-                    cte.DataOwner = owner;
+                    cte.Owner = owner;
 
                     events.Add(cte);
                 }
@@ -114,17 +117,67 @@ namespace TestDriver
 
         public List<ITELocation> MapToGS1Locations(string localLocations)
         {
-            throw new NotImplementedException();
+            List<ITELocation> locations = new List<ITELocation>();
+            try
+            {
+                JArray jArray = JArray.Parse(localLocations);
+                foreach (var jObj in jArray)
+                {
+                    ITELocation loc = new TELocation();
+                    loc.Name = jObj.Value<string>("Name");
+                    loc.GLN = IdentifierFactory.ParseGLN(jObj.Value<string>("GLN"), out string error);
+                    loc.Description = jObj.Value<string>("Description");
+                    locations.Add(loc);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+            }
+            return locations;
         }
 
         public List<ITEProduct> MapToGS1TradeItems(string localTradeItems)
         {
-            throw new NotImplementedException();
+            List<ITEProduct> products = new List<ITEProduct>();
+            try
+            {
+                JArray jArray = JArray.Parse(localTradeItems);
+                foreach (var jObj in jArray)
+                {
+                    ITEProduct product = new TEProduct();
+                    product.Name = jObj.Value<string>("Name");
+                    product.GTIN = IdentifierFactory.ParseGTIN(jObj.Value<string>("GTIN"), out string error);
+                    product.Description = jObj.Value<string>("Description");
+                    products.Add(product);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+            }
+            return products;
         }
 
         public List<ITETradingParty> MapToGS1TradingPartners(string localTradingPartners)
         {
-            throw new NotImplementedException();
+            List<ITETradingParty> tps = new List<ITETradingParty>();
+            try
+            {
+                JArray jArray = JArray.Parse(localTradingPartners);
+                foreach (var jObj in jArray)
+                {
+                    ITETradingParty tp = new TETradingParty();
+                    tp.Name = jObj.Value<string>("Name");
+                    tp.PGLN = IdentifierFactory.ParsePGLN(jObj.Value<string>("PGLN"), out string error);
+                    tps.Add(tp);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+            }
+            return tps;
         }
 
         public string MapToLocalEvents(List<ITEEvent> gs1Events, Dictionary<string, object> parameters)
@@ -230,17 +283,64 @@ namespace TestDriver
 
         public string MapToLocalLocations(List<ITELocation> gs1Locations)
         {
-            throw new NotImplementedException();
+            JArray jLocations = new JArray();
+            try
+            {
+                foreach (var location in gs1Locations)
+                {
+                    JObject jLoc = new JObject();
+                    jLoc["Name"] = location.Name;
+                    jLoc["GLN"] = location.GLN?.ToString();
+                    jLoc["Description"] = location.Description;
+                    jLocations.Add(jLoc);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+            }
+            return jLocations.ToString();
         }
 
         public string MapToLocalTradeItems(List<ITEProduct> products)
         {
-            throw new NotImplementedException();
+            JArray jTradeItems = new JArray();
+            try
+            {
+                foreach (var ti in products)
+                {
+                    JObject jTI = new JObject();
+                    jTI["Name"] = ti.Name;
+                    jTI["GTIN"] = ti.GTIN?.ToString();
+                    jTI["Description"] = ti.Description;
+                    jTradeItems.Add(jTI);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+            }
+            return jTradeItems.ToString();
         }
 
         public string MapToLocalTradingPartners(List<ITETradingParty> tradingParties)
         {
-            throw new NotImplementedException();
+            JArray jTPs = new JArray();
+            try
+            {
+                foreach (var tp in tradingParties)
+                {
+                    JObject jTP = new JObject();
+                    jTP["Name"] = tp.Name;
+                    jTP["PGLN"] = tp.PGLN?.ToString();
+                    jTPs.Add(jTP);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+            }
+            return jTPs.ToString();
         }
     }
 }

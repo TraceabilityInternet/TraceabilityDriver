@@ -5,11 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using TestDriver;
 using TraceabilityEngine.Clients;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Models.Events;
+using TraceabilityEngine.Interfaces.Models.Identifiers;
 using TraceabilityEngine.Interfaces.Models.Locations;
 using TraceabilityEngine.Interfaces.Models.Products;
 using TraceabilityEngine.Interfaces.Models.TradingParty;
@@ -122,15 +124,43 @@ namespace TestSolutionProvider.Services
             using (var client = TEClientFactory.InternalClient(this.TraceabilityDriverURL, this.TraceabilityDriverAPIKey))
             {
                 string localFormat = await client.GetEventsAsync(this.AccountID, this.TradingPartnerID, epc);
+                await SaveData(localFormat, "event");
 
-                // now we are going to save the data...
-                string url = $"{this.DataURL}/save/event";
-                var content = new StringContent(localFormat);
-                HttpResponseMessage response = await _client.PostAsync(url, content);
-                if (!response.IsSuccessStatusCode)
+                // now we are going to request the GTINs
+                List<ITEEvent> events = Mapper.MapToGS1Events(localFormat, null);
+                foreach (var cte in events)
                 {
-                    throw new Exception("Failed to request EPC data.");
+                    // request the gtins
+                    foreach (var piRef in cte.Products)
+                    {
+                        IGTIN gtin = piRef.EPC.GTIN;
+                        string localGTINs = await client.GetTradeItemAsync(this.AccountID, this.TradingPartnerID, gtin.ToString());
+                        await SaveData(localGTINs, "tradeitem");
+                    }
+
+                    // request the trading parties
+                    string localTP = await client.GetTradingPartyAsync(this.AccountID, this.TradingPartnerID, cte.DataOwner?.ToString());
+                    await SaveData(localTP, "tradingparty");
+                    localTP = await client.GetTradingPartyAsync(this.AccountID, this.TradingPartnerID, cte.Owner?.ToString());
+                    await SaveData(localTP, "tradingparty");
+
+                    // request the location 
+                    string locationData = await client.GetLocationAsync(this.AccountID, this.TradingPartnerID, cte.Location.GLN?.ToString());
+                    await SaveData(locationData, "location");
                 }
+            }
+        }
+
+        private async Task SaveData(string data, string type)
+        {
+            // now we are going to save the data...
+            string url = $"{this.DataURL}/save/{type}";
+            var content = new StringContent(data, Encoding.UTF8, "text/plain");
+            HttpResponseMessage response = await _client.PostAsync(url, content);
+            if (!response.IsSuccessStatusCode)
+            {
+                string responseError = await response.Content.ReadAsStringAsync();
+                throw new Exception("Failed to request EPC data.");
             }
         }
     }

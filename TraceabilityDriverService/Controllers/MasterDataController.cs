@@ -14,6 +14,7 @@ using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
 using TraceabilityEngine.Interfaces.Models.Locations;
 using TraceabilityEngine.Interfaces.Models.Products;
+using TraceabilityEngine.Interfaces.Models.TradingParty;
 using TraceabilityEngine.Mappers;
 using TraceabilityEngine.Mappers.EPCIS;
 using TraceabilityEngine.Service.Util;
@@ -156,11 +157,11 @@ namespace TraceabilityDriverService.Controllers
                             string localData = await response.Content.ReadAsStringAsync();
 
                             // pass the results through the configured mapper
-                            ITEProductMapper mapper = new ProductWebVocabMapper();
-                            List<ITEProduct> products = _configuration.Mapper.MapToGS1TradeItems(localData);
-                            if (products.Count > 0)
+                            ITETradingPartyMapper mapper = new TradingPartyWebVocabMapper();
+                            List<ITETradingParty> tps = _configuration.Mapper.MapToGS1TradingPartners(localData);
+                            if (tps.Count > 0)
                             {
-                                string gs1Events = mapper.ConvertFromProduct(products.FirstOrDefault());
+                                string gs1Events = mapper.ConvertFromTradingParty(tps.FirstOrDefault());
                                 return new OkObjectResult(gs1Events);
                             }
                             else

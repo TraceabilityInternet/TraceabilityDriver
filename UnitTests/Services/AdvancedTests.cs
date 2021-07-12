@@ -195,7 +195,6 @@ namespace UnitTests.Services
                     await driverDB.SaveDigitalLink(dl);
                 }
             }
-
         }
     }
 }

@@ -76,14 +76,22 @@
         this.showRequestData = true;
         StateHasChanged();
     }
-    
+
     private async Task RequestData()
     {
-        if (!string.IsNullOrWhiteSpace(this.requestEPC))
+        try
         {
-            await this.SolutionProviderService.RequestData(this.requestEPC);
-            this.showRequestData = false;
-            StateHasChanged();
+            if (!string.IsNullOrWhiteSpace(this.requestEPC))
+            {
+                await this.SolutionProviderService.RequestData(this.requestEPC);
+                this.showRequestData = false;
+                this.EventsList = new ObservableCollection<ITEEvent>(await SolutionProviderService.GetEventsAsync());
+                StateHasChanged();
+            }
+        }
+        catch (Exception)
+        {
+
         }
     }
 }
