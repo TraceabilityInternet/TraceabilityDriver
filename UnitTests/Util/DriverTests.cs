@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using TestDriver;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
 using TraceabilityEngine.Interfaces.Models.Events;
@@ -128,7 +129,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void Load()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -137,7 +138,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_Events()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -170,7 +171,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_Locations()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -207,7 +208,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_TradeItems()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -244,7 +245,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void XmlDriver_TradingParty()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
             ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
@@ -279,12 +280,139 @@ namespace UnitTests.Util
         }
 
         [TestMethod]
-        public void JsonDriver()
+        public void JsonDriver_Events()
         {
-            string dll = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
-            string className = "TestDriver.XmlTestDriver";
-            ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
+            ITETraceabilityMapper driver = new JsonTestDriver();
             Assert.IsNotNull(driver);
+
+            ITEEventMapper mapper = new EPCISJsonMapper_2_0();
+
+            List<ITEEvent> events = GetEvents();
+            string json = driver.MapToLocalEvents(events, new Dictionary<string, object>());
+            List<ITEEvent> eventsAfter = driver.MapToGS1Events(json, new Dictionary<string, object>());
+
+            string gs1Json = mapper.ConvertFromEvents(events);
+            string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);
+
+            JObject gs1JObj = JObject.Parse(gs1Json);
+            JObject gs1JObjAfter = JObject.Parse(gs1Json);
+
+            gs1JObj["creationDate"] = "";
+            gs1JObjAfter["creationDate"] = "";
+
+            gs1Json = gs1JObj.ToString();
+            gs1JsonAfter = gs1JObjAfter.ToString();
+
+            if (Debugger.IsAttached && gs1Json != gs1JsonAfter)
+            {
+                Debugger.Break();
+            }
+            Assert.AreEqual(gs1Json, gs1JsonAfter);
+        }
+
+        [TestMethod]
+        public void JsonDriver_Locations()
+        {
+            ITETraceabilityMapper driver = new JsonTestDriver();
+            Assert.IsNotNull(driver);
+
+            ITELocationMapper mapper = new LocationWebVocabMapper();
+
+            List<ITELocation> allLocations = GetLocations();
+            foreach (ITELocation location in allLocations)
+            {
+                List<ITELocation> locations = new List<ITELocation>() { location };
+                string xml = driver.MapToLocalLocations(locations);
+                List<ITELocation> locationsAfter = driver.MapToGS1Locations(xml);
+
+                string gs1Json = mapper.ConvertFromLocation(location);
+                string gs1JsonAfter = mapper.ConvertFromLocation(locationsAfter.FirstOrDefault());
+
+                JObject gs1JObj = JObject.Parse(gs1Json);
+                JObject gs1JObjAfter = JObject.Parse(gs1Json);
+
+                gs1JObj["creationDate"] = "";
+                gs1JObjAfter["creationDate"] = "";
+
+                gs1Json = gs1JObj.ToString();
+                gs1JsonAfter = gs1JObjAfter.ToString();
+
+                if (Debugger.IsAttached && gs1Json != gs1JsonAfter)
+                {
+                    Debugger.Break();
+                }
+                Assert.AreEqual(gs1Json, gs1JsonAfter);
+            }
+        }
+
+        [TestMethod]
+        public void JsonDriver_TradeItems()
+        {
+            ITETraceabilityMapper driver = new JsonTestDriver();
+            Assert.IsNotNull(driver);
+
+            ITEProductMapper mapper = new ProductWebVocabMapper();
+
+            List<ITEProduct> allProducts = GetProducts();
+            foreach (ITEProduct product in allProducts)
+            {
+                List<ITEProduct> products = new List<ITEProduct>() { product };
+                string xml = driver.MapToLocalTradeItems(products);
+                List<ITEProduct> productsAfter = driver.MapToGS1TradeItems(xml);
+
+                string gs1Json = mapper.ConvertFromProduct(product);
+                string gs1JsonAfter = mapper.ConvertFromProduct(productsAfter.FirstOrDefault());
+
+                JObject gs1JObj = JObject.Parse(gs1Json);
+                JObject gs1JObjAfter = JObject.Parse(gs1Json);
+
+                gs1JObj["creationDate"] = "";
+                gs1JObjAfter["creationDate"] = "";
+
+                gs1Json = gs1JObj.ToString();
+                gs1JsonAfter = gs1JObjAfter.ToString();
+
+                if (Debugger.IsAttached && gs1Json != gs1JsonAfter)
+                {
+                    Debugger.Break();
+                }
+                Assert.AreEqual(gs1Json, gs1JsonAfter);
+            }
+        }
+
+        [TestMethod]
+        public void JsonDriver_TradingParty()
+        {
+            ITETraceabilityMapper driver = new JsonTestDriver();
+            Assert.IsNotNull(driver);
+
+            ITETradingPartyMapper mapper = new TradingPartyWebVocabMapper();
+
+            List<ITETradingParty> allTPs = GetTradingParties();
+            foreach (ITETradingParty tp in allTPs)
+            {
+                List<ITETradingParty> tradingParties = new List<ITETradingParty>() { tp };
+                string xml = driver.MapToLocalTradingPartners(tradingParties);
+                List<ITETradingParty> tpAfter = driver.MapToGS1TradingPartners(xml);
+
+                string gs1Json = mapper.ConvertFromTradingParty(tp);
+                string gs1JsonAfter = mapper.ConvertFromTradingParty(tpAfter.FirstOrDefault());
+
+                JObject gs1JObj = JObject.Parse(gs1Json);
+                JObject gs1JObjAfter = JObject.Parse(gs1Json);
+
+                gs1JObj["creationDate"] = "";
+                gs1JObjAfter["creationDate"] = "";
+
+                gs1Json = gs1JObj.ToString();
+                gs1JsonAfter = gs1JObjAfter.ToString();
+
+                if (Debugger.IsAttached && gs1Json != gs1JsonAfter)
+                {
+                    Debugger.Break();
+                }
+                Assert.AreEqual(gs1Json, gs1JsonAfter);
+            }
         }
     }
 }

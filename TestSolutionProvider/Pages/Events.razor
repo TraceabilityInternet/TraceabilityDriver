@@ -1,0 +1,124 @@
+﻿@page "/"
+
+@inject ISolutionProviderService SolutionProviderService; 
+
+<div style="height: 100%;">
+    <TelerikGrid Data="@EventsList" Height="100%"
+                 Pageable="true" Sortable="true"
+                 Resizable="true" Reorderable="true">
+        <GridToolBar>
+            <GridCommandButton OnClick="@OpenRequestData" Primary="true">Request Traceability Data</GridCommandButton>
+        </GridToolBar>
+        <GridColumns>
+            <GridCommandColumn Width="100px">
+                <GridCommandButton OnClick="@ViewRaw" Primary="true">View Raw Data</GridCommandButton>
+            </GridCommandColumn>
+            <GridColumn Field="EventType" Width="200px" />
+            <GridColumn Field="Action" Width="200px" />
+            <GridColumn Field="BusinessStep" Width="200px" />
+            <GridColumn Field="Disposition" Width="200px" />
+        </GridColumns>
+    </TelerikGrid>
+
+    <TelerikWindow @bind-Visible="@showRawData">
+        <WindowTitle>
+            <strong>Raw Data</strong>
+        </WindowTitle>
+        <WindowContent>
+            <textarea style="height: 500px; width: 500px;">
+                @rawData
+            </textarea>
+            <center style="margin-top: 1.0em;">
+                <button class="k-button" @onclick="() => { this.showRawData = false; }" style="width: 150px; margin-left: 0.2em;">Close</button>
+            </center>
+        </WindowContent>
+    </TelerikWindow>
+
+    <TelerikWindow @bind-Visible="@showRequestData">
+        <WindowTitle>
+            <strong>Raw Data</strong>
+        </WindowTitle>
+        <WindowContent>
+            <center>
+                <center style="display: flex; flex-direction: row;">
+                    <div style="flex: 0.40;">
+                        <img src="/img/solutionprovider.png" height="100" width="100" />
+                        <div>JSON Solution Provider</div>
+                    </div>
+                    <div style="flex: 0.2;">
+                        <div style="margin-top: 25px;">
+                            <img src="/img/arrow.gif" style="filter: grayscale(1);" height="25" width="50" />
+                            <img src="/img/sending.gif" height="50" width="50" />
+                            <img src="/img/arrow.gif" style="filter: grayscale(1);"  height="25" width="50" />
+                        </div>
+                    </div>
+                    <div style="flex: 0.40;">
+                        <img src="/img/tdriver.png" height="100" />
+                        <div>JSON Solution Provider's Traceability Driver</div>
+                    </div>
+                </center>
+                <center>
+                    <div style="margin-top: 20px; margin-bottom: 20px;">
+                        The JSON Solution Provider sends a request to it's Traceability Driver asking
+                        for event traceability data for the requested EPC. In the request it provides 
+                        the Account that is requesting the data and the Trading Partner they are 
+                        requesting the data from.
+                    </div>
+                </center>
+            </center>
+            <center>
+                <h6 style="text-align: left;">EPC</h6>
+                <TelerikTextBox @bind-Value="@requestEPC" />
+            </center>
+            <center style="margin-top: 1.0em;">
+                <button class="k-button k-primary" @onclick="@RequestData" style="width: 150px; margin-left: 0.2em;">Request</button>
+            </center>
+        </WindowContent>
+    </TelerikWindow>
+</div>
+
+@code {
+    bool showRequestData = false;
+    bool showRawData = false;
+    string rawData = null;
+    string requestEPC = null;
+
+    ObservableCollection<ITEEvent> EventsList = new ObservableCollection<ITEEvent>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.EventsList = new ObservableCollection<ITEEvent>(await SolutionProviderService.GetEventsAsync());
+        base.OnInitialized();
+    }
+
+    private async Task ViewRaw(GridCommandEventArgs args)
+    {
+        ITEEvent row = (ITEEvent)args.Item;
+        this.rawData = await this.SolutionProviderService.GetRawData(row.EventID);
+        this.showRawData = true;
+    }
+
+    private void OpenRequestData(GridCommandEventArgs args)
+    {
+        this.showRequestData = true;
+        StateHasChanged();
+    }
+
+    private async Task RequestData()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(this.requestEPC))
+            {
+                await this.SolutionProviderService.RequestData(this.requestEPC);
+                this.showRequestData = false;
+                this.EventsList = new ObservableCollection<ITEEvent>(await SolutionProviderService.GetEventsAsync());
+                StateHasChanged();
+            }
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+}

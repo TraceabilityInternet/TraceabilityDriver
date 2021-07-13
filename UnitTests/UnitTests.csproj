@@ -47,8 +47,10 @@
     <ProjectReference Include="..\TEMappers\TEMappers.csproj" />
     <ProjectReference Include="..\TEModels\TEModels.csproj" />
     <ProjectReference Include="..\TEMongoDB\TEMongoDB.csproj" />
+    <ProjectReference Include="..\TEServiceUtil\TEServiceUtil.csproj" />
     <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
-    <ProjectReference Include="..\TestSolutionProviderService\TestSolutionProviderService.csproj" />
+    <ProjectReference Include="..\TestDriver\TestDriver.csproj" />
+    <ProjectReference Include="..\TestSolutionProvider\TestSolutionProvider.csproj" />
     <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
     <ProjectReference Include="..\TraceabilityDriverService\TraceabilityDriverService.csproj" />
   </ItemGroup>

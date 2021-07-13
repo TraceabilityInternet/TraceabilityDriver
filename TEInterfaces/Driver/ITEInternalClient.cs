@@ -18,6 +18,8 @@ namespace TraceabilityEngine.Interfaces.Driver
 
         Task<ITEDriverTradingPartner> AddTradingPartnerAsync(long accountID, IPGLN pgln);
 
+        Task<ITEDriverTradingPartner> AddTradingPartnerManuallyAsync(long accountID, ITEDriverTradingPartner tp);
+
         Task DeleteTradingPartnerAsync(long accountID, long tradingPartnerID);
 
         Task<string> GetTradeItemAsync(long accountID, long tradingPartnerID, string gtin);

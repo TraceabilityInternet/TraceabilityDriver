@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="wwwroot\content\**" />
+    <Compile Remove="wwwroot\js\**" />
+    <Content Remove="wwwroot\content\**" />
+    <Content Remove="wwwroot\js\**" />
+    <EmbeddedResource Remove="wwwroot\content\**" />
+    <EmbeddedResource Remove="wwwroot\js\**" />
+    <None Remove="wwwroot\content\**" />
+    <None Remove="wwwroot\js\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Remove="wwwroot\css\all.css" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="Data\xml\Events.xml" />
+    <None Remove="Data\xml\Locations.xml" />
+    <None Remove="Data\xml\TradeItems.xml" />
+    <None Remove="Data\xml\TradingParties.xml" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="Data\xml\Events.xml" />
+    <EmbeddedResource Include="Data\xml\Locations.xml" />
+    <EmbeddedResource Include="Data\xml\TradeItems.xml" />
+    <EmbeddedResource Include="Data\xml\TradingParties.xml" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Telerik.UI.for.Blazor" Version="2.22.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Data\json\" />
+    <Folder Include="wwwroot\img\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\TEClients\TEClients.csproj" />
+    <ProjectReference Include="..\TEInterfaces\TEInterfaces.csproj" />
+    <ProjectReference Include="..\TEMappers\TEMappers.csproj" />
+    <ProjectReference Include="..\TEModels\TEModels.csproj" />
+    <ProjectReference Include="..\TEServiceUtil\TEServiceUtil.csproj" />
+    <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
+    <ProjectReference Include="..\TestDriver\TestDriver.csproj" />
+    <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -30,14 +30,21 @@ namespace TraceabilityDriverService.Services
             this.URL = configuration["URL"];
             this.ConnectionString = _configuration["ConnectionString"];
             this.DirectoryURL = _configuration["DirectoryURL"];
-            this.ServiceProviderDID = DIDFactory.Parse(_configuration["ServiceProviderDID"]);
-            this.ServiceProviderPGLN = IdentifierFactory.ParsePGLN(_configuration["ServiceProviderPGLN"]);
+            if (!string.IsNullOrWhiteSpace(_configuration["ServiceProviderDID"]))
+            {
+                this.ServiceProviderDID = DIDFactory.Parse(_configuration["ServiceProviderDID"]);
+            }
+            if (!string.IsNullOrWhiteSpace(_configuration["ServiceProviderPGLN"]))
+            {
+                this.ServiceProviderPGLN = IdentifierFactory.ParsePGLN(_configuration["ServiceProviderPGLN"]);
+            }
             this.APIKey = _configuration["APIKey"];
             this.RequiresTradingPartnerAuthorization = _configuration.GetValue<bool>("RequiresTradingPartnerAuthorization");
             this.EventURLTemplate = _configuration["EventURLTemplate"];
             this.LocationURLTemplate = _configuration["LocationURLTemplate"];
             this.TradeItemURLTemplate = _configuration["TradeItemURLTemplate"];
             this.TradingPartnerURLTemplate = _configuration["TradingPartnerURLTemplate"];
+            this.DatabaseName = _configuration["DatabaseName"] ?? "TraceabilityDriver";
 
             MapperDLLPath = _configuration.GetValue<string>("MapperDLLPath");
             MapperClassName = _configuration.GetValue<string>("MapperClassName");
@@ -58,10 +65,11 @@ namespace TraceabilityDriverService.Services
         public string TradeItemURLTemplate { get; set; }
         public string LocationURLTemplate { get; set; }
         public string TradingPartnerURLTemplate { get; set; }
+        public string DatabaseName { get; set; }
 
         public ITEDriverDB GetDB()
         {
-            return new TEDriverDB(this.ConnectionString);
+            return new TEDriverDB(this.ConnectionString, this.DatabaseName);
         }
     }
 }

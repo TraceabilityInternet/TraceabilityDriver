@@ -49,23 +49,27 @@ namespace UnitTests
 
         public static async Task<ITDConfiguration> GetConfiguration(string url, string directoryURL, string solutionProviderURL=null)
         {
-            ITEDirectoryServiceProvider serviceProvider = await CreateServiceProvider();
-
             ITDConfiguration configuration = new TDConfiguration();
             configuration.APIKey = Guid.NewGuid().ToString();
             configuration.ConnectionString = ConnectionString01;
             configuration.DirectoryURL = directoryURL;
             configuration.MapperClassName = "TestDriver.XmlTestDriver";
-            configuration.MapperDLLPath = @"C:\FOTFS\TraceabilityEngine\TestDriver\bin\Debug\net5.0\TestDriver.dll";
+            configuration.MapperDLLPath = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             configuration.Mapper = DriverUtil.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
             configuration.RequiresTradingPartnerAuthorization = false;
-            configuration.ServiceProviderDID = serviceProvider.DID;
-            configuration.ServiceProviderPGLN = serviceProvider.PGLN;
+            configuration.DatabaseName = "TraceabilityDriver";
+            if (!string.IsNullOrWhiteSpace(directoryURL))
+            {
+                ITEDirectoryServiceProvider serviceProvider = await CreateServiceProvider();
+                configuration.ServiceProviderDID = serviceProvider.DID;
+                configuration.ServiceProviderPGLN = serviceProvider.PGLN;
+            }
             configuration.URL = url;
             if (solutionProviderURL != null)
             {
                 configuration.TradeItemURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradeitem/{{gtin}}";
                 configuration.LocationURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/location/{{gln}}";
+                configuration.TradingPartnerURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradingpartner/{{pgln}}";
                 configuration.EventURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/events/{{epc}}"; // John Edit
                 configuration.TradingPartnerURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradingparty/{{pgln}}"; // John Edit
             }
@@ -82,9 +86,9 @@ namespace UnitTests
             DirectoryService.Program.Start(url, ConnectionString01);
         }
 
-        public static void StartTestSolutionProvider(string url)
+        public static void StartTestSolutionProvider(string url, string dataURL = "xml", string mapperDLLPath = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll", string mapperClassName = "TestDriver.XmlTestDriver")
         {
-            TestSolutionProviderService.Program.Start(url);
+            TestSolutionProvider.Program.Start(url, mapperDLLPath, mapperClassName, dataURL, 0, 0, null, null);
         }
 
         public static ITEDocumentDB GetDocumentDB(string dbName)
