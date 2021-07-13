@@ -72,7 +72,27 @@ namespace TestSolutionProviderService.Controllers
             try
             {
                 TEXML xml = new TEXML("TradingParties");
-                foreach (TEXML xTI in xProducts[$"TradingParty[GLN='{pglnStr}']"])
+                foreach (TEXML xTI in xProducts[$"TradingParty[PGLN='{pglnStr}']"])
+                {
+                    xml.AddChild(xTI);
+                }
+                return xml.PrintXmlString;
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+        }
+
+        [HttpGet]
+        [Route("{account_id}/{tradingpartner_id}/tradingparty/{pglnStr}")]
+        public string GetTradingParty(string pglnStr, long account_id, long tradingpartner_id)
+        {
+            try
+            {
+                TEXML xml = new TEXML("TradingParties");
+                foreach (TEXML xTI in xProducts[$"TradingParty[PGLN='{pglnStr}']"])
                 {
                     xml.AddChild(xTI);
                 }

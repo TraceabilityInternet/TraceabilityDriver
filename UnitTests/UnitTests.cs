@@ -67,6 +67,7 @@ namespace UnitTests
                 configuration.TradeItemURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradeitem/{{gtin}}";
                 configuration.LocationURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/location/{{gln}}";
                 configuration.EventURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/events/{{epc}}"; // John Edit
+                configuration.TradingPartnerURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradingparty/{{pgln}}"; // John Edit
             }
             return configuration;
         }

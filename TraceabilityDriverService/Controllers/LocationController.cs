@@ -32,10 +32,33 @@ namespace TraceabilityDriverService.Controllers
             _configuration = configuration;
         }
 
+        /// <summary>
+        /// An HTTP GET request that returns, in local format, a Location, identified by a GLN, of a specified Account's Trading Partner.
+        /// </summary>
+        /// <param name="accountID"></param>
+        /// <param name="tradingPartnerID"></param>
+        /// <param name="gln"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("{accountID}/{tradingPartnerID}/{gln}")]
-        public async Task<string> Get(long accountID, long tradingPartnerID, string gln)
+        public async Task<ActionResult<string>> Get(long accountID, long tradingPartnerID, string gln)
         {
+            // validation
+            if (string.IsNullOrEmpty(gln))
+            {
+                return new BadRequestObjectResult("GLN is null or empty");
+            }
+
+            if (tradingPartnerID == 0)
+            {
+                return new BadRequestObjectResult("Trading partner ID was not properly set");
+            }
+
+            if (accountID == 0)
+            {
+                return new BadRequestObjectResult("Account ID is null");
+            }
+
             using (ITEDriverDB driverDB = _configuration.GetDB())
             {
                 ITEDriverAccount account = await driverDB.LoadAccountAsync(accountID);

@@ -37,10 +37,30 @@ namespace TraceabilityDriverService.Controllers
             _configuration = configuration;
         }
 
+        /// <summary>
+        /// An HTTP GET request that returns, in local format, a Trade Item's list of events.
+        /// </summary>
+        /// <param name="accountID"></param>
+        /// <param name="tradingPartnerID"></param>
+        /// <param name="epcStr"></param>
+        /// <param name="minEventTime"></param>
+        /// <param name="maxEventTime"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("{accountID}/{tradingPartnerID}/{epcStr}")]
-        public async Task<string> GetEvents(long accountID, long tradingPartnerID, string epcStr, [FromQuery] DateTime? minEventTime = null, [FromQuery] DateTime? maxEventTime = null)
+        public async Task<ActionResult<string>> GetEvents(long accountID, long tradingPartnerID, string epcStr, [FromQuery] DateTime? minEventTime = null, [FromQuery] DateTime? maxEventTime = null)
         {
+            // validation
+            if (accountID == 0)
+            {
+                return "Account ID was not properly set";
+            }
+
+            if (tradingPartnerID == 0)
+            {
+                return "Trading Partner ID was not properly set";
+            }
+
             if (string.IsNullOrEmpty(epcStr))
             {
                 throw new ArgumentNullException(nameof(epcStr));

@@ -153,7 +153,7 @@ namespace TraceabilityEngine.Clients
         {
             try
             {
-                string url = $"{_url}/api/location/{accountID}/{tradingPartnerID}/{gln}"; // double check routing url
+                string url = $"{_url}/api/location/{accountID}/{tradingPartnerID}/{gln}";
                 var response = await _client.GetAsync(url);
                 if (response.IsSuccessStatusCode == false)
                 {
@@ -172,7 +172,23 @@ namespace TraceabilityEngine.Clients
 
         public async Task<string> GetTradingPartyAsync(long accountID, long tradingPartnerID, string pgln)
         {
-            throw new NotImplementedException();
+            try
+            {
+                string url = $"{_url}/api/tradingparty/{accountID}/{tradingPartnerID}/{pgln}";
+                var response = await _client.GetAsync(url);
+                if (response.IsSuccessStatusCode == false)
+                {
+                    string errorStr = await response.Content.ReadAsStringAsync();
+                    throw new Exception("Failed to get the trading party.");
+                }
+                string responseStr = await response.Content.ReadAsStringAsync();
+                return responseStr;
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
         }
 
         public async Task<string> GetEventsAsync(long accountID, long tradingPartnerID, string epc)

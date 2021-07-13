@@ -33,12 +33,29 @@ namespace TraceabilityDriverService.Controllers
             _configuration = config;
         }
 
+        /// <summary>
+        /// An HTTP POST request that returns, in GS1 format, a queried list of events.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="accountID"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("queries/SimpleEventQuery")]
         public async Task<IActionResult> GetEvents([FromBody] SimpleEventQuery query, long accountID)
         {
             try
             {
+                // validation
+                if (query == null)
+                {
+                    return new BadRequestObjectResult("Query is null.");
+                }
+
+                if (accountID == 0)
+                {
+                    return new BadRequestObjectResult("Account ID was not properly set");
+                }
+
                 List<ITEEvent> events = new List<ITEEvent>();
 
                 using (ITEDriverDB driverDB = _configuration.GetDB())

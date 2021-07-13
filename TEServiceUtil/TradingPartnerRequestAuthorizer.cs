@@ -75,8 +75,12 @@ namespace TraceabilityEngine.Service.Util
                 string decrypted = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader));
                 ISimpleSignature signature = SimpleSignatureFactory.Parse(decrypted);
 
-                IPGLN accountPGLN = IdentifierFactory.ParsePGLN(signature.Value.Split("|")[0]);
-                IPGLN tradingPartnerPGLN = IdentifierFactory.ParsePGLN(signature.Value.Split("|")[1]);
+                //// I think these need to be switched
+                //IPGLN accountPGLN = IdentifierFactory.ParsePGLN(signature.Value.Split("|")[0]);
+                //IPGLN tradingPartnerPGLN = IdentifierFactory.ParsePGLN(signature.Value.Split("|")[1]);
+
+                IPGLN accountPGLN = IdentifierFactory.ParsePGLN(signature.Value.Split("|")[1]);
+                IPGLN tradingPartnerPGLN = IdentifierFactory.ParsePGLN(signature.Value.Split("|")[0]);
 
                 ITEDriverAccount account = await driverDB.LoadAccountAsync(accountPGLN);
                 ITEDriverTradingPartner tp = await driverDB.LoadTradingPartnerAsync(account.ID, tradingPartnerPGLN);

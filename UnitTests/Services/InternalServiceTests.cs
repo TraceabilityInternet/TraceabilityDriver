@@ -115,10 +115,14 @@ namespace UnitTests.Services
             string url = "http://localhost:9126";
             string directoryURL = "http://localhost:9125/";
 
+            // clear the databases
+            await UnitTests.ClearDatabases();
+
             // create the account
             ITEDriverAccount account = new TEDriverAccount();
             account.Name = "Test Account #1";
             account.DigitalLinkURL = "www.google.com";
+            account.PGLN = new PGLN("urn:epc:id:sgln:08600031303.0.1");
 
             // start the directory serivce
             UnitTests.StartDirectoryService(directoryURL);
@@ -131,20 +135,22 @@ namespace UnitTests.Services
             await controller.Post(account);
 
             // load the account
-            ITEDriverAccount loadedAccount = await controller.Get(account.ID.ToString());
-            Assert.AreEqual(account.ID, loadedAccount.ID);
-            Assert.AreEqual(account.Name, loadedAccount.Name);
-            Assert.AreEqual(account.DID.ToString(), loadedAccount.DID.ToString());
-            Assert.AreEqual(account.PGLN, loadedAccount.PGLN);
-            Assert.AreEqual(account.DigitalLinkURL, loadedAccount.DigitalLinkURL);
+            ActionResult<ITEDriverAccount> aResult = await controller.Get(account.ID.ToString());
+            ITEDriverAccount loadAccount = aResult.Value;
+            Assert.AreEqual(account.ID, loadAccount.ID);
+            Assert.AreEqual(account.Name, loadAccount.Name);
+            Assert.AreEqual(account.DID.ToString(), loadAccount.DID.ToString());
+            Assert.AreEqual(account.PGLN, loadAccount.PGLN);
+            Assert.AreEqual(account.DigitalLinkURL, loadAccount.DigitalLinkURL);
 
             // load the account by the PGLN
-            loadedAccount = await controller.Get(account.PGLN?.ToString());
-            Assert.AreEqual(account.ID, loadedAccount.ID);
-            Assert.AreEqual(account.Name, loadedAccount.Name);
-            Assert.AreEqual(account.DID.ToString(), loadedAccount.DID.ToString());
-            Assert.AreEqual(account.PGLN, loadedAccount.PGLN);
-            Assert.AreEqual(account.DigitalLinkURL, loadedAccount.DigitalLinkURL);
+            aResult = await controller.Get(account.PGLN?.ToString());
+            loadAccount = aResult.Value;
+            Assert.AreEqual(account.ID, loadAccount.ID);
+            Assert.AreEqual(account.Name, loadAccount.Name);
+            Assert.AreEqual(account.DID.ToString(), loadAccount.DID.ToString());
+            Assert.AreEqual(account.PGLN, loadAccount.PGLN);
+            Assert.AreEqual(account.DigitalLinkURL, loadAccount.DigitalLinkURL);
         }
 
         [TestMethod]
@@ -177,14 +183,17 @@ namespace UnitTests.Services
             await accountController.Post(account2);
 
             // add second account as a trading partner to the first account
-            IActionResult result = await controller.Post(account.ID, account2.PGLN?.ToString());
-            Assert.IsTrue((result is AcceptedResult));
-            AcceptedResult acceptedResult = result as AcceptedResult;
-            ITEDriverTradingPartner tp = acceptedResult.Value as ITEDriverTradingPartner;
+            ActionResult<ITEDriverTradingPartner> result = await controller.Post(account.ID, account2.PGLN?.ToString());
+            //Assert.IsTrue((result.Result is AcceptedResult)); // John Added .Result
+            //AcceptedResult acceptedResult = result.Result as AcceptedResult;
+            ITEDriverTradingPartner tp = result.Value;
             Assert.IsNotNull(tp);
 
-            // load the trading partner
-            ITEDriverTradingPartner loadedTP = await controller.Get(account.ID, tp.ID);
+            // load the trading partner 
+
+            ActionResult<ITEDriverTradingPartner> aResult = await controller.Get(account.ID, tp.ID);
+            ITEDriverTradingPartner loadedTP = aResult.Value;
+            //ITEDriverTradingPartner loadedTP = await controller.Get(account.ID, tp.ID);
             Assert.AreEqual(tp.ID, loadedTP.ID);
             Assert.AreEqual(tp.Name, loadedTP.Name);
             Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
@@ -193,7 +202,8 @@ namespace UnitTests.Services
 
             // delete the trading partner
             await controller.Delete(tp.AccountID, tp.ID);
-            loadedTP = await controller.Get(account.ID, tp.ID);
+            aResult = await controller.Get(account.ID, tp.ID);
+            loadedTP = aResult.Value;
             Assert.IsNull(loadedTP);
         }
 
@@ -202,6 +212,9 @@ namespace UnitTests.Services
         {
             string url = "http://localhost:9127";
             string directoryURL = "http://localhost:9128/";
+
+            //clear MongoDB
+            await UnitTests.ClearDatabases();
 
             // start the directory serivce
             DirectoryService.Program.Start(directoryURL, UnitTests.ConnectionString01);
@@ -216,6 +229,7 @@ namespace UnitTests.Services
                 ITEDriverAccount account = new TEDriverAccount();
                 account.Name = "Test Account #1";
                 account.DigitalLinkURL = "www.google.com";
+                account.PGLN = new PGLN("urn:epc:id:sgln:08600031303.0.1");
 
                 // add the account
                 account = await client.SaveAccountAsync(account);

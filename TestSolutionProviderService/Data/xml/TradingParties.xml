@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<TradingParties>
-  
-</TradingParties>
+<TradingParty>
+  <PGLN>urn:epc:id:sgln:08600031303.0.0</PGLN>
+  <Name>Test Trading Party</Name>
+</TradingParty>
