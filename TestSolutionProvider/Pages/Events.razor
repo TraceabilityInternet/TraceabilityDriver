@@ -40,6 +40,33 @@
         </WindowTitle>
         <WindowContent>
             <center>
+                <center style="display: flex; flex-direction: row;">
+                    <div style="flex: 0.40;">
+                        <img src="/img/solutionprovider.png" height="100" width="100" />
+                        <div>JSON Solution Provider</div>
+                    </div>
+                    <div style="flex: 0.2;">
+                        <div style="margin-top: 25px;">
+                            <img src="/img/arrow.gif" style="filter: grayscale(1);" height="25" width="50" />
+                            <img src="/img/sending.gif" height="50" width="50" />
+                            <img src="/img/arrow.gif" style="filter: grayscale(1);"  height="25" width="50" />
+                        </div>
+                    </div>
+                    <div style="flex: 0.40;">
+                        <img src="/img/tdriver.png" height="100" />
+                        <div>JSON Solution Provider's Traceability Driver</div>
+                    </div>
+                </center>
+                <center>
+                    <div style="margin-top: 20px; margin-bottom: 20px;">
+                        The JSON Solution Provider sends a request to it's Traceability Driver asking
+                        for event traceability data for the requested EPC. In the request it provides 
+                        the Account that is requesting the data and the Trading Partner they are 
+                        requesting the data from.
+                    </div>
+                </center>
+            </center>
+            <center>
                 <h6 style="text-align: left;">EPC</h6>
                 <TelerikTextBox @bind-Value="@requestEPC" />
             </center>

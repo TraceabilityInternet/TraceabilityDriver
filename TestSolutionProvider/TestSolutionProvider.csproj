@@ -39,6 +39,7 @@
   
   <ItemGroup>
     <Folder Include="Data\json\" />
+    <Folder Include="wwwroot\img\" />
   </ItemGroup>
   
   <ItemGroup>
