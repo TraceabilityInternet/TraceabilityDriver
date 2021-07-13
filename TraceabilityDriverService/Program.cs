@@ -39,6 +39,7 @@ namespace TraceabilityDriverService
                     webBuilder.UseSetting("APIKey", configuration.APIKey);
                     webBuilder.UseSetting("MapperDLLPath", configuration.MapperDLLPath);
                     webBuilder.UseSetting("MapperClassName", configuration.MapperClassName);
+                    webBuilder.UseSetting("DatabaseName", configuration.DatabaseName);
                     webBuilder.UseEnvironment("Development");
                     webBuilder.UseUrls(configuration.URL);
                     webBuilder.UseStartup<Startup>();

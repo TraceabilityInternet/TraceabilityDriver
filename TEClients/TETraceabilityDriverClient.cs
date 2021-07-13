@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -111,6 +112,31 @@ namespace TraceabilityEngine.Clients
             }
         }
 
+        public async Task<ITEDriverTradingPartner> AddTradingPartnerManuallyAsync(long accountID, ITEDriverTradingPartner tp)
+        {
+            try
+            {
+                string json = tp.ToJson();
+                StringContent strContent = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _client.PostAsync($"{_url}/api/tradingpartner/{accountID}/add_manually", strContent);
+                if (response.IsSuccessStatusCode == false)
+                {
+                    throw new Exception("Failed to add the trading partner.");
+                }
+                else
+                {
+                    string responseStr = await response.Content.ReadAsStringAsync();
+                    tp = TEDriverFactory.CreateTradingPartner(responseStr);
+                    return tp;
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+        }
+
         public async Task DeleteTradingPartnerAsync(long accountID, long tradingPartnerID)
         {
             try
@@ -172,7 +198,23 @@ namespace TraceabilityEngine.Clients
 
         public async Task<string> GetTradingPartyAsync(long accountID, long tradingPartnerID, string pgln)
         {
-            throw new NotImplementedException();
+            try
+            {
+                string url = $"{_url}/api/tradingparty/{accountID}/{tradingPartnerID}/{pgln}"; // double check routing url
+                var response = await _client.GetAsync(url);
+                if (response.IsSuccessStatusCode == false)
+                {
+                    string errorStr = await response.Content.ReadAsStringAsync();
+                    throw new Exception("Failed to get the trading party.");
+                }
+                string responseStr = await response.Content.ReadAsStringAsync();
+                return responseStr;
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
         }
 
         public async Task<string> GetEventsAsync(long accountID, long tradingPartnerID, string epc)
@@ -184,7 +226,7 @@ namespace TraceabilityEngine.Clients
                 if (!response.IsSuccessStatusCode)
                 {
                     string responseStr = await response.Content.ReadAsStringAsync();
-                    throw new Exception("Failed to register the account.");
+                    throw new Exception("Failed to get the events.");
                 }
                 else
                 {

@@ -34,7 +34,7 @@ namespace TraceabilityDriverService.Controllers
 
         [HttpGet]
         [Route("{accountID}/{tradingPartnerID}/{gln}")]
-        public async Task<string> Get(long accountID, long tradingPartnerID, string gln)
+        public async Task<ActionResult<string>> Get(long accountID, long tradingPartnerID, string gln)
         {
             using (ITEDriverDB driverDB = _configuration.GetDB())
             {
@@ -54,25 +54,23 @@ namespace TraceabilityDriverService.Controllers
                     JArray jArr = JArray.Parse(linkJson); // Edited Jobject to Jarray
                     string masterDataURL = jArr[0].Value<string>("link"); // "url" to "link", added [0] index
 
-
                     // now we have the link to the master data
                     client.DefaultRequestHeaders.Clear();
                     client.DefaultRequestHeaders.Add("Authorization", authHeader);
                     var response2 = await client.GetAsync(masterDataURL); // Edited url to masterDataURL
-                    string gs1Format = await response2.Content.ReadAsStringAsync();
-                    ITELocationMapper mapper = new LocationWebVocabMapper();
-                    ITELocation location = mapper.ConvertToLocation(gs1Format);
-                    string localFormat = _configuration.Mapper.MapToLocalLocations(new List<ITELocation>() { location });
-                    return localFormat;
 
-
-                    // now we have the link to
-                    //throw new NotImplementedException();
-                    //client.DefaultRequestHeaders.Clear();
-                    //var response2 = await client.GetAsync(url);
-                    //string gs1Format = await response2.Content.ReadAsStringAsync();
-                    //string localFormat = _driver.MapToLocalLocations(gs1Format);
-                    //return localFormat;
+                    if (response2.IsSuccessStatusCode)
+                    {
+                        string gs1Format = await response2.Content.ReadAsStringAsync();
+                        ITELocationMapper mapper = new LocationWebVocabMapper();
+                        ITELocation location = mapper.ConvertToLocation(gs1Format);
+                        string localFormat = _configuration.Mapper.MapToLocalLocations(new List<ITELocation>() { location });
+                        return localFormat;
+                    }
+                    else
+                    {
+                        return new NotFoundResult();
+                    }
                 }
             }
         }

@@ -49,6 +49,26 @@ namespace TraceabilityDriverService.Controllers
             }
         }
 
+        //[HttpGet]
+        //[Route("{accountID}/search/{name}")]
+        //public async Task<ITEDriverTradingPartnerSearchResult> Search(long accountID, string name)
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrWhiteSpace(name) || name.Length < 3)
+        //        {
+        //            return new BadRequestObjectResult("Must provide a name of at least 3 characters long.");
+        //        }
+
+        //        throw new NotImplementedException();
+        //    }
+        //    catch (Exception Ex)
+        //    {
+        //        TELogger.Log(0, Ex);
+        //        throw;
+        //    }
+        //}
+
         [HttpPost]
         [Route("{accountID}/{pglnStr}")]
         public async Task<IActionResult> Post(long accountID, string pglnStr)
@@ -75,6 +95,46 @@ namespace TraceabilityDriverService.Controllers
 
                         return new AcceptedResult("", tradingPartner);
                     }
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+        }
+
+        [HttpPost]
+        [Route("{accountID}/add_manually")]
+        public async Task<IActionResult> Post(long accountID, [FromBody] ITEDriverTradingPartner tradingPartner)
+        {
+            try
+            {
+                // convert to driver trading partner and save it
+                using (ITEDriverDB driverDB = _configuration.GetDB())
+                {
+                    // validate the account
+                    if (await driverDB.LoadAccountAsync(accountID) == null)
+                    {
+                        return new NotFoundResult();
+                    }
+                    
+                    // validate the trading partner
+                    if (tradingPartner == null)
+                    {
+                        return new BadRequestResult();
+                    }
+                    else if (IPGLN.IsNullOrEmpty(tradingPartner.PGLN) 
+                        || IDID.IsNullOrEmpty(tradingPartner.DID) 
+                        || string.IsNullOrWhiteSpace(tradingPartner.DigitalLinkURL) 
+                        || string.IsNullOrWhiteSpace(tradingPartner.Name))
+                    {
+                        return new BadRequestResult();
+                    }
+
+                    tradingPartner.AccountID = accountID;
+                    await driverDB.SaveTradingPartnerAsync(tradingPartner);
+                    return new AcceptedResult("", tradingPartner);
                 }
             }
             catch (Exception Ex)
