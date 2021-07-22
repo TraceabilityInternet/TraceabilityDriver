@@ -211,8 +211,6 @@ namespace UnitTests.Services
             string solutionProviderURL = "http://localhost:1347";
             string traceDriveURL = "http://localhost:1348";
 
-
-
             // start the directory service URL
             UnitTests.StartDirectoryService(directoryServiceURL);
 
@@ -233,7 +231,7 @@ namespace UnitTests.Services
                 ITEDriverTradingPartner tp = await AddTradingPartner(client, account01, account02.PGLN);
 
                 // request the location
-                string json = await client.GetLocationAsync(account01.ID, tp.ID, "urn:epc:id:sgln:08600031303.0.1"); // EPCIS URN format is 13 digits?
+                string json = await client.GetLocationAsync(account01.ID, tp.ID, "urn:epc:id:sgln:08600031303.0.0"); // EPCIS URN format is 13 digits?
 
                 // this request returned the JSON in GS1 Web Vocab format
                 // we are going to map that into the ITEProduct models
