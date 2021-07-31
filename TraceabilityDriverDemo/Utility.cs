@@ -76,7 +76,7 @@ namespace TraceabilityDriverDemo
             {
                 configuration.TradeItemURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradeitem/{{gtin}}";
                 configuration.LocationURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/location/{{gln}}";
-                configuration.TradingPartnerURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradingpartner/{{pgln}}";
+                configuration.TradingPartyURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/tradingpartner/{{pgln}}";
                 configuration.EventURLTemplate = $"{solutionProviderURL}/xml/{{account_id}}/{{tradingpartner_id}}/events/{{epc}}"; // John Edit
             }
             return configuration;

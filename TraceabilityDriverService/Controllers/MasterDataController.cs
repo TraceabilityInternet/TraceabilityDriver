@@ -149,7 +149,7 @@ namespace TraceabilityDriverService.Controllers
                         long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(authHeader, driverDB);
 
                         // query the configured url for the epc
-                        string url = _configuration.TradingPartnerURLTemplate.Replace("{pgln}", pgln).Replace("{account_id}", account_id.ToString()).Replace("{tradingpartner_id}", tradingpartner_id.ToString());
+                        string url = _configuration.TradingPartyURLTemplate.Replace("{pgln}", pgln).Replace("{account_id}", account_id.ToString()).Replace("{tradingpartner_id}", tradingpartner_id.ToString());
                         using (LimitedPoolItem<HttpClient> item = TraceabilityEngine.Util.Net.HttpUtil.ClientPool.Get())
                         {
                             HttpClient client = item.Value;

@@ -18,7 +18,7 @@ namespace TestDriver
 {
     public class JsonTestDriver : ITETraceabilityMapper
     {
-        public List<ITEEvent> MapToGS1Events(string localEvents, Dictionary<string, object> parameters)
+        public List<ITEEvent> MapToGS1Events(string localEvents)
         {
             List<ITEEvent> events = new List<ITEEvent>();
             try
@@ -180,7 +180,7 @@ namespace TestDriver
             return tps;
         }
 
-        public string MapToLocalEvents(List<ITEEvent> gs1Events, Dictionary<string, object> parameters)
+        public string MapToLocalEvents(List<ITEEvent> gs1Events)
         {
             JArray jEvents = new JArray();
             try

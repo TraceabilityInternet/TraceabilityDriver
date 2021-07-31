@@ -29,7 +29,7 @@ namespace TraceabilityDriverService
                     webBuilder.UseSetting("EventURLTemplate", configuration.EventURLTemplate);
                     webBuilder.UseSetting("TradeItemURLTemplate", configuration.TradeItemURLTemplate);
                     webBuilder.UseSetting("LocationURLTemplate", configuration.LocationURLTemplate);
-                    webBuilder.UseSetting("TradingPartnerURLTemplate", configuration.TradingPartnerURLTemplate);
+                    webBuilder.UseSetting("TradingPartyURLTemplate", configuration.TradingPartyURLTemplate);
                     webBuilder.UseSetting("RequiresTradingPartnerAuthorization", configuration.RequiresTradingPartnerAuthorization.ToString());
                     webBuilder.UseSetting("URL", configuration.URL);
                     webBuilder.UseSetting("DirectoryURL", configuration.DirectoryURL);

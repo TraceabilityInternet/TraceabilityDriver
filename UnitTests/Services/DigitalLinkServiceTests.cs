@@ -158,7 +158,7 @@ namespace UnitTests.Services
 
                 // this request returned the JSON in GS1 Web Vocab format
                 // we are going to map that into the ITEProduct models
-                var events = config.Mapper.MapToGS1Events(json, null);
+                var events = config.Mapper.MapToGS1Events(json);
                 Assert.IsNotNull(events);
                 Assert.AreEqual(events.Count, 2);
             }

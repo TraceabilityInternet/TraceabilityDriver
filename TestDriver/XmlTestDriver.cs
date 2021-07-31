@@ -22,7 +22,7 @@ namespace TestDriver
 {
     public class XmlTestDriver : ITETraceabilityMapper
     {
-        public List<ITEEvent> MapToGS1Events(string localEvents, Dictionary<string, object> parameters)
+        public List<ITEEvent> MapToGS1Events(string localEvents)
         {
             try
             {
@@ -118,7 +118,7 @@ namespace TestDriver
             }
         }
 
-        public string MapToLocalEvents(List<ITEEvent> gs1Events, Dictionary<string, object> parameters)
+        public string MapToLocalEvents(List<ITEEvent> gs1Events)
         {
             try
             {

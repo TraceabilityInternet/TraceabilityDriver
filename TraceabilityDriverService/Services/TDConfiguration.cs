@@ -39,11 +39,18 @@ namespace TraceabilityDriverService.Services
                 this.ServiceProviderPGLN = IdentifierFactory.ParsePGLN(_configuration["ServiceProviderPGLN"]);
             }
             this.APIKey = _configuration["APIKey"];
-            this.RequiresTradingPartnerAuthorization = _configuration.GetValue<bool>("RequiresTradingPartnerAuthorization");
+            if (string.IsNullOrWhiteSpace(_configuration.GetValue<string>("RequiresTradingPartnerAuthorization")))
+            {
+                this.RequiresTradingPartnerAuthorization = true;
+            }
+            else
+            {
+                this.RequiresTradingPartnerAuthorization = _configuration.GetValue<bool>("RequiresTradingPartnerAuthorization");
+            }
             this.EventURLTemplate = _configuration["EventURLTemplate"];
             this.LocationURLTemplate = _configuration["LocationURLTemplate"];
             this.TradeItemURLTemplate = _configuration["TradeItemURLTemplate"];
-            this.TradingPartnerURLTemplate = _configuration["TradingPartnerURLTemplate"];
+            this.TradingPartyURLTemplate = _configuration["TradingPartyURLTemplate"];
             this.DatabaseName = _configuration["DatabaseName"] ?? "TraceabilityDriver";
 
             MapperDLLPath = _configuration.GetValue<string>("MapperDLLPath");
@@ -64,7 +71,7 @@ namespace TraceabilityDriverService.Services
         public string EventURLTemplate { get; set; }
         public string TradeItemURLTemplate { get; set; }
         public string LocationURLTemplate { get; set; }
-        public string TradingPartnerURLTemplate { get; set; }
+        public string TradingPartyURLTemplate { get; set; }
         public string DatabaseName { get; set; }
 
         public ITEDriverDB GetDB()
