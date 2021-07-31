@@ -28,6 +28,22 @@ namespace TraceabilityEngine.Models.Driver
         public string Name { get; set; }
         public IPGLN PGLN { get; set; }
         public IDID DID { get; set; }
+        public IDID PublicDID 
+        { 
+            get
+            {
+                if (this.DID != null)
+                {
+                    IDID did = DIDFactory.Parse(this.DID.ToString());
+                    did.PrivateKey = null;
+                    return did;
+                }
+                else
+                {
+                    return null;
+                }
+            } 
+        }
 
         public ITEDirectoryNewAccount ToDirectoryAccount(IDID serviceProviderDID, IPGLN serviceProviderPGLN)
         {
@@ -52,6 +68,7 @@ namespace TraceabilityEngine.Models.Driver
             JObject json = new JObject();
             json["DigitalLinkURL"] = this.DigitalLinkURL;
             json["DID"] = this.DID?.ToString();
+            json["PublicDID"] = this.PublicDID?.ToString();
             json["Name"] = this.Name;
             json["ID"] = this.ID;
             json["PGLN"] = this.PGLN?.ToString();
