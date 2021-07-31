@@ -10,7 +10,12 @@ If you find any issues in the code, or have ideas on how the software can be imp
 Below is documentation about the Traceability Driver.
 
 ## What is this thing?
-The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. 
+The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. It is a cross-platform webservice that can be installed into any existing traceability solution, who can then use the traceability driver to exchange traceability data with anyone else who implements the Traceability Driver.
+
+![](https://github.com/TraceabilityInternet/TraceabilityDriver/raw/main/Images/diagram01.png)
+
+## Build on GS1 Standards
+The Traceability Driver uses data models and communication protocols from GS1 to exchange traceability data.
 
 ### White Paper
 For starters, you can review the [Traceability Driver White Paper](https://github.com/TraceabilityInternet/TraceabilityDriver/blob/main/Traceability%20Driver%20White%20Paper.docx?raw=true) and the [Traceability Driver Security White Paper](https://github.com/TraceabilityInternet/TraceabilityDriver/blob/main/Traceability%20Driver%20Security%20White%20Paper.docx?raw=true). These were the original documents written around the Traceability Driver.
