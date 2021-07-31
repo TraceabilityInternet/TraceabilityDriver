@@ -32,6 +32,11 @@ The `TraceabilityDriverService` is what needs to be installed. You will need to 
 ### Building it yourself...
 Building the source-code yourself is easy and can be done for free using Visual Studio Community 2019 which is available for both Windows and Mac. If you are using a Linux based system like Ubuntu, you can use Visual Code which is available for Linux to build the source-code.
 
+## Hosting
+The software can be hosted either via IIS, Self-Hosting, or Azure Web Services. 
+
+*Coming soon will be detailed step-by-step guides on each hosting method.*
+
 ### What if I can't build the code?
 We recommned you review and build the code yourself so that you can feel condifent about using it. If this is not an option, please feel free to use the pre-built package in the `Published` folder in the root directory.
 
