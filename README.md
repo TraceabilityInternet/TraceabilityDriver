@@ -33,6 +33,7 @@ We recommned you review and build the code yourself so that you can feel condife
 ## Configuration
 There are several important fields that need to be configured in the `appsettings.json` file before you can use the Traceability Driver.
 
+* `URL` - This is the URL you want to host the Traceability Driver under.
 * `MapperDLLPath` - This is the physical filepath to the compiled DLL that contains the mapper for your Traceability Driver. 
 * `MapperClassName` - This is the full namespace to the class the mapper DLL that will be used for mapping to/from your local data format into the common data model.
 * `APIKey` - This is the configured API Key that will be required to talk to your Traceability Driver through the Internal API. More about the Internal API is documented below.
@@ -61,6 +62,8 @@ There are several important fields that need to be configured in the `appsetting
         }
     },
     "AllowedHosts": "*",
+    "URL" : "https://localhost:8001/",
+    "APIKey": "<insert_api_key_here>",
     "MapperDLLPath": "c:\\webservices\\traceability_driver\\mapper\\MyMapper.dll",
     "MapperClassName": "MyMapper.MyMapperClass",
     "ConnectionString": "mongodb://localhost",
@@ -86,7 +89,78 @@ There are three terms that are thrown around throughout this documentation, and 
 
 All Accounts and Trading Partners are Trading Parties. A Trading Partner, is simple another Account on the same solution provider or another solution provider. If anyone thinks this is still confusing or has a better way to explain this, please post an issue and we will promptly review it.
 
-## Registering an Account
-Once you have installed the Traceability Driver, you will need to register your each account with the Traceability Driver.
+## Adding an Account
+Once you have installed the Traceability Driver, you will need to add each account to the Traceability Driver. This can be done by using the Internal API for the Traceability Driver. Only the host of the Traceability Driver can access the Internal API, and authorization is required using the configured API Key in the `appsettings.json`. More about this is discussed above.
+
+The easiest way to add an account is using the C# Traceability Driver Client provided in the `TEClients` project. 
+
+```
+using (ITEInternalClient client = TEClientFactory.InternalClient(url, configuration.APIKey))
+{
+     // create the account
+     ITEDriverAccount account = new TEDriverAccount();
+     account.ID = 1;
+     account.Name = "Test Account #1";
+
+     // add the account
+     account = await client.SaveAccountAsync(account);
+}
+```
+*We are planning to provide clients for other programming languages in the future.*
+
+
+Otherwise you can make an HTTP Request to your Traceability Driver like so:
+```
+POST 
+
+URL: https://localhost:8001/api/account
+
+HEADERS
+Authorization: Basic <api_key>
+
+BODY
+{
+  "ID": 1,
+  "Name": "Test Account #1"
+}
+```
+
+After the account is created, the HTTP Request will return an account object that looks like:
+```
+{
+     "DigitalLinkURL" : "https://localhost:8001/1/digital_link",
+     "PublicDID":"did:traceabilityengine_v1:c63481c6-8a42-4723-af6b-b2cd30f0d4e1.ew0KICAiUHVibGljS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQblpyUjA4dk1VeHFZV3hGTlhsQ1NESmFSM0J5UVhnck5FaEZUbEUyYm5RemNWUmhibXh3WTBSUVRGTXpjMDlYVUhVdllrOTVhekZJTmpOMFVrZE9iM1pMVldoSFRqRmtVakJIVFhreGRITlBjMVZSWnpST1VVbzBNbXROYWxkVFZFaHdTMVprUTA5SFpVdFFOMHRXTjJGWWJWSmxhWFowT0hVMWFsYzRhMm9yUlVoTU1uZHdkbWR4ZDFscE9WaGpZbUowV2toUlNrTTVlR2hGYlZoRmVEaEdaalZpWkVwa1JrZGtNRDA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQand2VWxOQlMyVjVWbUZzZFdVKyIsDQogICJQcml2YXRlS2V5IjogIiINCn0=",
+     "DID":"did:traceabilityengine_v1:6c6f252a-a574-47dd-a809-72f4aa5d722f.ew0KICAiUHVibGljS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQbTR5YkZnMlkyTk9WVnB0Ymt4TFJEUTVPVTVrUlVoblJrbHhWMjVuZGs1cU5uUTBZbGcwYW5aTmJWVlJVa1kyYVdSVE1XRlhaVUl5Ym5wNU1WVmhZVnBRYlZBd1JrOVVWVEF2TlhCU1lYTm1kalF6YmpCSlYzWndNR05LWlhwVk5tRnBRWGRDWmpOS2REZGtZbUpRY1VSbFRYcEpjWFJzZUZwRWR6RkZUa1ZsWkdsdVdITlBXSHBWVldZMGJqTTBlVWROV0dwSFNsaFBURFpXYld4WlFrMDJhVWhvVFdKSmFWUXhhejA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQand2VWxOQlMyVjVWbUZzZFdVKyIsDQogICJQcml2YXRlS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQbTR5YkZnMlkyTk9WVnB0Ymt4TFJEUTVPVTVrUlVoblJrbHhWMjVuZGs1cU5uUTBZbGcwYW5aTmJWVlJVa1kyYVdSVE1XRlhaVUl5Ym5wNU1WVmhZVnBRYlZBd1JrOVVWVEF2TlhCU1lYTm1kalF6YmpCSlYzWndNR05LWlhwVk5tRnBRWGRDWmpOS2REZGtZbUpRY1VSbFRYcEpjWFJzZUZwRWR6RkZUa1ZsWkdsdVdITlBXSHBWVldZMGJqTTBlVWROV0dwSFNsaFBURFpXYld4WlFrMDJhVWhvVFdKSmFWUXhhejA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQanhRUGpBNFNta3lVV3BhVm5ONldVNUVOMkV5TDJsMGIwVkxOblEwYWs1dmFrVkdlazFwZG5KR1drcEdUVmgwVFRoM0wzQlZNRWhIVWtWSk9FZDJibEFyZG01cGJIWlpMMkZpZERoaWQwdFhVVUpKTmpCNGQxZDNQVDA4TDFBK1BGRStkMHhqTTFwUmIxWmxlRWhzVVRGVGNTOUVMM2hRYmxsbFpteHdNV3RJYmpVM1VrcGpVRlJPVDFkcmIyeFBNalprUlRSVlZtdFFjR2hNUVdSSGFsQlpVVEJWTDJ0YVRXRjZORUZWUVdwUlZGRTJTRVpPVjNjOVBUd3ZVVDQ4UkZBK2RFcFZRVlp5VlVaSmRFSjBWRFpEUzFsNWQyVmFTbmxFVUdsRFluVTRVM2xtV1VKdGVqQkRSamhuUlZneGVWSkhORzFDWkhaVVMxcDJUekZJZERKemJHVlJaalpqT1ZReU9WUTJNbFpGS3pVek1qZEJTVkU5UFR3dlJGQStQRVJSUG5OdFdIQkNZMDgzT1hReWRVZG9TVFkxY1VKaGRISlBjSEowV1Zkc2RGRlVjRWcyYlc1S1JIVkxNamhRTkVkRFdsVkJVMWN6YTNGd2QxcFNTMjU0Y2padWIydFRjVXRsTkhjNWVHUnJhVEoyU21vMFkyMVJQVDA4TDBSUlBqeEpiblpsY25ObFVUNXJhVnBCSzNWSVUwWTFORzgyWnpBemN6RlpTVXhsZWxSVFUyMXZRbE5CVUhvdlJtczJRWFpLUjI1T1VVdHpVVm80WkhRNGQyVmxSMWxMYTFwTWVHWktTWFJ5Tkc5SFozWkRRV0p3YUU5NFluQjVjVVIwVVQwOVBDOUpiblpsY25ObFVUNDhSRDVHWjBsa1QxSkdZVXhYU0doVGNrRlBjakpvYlN0T1kxcEliV1IzWTFGMldsSTFkbE5sTmxsVlNVRnJSRGRsZVVNd1ZuRndiSEUzSzNOWk1WbEhlVmM1Ulc1blMxRnlaekZEWlN0a05sSm9ka1ZoYzNSNlkzaFFaMmN3ZVhaTU9HRTRVVTR5VmpseVdEVlhOVVJST1U1d2NYWjZWVU00VVZsd1lXdEZUVFJZZFVweFlXczRSVmx4ZURORWJWSjJRblozTVVWT1luSXlXRGc1TlRkTlIyeDNkR2xyTVdkaVdXRm1SMFU5UEM5RVBqd3ZVbE5CUzJWNVZtRnNkV1UrIg0KfQ==",
+     "Name" : "Test Account #1",
+     "ID" : 1, 
+     "PGLN" :"urn:gdst:foodontology.com:party:1.0"
+}
+```
+
+### Account ID
+The Account ID is an internal identifier for accounts and is optional when creating an account. This is useful for linking accounts on the Traceability Driver to the account in the traceability solution. If an ID is not provided when you create an account, then one will be generated for you.
+
+### Account PGLN
+The Account PGLN is a globally unique identifier for identifying the the Account. This would typically be provided when generating the account, however, if it is not provided, then it will be generated for you.
+
+### Account Digital Link URL
+The Account Digital Link URL is the URL to the Digital Link Resolver for the account. When creating an account, **you should rarely set this yourself**. The Traceability Driver will generate this itself.
+
+### Account DID
+The Account DID is a Decentralized Identifier (DID) that also contains a public / private key for the Account. **You should never share this with anyone**. Inside of it is a baked a Public / Private key. The Traceability Driver knows how to share this without including the Private Key, which is critical in ensuring the security of the system.
+
+### Account Public DID
+The `PublicDID` property contains the DID without the private key. This can be shared with others who want to add the account as a trading partner.
 
 ## Adding a Trading Partner
+Once you have added all the accounts to the Traceability Driver, you will want to add Trading Partners to each account. Adding a Trading Party as a Trading Partner to an account indicates, that this Account is allowed to exchange traceability data with this Trading Party.
+
+This can be done in two ways:
+1. You can add a Trading Partner using the Directory Service by providing the PGLN.
+2. You can manually add a Trading Partner by providing the PGLN, PublicDID, and Digital Link Resolver URL.
+
+### Adding a Trading Partner with the Directory Service
+*Coming soon..*
+
+### Adding a Trading Partner Manually
+*Coming soon..*
