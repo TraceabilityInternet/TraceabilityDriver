@@ -74,7 +74,7 @@ namespace UnitTests.Services
 
                 // account #1 requests event data from account #2
                 string json = await td01Client.GetEventsAsync(account01.ID, tp01.ID, "urn:epc:class:lgtin:08600031303.00.METAL"); // EPC from first entry in Events.xml
-                var events = config01.Mapper.MapToGS1Events(json, null);
+                var events = config01.Mapper.MapToGS1Events(json);
                 Assert.IsNotNull(events);
                 Assert.AreEqual(events.Count, 2);
 
@@ -131,7 +131,7 @@ namespace UnitTests.Services
 
                 // account #1 requests event data from account #2
                 string json = await td01Client.GetEventsAsync(account01.ID, tp01.ID, "urn:epc:class:lgtin:08600031303.00.METAL"); // EPC from first entry in Events.xml
-                var events = config01.Mapper.MapToGS1Events(json, null);
+                var events = config01.Mapper.MapToGS1Events(json);
                 Assert.IsNotNull(events);
                 Assert.AreEqual(events.Count, 2);
 

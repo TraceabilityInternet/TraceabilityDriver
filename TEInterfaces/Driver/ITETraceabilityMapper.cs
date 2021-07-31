@@ -12,8 +12,8 @@ namespace TraceabilityEngine.Interfaces.Driver
 {
     public interface ITETraceabilityMapper
     {
-        string MapToLocalEvents(List<ITEEvent> gs1Events, Dictionary<string, object> parameters);
-        List<ITEEvent> MapToGS1Events(string localEvents, Dictionary<string, object> parameters);
+        string MapToLocalEvents(List<ITEEvent> gs1Events);
+        List<ITEEvent> MapToGS1Events(string localEvents);
 
         string MapToLocalTradeItems(List<ITEProduct> products);
         List<ITEProduct> MapToGS1TradeItems(string localTradeItems);

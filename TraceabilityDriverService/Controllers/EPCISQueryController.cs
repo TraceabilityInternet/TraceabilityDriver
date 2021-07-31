@@ -60,7 +60,7 @@ namespace TraceabilityDriverService.Controllers
                                 string localData = await response.Content.ReadAsStringAsync();
 
                                 // pass the results through the configured mapper
-                                List<ITEEvent> theseEvents = _configuration.Mapper.MapToGS1Events(localData, new Dictionary<string, object>());
+                                List<ITEEvent> theseEvents = _configuration.Mapper.MapToGS1Events(localData);
                                 events.AddRange(theseEvents);
                             }
                         }

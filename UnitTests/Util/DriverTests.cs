@@ -146,8 +146,8 @@ namespace UnitTests.Util
             ITEEventMapper mapper = new EPCISJsonMapper_2_0();
 
             List<ITEEvent> events = GetEvents();
-            string xml = driver.MapToLocalEvents(events, new Dictionary<string, object>());
-            List<ITEEvent> eventsAfter = driver.MapToGS1Events(xml, new Dictionary<string, object>());
+            string xml = driver.MapToLocalEvents(events);
+            List<ITEEvent> eventsAfter = driver.MapToGS1Events(xml);
 
             string gs1Json = mapper.ConvertFromEvents(events);
             string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);
@@ -288,8 +288,8 @@ namespace UnitTests.Util
             ITEEventMapper mapper = new EPCISJsonMapper_2_0();
 
             List<ITEEvent> events = GetEvents();
-            string json = driver.MapToLocalEvents(events, new Dictionary<string, object>());
-            List<ITEEvent> eventsAfter = driver.MapToGS1Events(json, new Dictionary<string, object>());
+            string json = driver.MapToLocalEvents(events);
+            List<ITEEvent> eventsAfter = driver.MapToGS1Events(json);
 
             string gs1Json = mapper.ConvertFromEvents(events);
             string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);

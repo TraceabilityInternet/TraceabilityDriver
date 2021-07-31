@@ -24,7 +24,7 @@ namespace TraceabilityDriverService.Services.Interfaces
         string EventURLTemplate { get; set; }
         string TradeItemURLTemplate { get; set; }
         string LocationURLTemplate { get; set; }
-        string TradingPartnerURLTemplate { get; set; }
+        string TradingPartyURLTemplate { get; set; }
         ITEDriverDB GetDB();
     }
 }
