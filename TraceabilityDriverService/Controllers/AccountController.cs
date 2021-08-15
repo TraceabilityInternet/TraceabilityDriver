@@ -32,7 +32,7 @@ namespace TraceabilityDriverService.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public async Task<ITEDriverAccount> Get(string id)
+        public async Task<IActionResult> Get(string id)
         {
             try
             {
@@ -42,14 +42,14 @@ namespace TraceabilityDriverService.Controllers
                     {
                         // load by the id
                         ITEDriverAccount account = await driverDB.LoadAccountAsync(longID);
-                        return account;
+                        return new OkObjectResult(account);
                     }
                     else
                     {
                         // load by the PGLN
                         IPGLN pgln = IdentifierFactory.ParsePGLN(id);
                         ITEDriverAccount account = await driverDB.LoadAccountAsync(pgln);
-                        return account;
+                        return new OkObjectResult(account);
                     }
                 }    
             }
@@ -97,7 +97,7 @@ namespace TraceabilityDriverService.Controllers
                     }
                 }
 
-                return new AcceptedResult("", account);
+                return new OkObjectResult(account);
             }
             catch (Exception Ex)
             {

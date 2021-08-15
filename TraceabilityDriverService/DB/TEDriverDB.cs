@@ -15,7 +15,7 @@ using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.Interfaces;
 using TraceabilityEngine.Util.Security;
 
-namespace TraceabilityEngine.Service.Util.DB
+namespace TraceabilityDriverService.DB
 {
     public class TEDriverDB : ITEDriverDB
     {

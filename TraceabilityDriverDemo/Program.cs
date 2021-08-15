@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TraceabilityDriverService.DB;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Clients;
 using TraceabilityEngine.Interfaces.Driver;
@@ -9,7 +10,6 @@ using TraceabilityEngine.Interfaces.Models.Identifiers;
 using TraceabilityEngine.Models.DigitalLink;
 using TraceabilityEngine.Models.Driver;
 using TraceabilityEngine.Models.Identifiers;
-using TraceabilityEngine.Service.Util.DB;
 
 namespace TraceabilityDriverDemo
 {

@@ -29,7 +29,7 @@ namespace TraceabilityEngine.Clients
             _client = new HttpClient();
             _url = url.TrimEnd('/');
             _client.DefaultRequestHeaders.Clear();
-            _client.DefaultRequestHeaders.Add("Authorization", "Bearer " + apiKey);
+            _client.DefaultRequestHeaders.Add("Authorization", "Basic " + apiKey);
         }
 
         #pragma warning disable 1998
@@ -264,13 +264,6 @@ namespace TraceabilityEngine.Clients
                 throw;
             }
         }
-
-        //private string GetAuth(IDID accountDID, IPGLN accountPGLN, IPGLN tpPGLN, string subject)
-        //{
-        //    string authKey = _tpPGLN + "|" + _accountPGLN + "|" + subject;
-        //    ISimpleSignature signature = _did.Sign(authKey, DateTime.UtcNow.ToString());
-        //    return "Bearer " + Convert.ToBase64String(Encoding.UTF8.GetBytes(signature.ToString()));
-        //}
 
         #region IDisposable
         private bool disposedValue;

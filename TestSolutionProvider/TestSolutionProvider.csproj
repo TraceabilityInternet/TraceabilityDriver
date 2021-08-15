@@ -34,10 +34,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Telerik.UI.for.Blazor" Version="2.22.0" />
-  </ItemGroup>
-  
-  <ItemGroup>
     <Folder Include="Data\json\" />
     <Folder Include="wwwroot\img\" />
   </ItemGroup>
@@ -51,6 +47,13 @@
     <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
     <ProjectReference Include="..\TestDriver\TestDriver.csproj" />
     <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
+    <ProjectReference Include="..\TraceabilityDriverService\TraceabilityDriverService.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="Telerik.Blazor">
+      <HintPath>..\packages\Telerik.UI.for.Blazor.2.22.0\lib\netstandard2.1\Telerik.Blazor.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

@@ -4,12 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TraceabilityDriverService.DB;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Models.Identifiers;
 using TraceabilityEngine.Models.Identifiers;
-using TraceabilityEngine.Service.Util;
-using TraceabilityEngine.Service.Util.DB;
 using TraceabilityEngine.Util.Interfaces;
 using TraceabilityEngine.Util.Security;
 
@@ -47,6 +46,7 @@ namespace TraceabilityDriverService.Services
             {
                 this.RequiresTradingPartnerAuthorization = _configuration.GetValue<bool>("RequiresTradingPartnerAuthorization");
             }
+            this.SolutionProviderAPIKey = _configuration["SolutionProviderAPIKey"];
             this.EventURLTemplate = _configuration["EventURLTemplate"];
             this.LocationURLTemplate = _configuration["LocationURLTemplate"];
             this.TradeItemURLTemplate = _configuration["TradeItemURLTemplate"];
@@ -55,7 +55,7 @@ namespace TraceabilityDriverService.Services
 
             MapperDLLPath = _configuration.GetValue<string>("MapperDLLPath");
             MapperClassName = _configuration.GetValue<string>("MapperClassName");
-            this.Mapper = DriverUtil.LoadMapper(MapperDLLPath, MapperClassName);
+            this.Mapper = TraceabilityDriverServiceFactory.LoadMapper(MapperDLLPath, MapperClassName);
         }
 
         public ITETraceabilityMapper Mapper { get; set; }
@@ -68,6 +68,7 @@ namespace TraceabilityDriverService.Services
         public string MapperDLLPath { get; set; }
         public string MapperClassName { get; set; }
         public bool RequiresTradingPartnerAuthorization { get; set; }
+        public string SolutionProviderAPIKey { get; set; }
         public string EventURLTemplate { get; set; }
         public string TradeItemURLTemplate { get; set; }
         public string LocationURLTemplate { get; set; }

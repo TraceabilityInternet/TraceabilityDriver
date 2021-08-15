@@ -18,8 +18,8 @@ using TraceabilityEngine.Models.Identifiers;
 using TraceabilityEngine.Interfaces.Models.Identifiers;
 using TraceabilityEngine.Interfaces.Models.DigitalLink;
 using TraceabilityEngine.Models.DigitalLink;
-using TraceabilityEngine.Service.Util.DB;
 using TraceabilityEngine.Interfaces.Models.Events;
+using TraceabilityDriverService.DB;
 
 namespace UnitTests.Services
 {
@@ -96,7 +96,7 @@ namespace UnitTests.Services
             await UnitTests.ClearDatabases();
             await CreateLinks();
 
-            // setup the directory service
+
             string td01URL = "http://localhost:1377";
             string td02URL = "http://localhost:1378";
             string solutionProviderURL = "http://localhost:1370";

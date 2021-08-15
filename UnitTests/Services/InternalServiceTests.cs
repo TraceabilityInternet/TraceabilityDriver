@@ -132,7 +132,9 @@ namespace UnitTests.Services
             await controller.Post(account);
 
             // load the account
-            ITEDriverAccount loadedAccount = await controller.Get(account.ID.ToString());
+            var result = await controller.Get(account.ID.ToString());
+            Assert.IsInstanceOfType(result, typeof(OkObjectResult));
+            ITEDriverAccount loadedAccount = (result as OkObjectResult).Value as ITEDriverAccount;
             Assert.IsNotNull(loadedAccount);
             Assert.AreEqual(account.ID, loadedAccount.ID);
             Assert.AreEqual(account.Name, loadedAccount.Name);
@@ -141,7 +143,8 @@ namespace UnitTests.Services
             Assert.AreEqual(account.DigitalLinkURL, loadedAccount.DigitalLinkURL);
 
             // load the account by the PGLN
-            loadedAccount = await controller.Get(account.PGLN?.ToString());
+            Assert.IsInstanceOfType(result, typeof(OkObjectResult));
+            loadedAccount = (result as OkObjectResult).Value as ITEDriverAccount;
             Assert.AreEqual(account.ID, loadedAccount.ID);
             Assert.AreEqual(account.Name, loadedAccount.Name);
             Assert.AreEqual(account.DID.ToString(), loadedAccount.DID.ToString());

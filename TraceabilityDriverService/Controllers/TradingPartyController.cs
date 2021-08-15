@@ -9,13 +9,15 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using TraceabilityDriverService.Authentication;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
+using TraceabilityEngine.Interfaces.Models.DigitalLink;
 using TraceabilityEngine.Interfaces.Models.Locations;
 using TraceabilityEngine.Interfaces.Models.TradingParty;
 using TraceabilityEngine.Mappers;
-using TraceabilityEngine.Service.Util;
+using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.Interfaces;
 using TraceabilityEngine.Util.Security;
 
@@ -35,37 +37,75 @@ namespace TraceabilityDriverService.Controllers
 
         [HttpGet]
         [Route("{accountID}/{tradingPartnerID}/{pgln}")]
-        public async Task<string> Get(long accountID, long tradingPartnerID, string pgln)
+        public async Task<ActionResult<string>> Get(long accountID, long tradingPartnerID, string pgln)
         {
-            using (ITEDriverDB driverDB = _configuration.GetDB())
+            try
             {
-                ITEDriverAccount account = await driverDB.LoadAccountAsync(accountID);
-                ITEDriverTradingPartner tp = await driverDB.LoadTradingPartnerAsync(accountID, tradingPartnerID);
-                string authHeader = TradingPartnerRequestAuthorizer.GenerateAuthHeader(pgln, account, tp);
-                string url = tp.DigitalLinkURL + $"/pgln/{pgln}?linkType=gs1:masterData";
-
-                using (var item = TraceabilityEngine.Util.Net.HttpUtil.ClientPool.Get())
+                using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
-                    HttpClient client = item.Value;
-                    client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Add("Authorization", authHeader);
-                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authHeader); // Looks like a bad header...
-                    var response = await client.GetAsync(url);
-                    string linkJson = await response.Content.ReadAsStringAsync();
-                    JArray jArr = JArray.Parse(linkJson); // Edited Jobject to Jarray
-                    string masterDataURL = jArr[0].Value<string>("link"); // "url" to "link", added [0] index
+                    // the first step is to query the GS1 Digital Link Resolver of the trading partner to get a link
+                    // to the master data that is being requested.
+                    ITEDriverAccount account = await driverDB.LoadAccountAsync(accountID);
+                    ITEDriverTradingPartner tp = await driverDB.LoadTradingPartnerAsync(accountID, tradingPartnerID);
+                    string authHeader = TradingPartnerRequestAuthorizer.GenerateAuthHeader(pgln, account, tp);
+                    string url = tp.DigitalLinkURL + $"/pgln/{pgln}?linkType=gs1:masterData";
 
-                    // now we have the link to the master data
-                    client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Add("Authorization", authHeader);
-                    var response2 = await client.GetAsync(masterDataURL); // Edited url to masterDataURL
-                    string gs1Format = await response2.Content.ReadAsStringAsync();
-                    ITETradingPartyMapper mapper = new TradingPartyWebVocabMapper();
-                    ITETradingParty theTP = mapper.ConvertToTradingParty(gs1Format);
-                    string localFormat = _configuration.Mapper.MapToLocalTradingPartners(new List<ITETradingParty>() { theTP });
-                    return localFormat;
+                    using (var item = TraceabilityEngine.Util.Net.HttpUtil.ClientPool.Get())
+                    {
+                        HttpClient client = item.Value;
+                        client.DefaultRequestHeaders.Clear();
+                        client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                        var response = await client.GetAsync(url);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            // validate we received the link type we are looking for
+                            string linkJson = await response.Content.ReadAsStringAsync();
+                            List<ITEDigitalLink> links = TraceabilityDriverServiceFactory.ParseLinks(linkJson);
+                            if (links == null || !links.Exists(l => l.linkType == "gs1:masterData"))
+                            {
+                                return new BadRequestObjectResult("Failed to get gs1:masterData link from GS1 Digital Link Resolver.");
+                            }
+
+                            // now we have the link to the master data api that will provide us the trade items
+                            // we assume that this API will require the same authorization headers as the GS1 Digital Link Resolver
+                            string masterDataURL = links.Find(l => l.linkType == "gs1:masterData").link;
+                            client.DefaultRequestHeaders.Clear();
+                            client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                            var response2 = await client.GetAsync(masterDataURL); // Edited url to masterDataURL
+
+                            // if we got a successful response, map the response into the local format and return that.
+                            if (response2.IsSuccessStatusCode)
+                            {
+                                string gs1Format = await response2.Content.ReadAsStringAsync();
+                                ITETradingPartyMapper mapper = new TradingPartyWebVocabMapper();
+                                ITETradingParty theTP = mapper.ConvertToTradingParty(gs1Format);
+                                string localFormat = _configuration.Mapper.MapToLocalTradingPartners(new List<ITETradingParty>() { theTP });
+                                return localFormat;
+                            }
+                            else
+                            {
+                                return new BadRequestObjectResult("There was an error with the link provided by the GS1 Digital Link Resolver.");
+                            }
+                        }
+                        else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            return new NotFoundResult();
+                        }
+                        else
+                        {
+                            return new BadRequestObjectResult("There was an unknown error processing this request.");
+                        }
+                        
+                    }
                 }
             }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+            
         }
     }
 }
