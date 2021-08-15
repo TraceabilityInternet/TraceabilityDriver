@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,11 +7,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TraceabilityEngine.Interfaces.Driver;
+using TraceabilityEngine.Interfaces.Models.DigitalLink;
+using TraceabilityEngine.Models.DigitalLink;
 using TraceabilityEngine.Util;
 
-namespace TraceabilityEngine.Service.Util
+namespace TraceabilityDriverService
 {
-    public static class DriverUtil
+    public static class TraceabilityDriverServiceFactory
     {
         public static ITETraceabilityMapper LoadMapper(string dllPath, string className)
         {
@@ -34,6 +37,12 @@ namespace TraceabilityEngine.Service.Util
                 TELogger.Log(0, Ex);
                 throw;
             }
+        }
+
+        public static List<ITEDigitalLink> ParseLinks(string json)
+        {
+            List<TEDigitalLink> links = JsonConvert.DeserializeObject<List<TEDigitalLink>>(json);
+            return links.Select(l => (ITEDigitalLink)l).ToList();
         }
     }
 }

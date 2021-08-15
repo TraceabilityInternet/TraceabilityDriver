@@ -21,6 +21,7 @@ namespace TraceabilityDriverService.Services.Interfaces
         string MapperDLLPath { get; set; }
         string MapperClassName { get; set; }
         bool RequiresTradingPartnerAuthorization { get; set; }
+        string SolutionProviderAPIKey { get; set; }
         string EventURLTemplate { get; set; }
         string TradeItemURLTemplate { get; set; }
         string LocationURLTemplate { get; set; }

@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TestDriver;
+using TraceabilityDriverService;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
 using TraceabilityEngine.Interfaces.Models.Events;
@@ -24,7 +25,6 @@ using TraceabilityEngine.Models.Identifiers;
 using TraceabilityEngine.Models.Locations;
 using TraceabilityEngine.Models.Products;
 using TraceabilityEngine.Models.TradingParty;
-using TraceabilityEngine.Service.Util;
 using TraceabilityEngine.StaticData;
 using TraceabilityEngine.Util.StaticData;
 
@@ -131,7 +131,7 @@ namespace UnitTests.Util
         {
             string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
-            ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
+            ITETraceabilityMapper driver = TraceabilityDriverServiceFactory.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
         }
 
@@ -140,7 +140,7 @@ namespace UnitTests.Util
         {
             string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
-            ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
+            ITETraceabilityMapper driver = TraceabilityDriverServiceFactory.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
 
             ITEEventMapper mapper = new EPCISJsonMapper_2_0();
@@ -173,7 +173,7 @@ namespace UnitTests.Util
         {
             string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
-            ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
+            ITETraceabilityMapper driver = TraceabilityDriverServiceFactory.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
 
             ITELocationMapper mapper = new LocationWebVocabMapper();
@@ -210,7 +210,7 @@ namespace UnitTests.Util
         {
             string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
-            ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
+            ITETraceabilityMapper driver = TraceabilityDriverServiceFactory.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
 
             ITEProductMapper mapper = new ProductWebVocabMapper();
@@ -247,7 +247,7 @@ namespace UnitTests.Util
         {
             string dll = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             string className = "TestDriver.XmlTestDriver";
-            ITETraceabilityMapper driver = DriverUtil.LoadMapper(dll, className);
+            ITETraceabilityMapper driver = TraceabilityDriverServiceFactory.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
 
             ITETradingPartyMapper mapper = new TradingPartyWebVocabMapper();

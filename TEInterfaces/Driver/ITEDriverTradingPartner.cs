@@ -9,6 +9,12 @@ using TraceabilityEngine.Util.Interfaces;
 
 namespace TraceabilityEngine.Interfaces.Driver
 {
+    public enum TradingPartnerCommunicationProtocol
+    {
+        Classic = 0,
+        EPCISQueryInterfaceOnly = 1
+    }
+
     public interface ITEDriverTradingPartner : ITEDocumentObject
     {
         long ID { get; set; }
@@ -17,6 +23,7 @@ namespace TraceabilityEngine.Interfaces.Driver
         IPGLN PGLN { get; set; }
         string DigitalLinkURL { get; set; }
         IDID DID { get; set; }
+        TradingPartnerCommunicationProtocol Protocol { get; set; }
 
         string ToJson();
         void FromJson(string json);

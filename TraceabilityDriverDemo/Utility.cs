@@ -5,13 +5,13 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using TraceabilityDriverService;
 using TraceabilityDriverService.Services;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Databases.Mongo;
 using TraceabilityEngine.Interfaces.DB.DocumentDB;
 using TraceabilityEngine.Interfaces.Services.DirectoryService;
 using TraceabilityEngine.Models.Directory;
-using TraceabilityEngine.Service.Util;
 using TraceabilityEngine.Util.Security;
 
 namespace TraceabilityDriverDemo
@@ -62,7 +62,7 @@ namespace TraceabilityDriverDemo
             configuration.DirectoryURL = directoryURL;
             configuration.MapperClassName = "TestDriver.XmlTestDriver";
             configuration.MapperDLLPath = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
-            configuration.Mapper = DriverUtil.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
+            configuration.Mapper = TraceabilityDriverServiceFactory.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
             configuration.RequiresTradingPartnerAuthorization = false;
             configuration.DatabaseName = dbName;
             if (!string.IsNullOrWhiteSpace(directoryURL))

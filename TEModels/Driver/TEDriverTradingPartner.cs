@@ -27,6 +27,7 @@ namespace TraceabilityEngine.Models.Driver
         public IPGLN PGLN { get; set; }
         public string DigitalLinkURL { get; set; }
         public IDID DID { get; set; }
+        public TradingPartnerCommunicationProtocol Protocol { get; set; }
 
         public TEDriverTradingPartner()
         {
@@ -50,6 +51,7 @@ namespace TraceabilityEngine.Models.Driver
             json["AccountID"] = this.AccountID;
             json["ID"] = this.ID;
             json["PGLN"] = this.PGLN?.ToString();
+            json["Protocol"] = this.Protocol.ToString();
             return json.ToString();
         }
 
@@ -62,6 +64,14 @@ namespace TraceabilityEngine.Models.Driver
             this.ID = json.Value<long>("ID");
             this.AccountID = json.Value<long>("AccountID");
             this.PGLN = IdentifierFactory.ParsePGLN(json.Value<string>("PGLN"), out string error);
+            if(Enum.TryParse<TradingPartnerCommunicationProtocol>(json.Value<string>("Protocol"), out TradingPartnerCommunicationProtocol protocol))
+            {
+                this.Protocol = protocol;
+            }
+            else
+            {
+                this.Protocol = TradingPartnerCommunicationProtocol.Classic;
+            }
         }
     }
 }

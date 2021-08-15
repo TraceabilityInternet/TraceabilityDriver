@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using TestDriver;
+using TraceabilityDriverService;
 using TraceabilityEngine.Clients;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Models.Events;
@@ -15,7 +16,6 @@ using TraceabilityEngine.Interfaces.Models.Identifiers;
 using TraceabilityEngine.Interfaces.Models.Locations;
 using TraceabilityEngine.Interfaces.Models.Products;
 using TraceabilityEngine.Interfaces.Models.TradingParty;
-using TraceabilityEngine.Service.Util;
 
 namespace TestSolutionProvider.Services
 {
@@ -36,7 +36,7 @@ namespace TestSolutionProvider.Services
             string mapperClassName = configuration.GetValue<string>("MapperClassName");
             if (!string.IsNullOrWhiteSpace(mapperDLLPath) && !string.IsNullOrWhiteSpace(mapperClassName))
             {
-                this.Mapper = DriverUtil.LoadMapper(mapperDLLPath, mapperClassName);
+                this.Mapper = TraceabilityDriverServiceFactory.LoadMapper(mapperDLLPath, mapperClassName);
             }
             this.DataURL = configuration.GetValue<string>("DataURL");
             this.AccountID = configuration.GetValue<long>("AccountID");

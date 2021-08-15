@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using TraceabilityDriverService.Controllers;
+using TraceabilityDriverService.DB;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Clients;
 using TraceabilityEngine.Databases.Mongo;
@@ -22,7 +23,6 @@ using TraceabilityEngine.Mappers;
 using TraceabilityEngine.Models.DigitalLink;
 using TraceabilityEngine.Models.Driver;
 using TraceabilityEngine.Models.Identifiers;
-using TraceabilityEngine.Service.Util.DB;
 
 namespace UnitTests.Services
 {

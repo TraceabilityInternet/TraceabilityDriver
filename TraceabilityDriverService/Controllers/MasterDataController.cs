@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using TraceabilityDriverService.Authentication;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
@@ -17,12 +18,16 @@ using TraceabilityEngine.Interfaces.Models.Products;
 using TraceabilityEngine.Interfaces.Models.TradingParty;
 using TraceabilityEngine.Mappers;
 using TraceabilityEngine.Mappers.EPCIS;
-using TraceabilityEngine.Service.Util;
 using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.ObjectPooling;
 
 namespace TraceabilityDriverService.Controllers
 {
+    /// <summary>
+    /// This is the API that receives external requests. This API requires that external requests follow the public/private key 
+    /// security that is provided. Requests are then forwarded to the solution provider using the URL templates configured. 
+    /// The SolutionProviderAPIKey is added to the Authorization header for forwarded requests.
+    /// </summary>
     [ApiController]
     [Route("{account_id}/masterdata")]
     public class MasterDataController : ControllerBase
@@ -56,6 +61,11 @@ namespace TraceabilityDriverService.Controllers
                         {
                             HttpClient client = item.Value;
                             var response = await client.GetAsync(url);
+                            client.DefaultRequestHeaders.Clear();
+                            if (!string.IsNullOrWhiteSpace(_configuration.SolutionProviderAPIKey))
+                            {
+                                client.DefaultRequestHeaders.Add("Authorization", "Basic " + _configuration.SolutionProviderAPIKey);
+                            }
                             string localData = await response.Content.ReadAsStringAsync();
 
                             // pass the results through the configured mapper
@@ -106,6 +116,11 @@ namespace TraceabilityDriverService.Controllers
                         {
                             HttpClient client = item.Value;
                             var response = await client.GetAsync(url);
+                            client.DefaultRequestHeaders.Clear();
+                            if (!string.IsNullOrWhiteSpace(_configuration.SolutionProviderAPIKey))
+                            {
+                                client.DefaultRequestHeaders.Add("Authorization", "Basic " + _configuration.SolutionProviderAPIKey);
+                            }
                             string localData = await response.Content.ReadAsStringAsync();
 
                             // pass the results through the configured mapper
@@ -154,6 +169,11 @@ namespace TraceabilityDriverService.Controllers
                         {
                             HttpClient client = item.Value;
                             var response = await client.GetAsync(url);
+                            client.DefaultRequestHeaders.Clear();
+                            if (!string.IsNullOrWhiteSpace(_configuration.SolutionProviderAPIKey))
+                            {
+                                client.DefaultRequestHeaders.Add("Authorization", "Basic " + _configuration.SolutionProviderAPIKey);
+                            }
                             string localData = await response.Content.ReadAsStringAsync();
 
                             // pass the results through the configured mapper

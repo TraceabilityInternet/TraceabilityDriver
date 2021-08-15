@@ -30,24 +30,32 @@ namespace TraceabilityDriverService.Controllers
         [Route("01/{gtin}")]
         public async Task<IActionResult> GTIN(long account_id, string gtin, [FromQuery] string linkType)
         {
-            // find a link by the linkType and the identifier type 'gtin'
-            List<ITEDigitalLink> links = await GetLinks("gtin", linkType);
+            try
+            {
+                // find a link by the linkType and the identifier type 'gtin'
+                List<ITEDigitalLink> links = await GetLinks("gtin", linkType);
 
-            // if not found return a NotFoundResult
-            if (links == null || links.Count < 1)
-            {
-                return new NotFoundResult();
-            }
-            // else, format the link and return it
-            else
-            {
-                foreach (ITEDigitalLink link in links)
+                // if not found return a NotFoundResult
+                if (links == null || links.Count < 1)
                 {
-                    link.link = link.link.Replace("{gtin}", gtin)
-                                    .Replace("{account_id}", account_id.ToString())
-                                    .Replace("{url}", _configuration.URL);
+                    return new NotFoundResult();
                 }
-                return new OkObjectResult(links);
+                // else, format the link and return it
+                else
+                {
+                    foreach (ITEDigitalLink link in links)
+                    {
+                        link.link = link.link.Replace("{gtin}", gtin)
+                                        .Replace("{account_id}", account_id.ToString())
+                                        .Replace("{url}", _configuration.URL);
+                    }
+                    return new OkObjectResult(links);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
             }
         }
 
@@ -55,24 +63,32 @@ namespace TraceabilityDriverService.Controllers
         [Route("gln/{gln}")]
         public async Task<IActionResult> GLN(long account_id, string gln, [FromQuery] string linkType)
         {
-            // find a link by the linkType and the identifier type 'gtin'
-            List<ITEDigitalLink> links = await GetLinks ("gln", linkType);
+            try
+            {
+                // find a link by the linkType and the identifier type 'gtin'
+                List<ITEDigitalLink> links = await GetLinks("gln", linkType);
 
-            // if not found return a NotFoundResult
-            if (links == null || links.Count < 1)
-            {
-                return new NotFoundResult();
-            }
-            // else, format the link and return it
-            else
-            {
-                foreach (ITEDigitalLink link in links)
+                // if not found return a NotFoundResult
+                if (links == null || links.Count < 1)
                 {
-                    link.link = link.link.Replace("{gln}", gln)
-                                    .Replace("{account_id}", account_id.ToString())
-                                    .Replace("{url}", _configuration.URL);
+                    return new NotFoundResult();
                 }
-                return new OkObjectResult(links);
+                // else, format the link and return it
+                else
+                {
+                    foreach (ITEDigitalLink link in links)
+                    {
+                        link.link = link.link.Replace("{gln}", gln)
+                                        .Replace("{account_id}", account_id.ToString())
+                                        .Replace("{url}", _configuration.URL);
+                    }
+                    return new OkObjectResult(links);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
             }
         }
 
@@ -80,24 +96,32 @@ namespace TraceabilityDriverService.Controllers
         [Route("pgln/{pgln}")]
         public async Task<IActionResult> PGLN(long account_id, string pgln, [FromQuery] string linkType)
         {
-            // find a link by the linkType and the identifier type 'gtin'
-            List<ITEDigitalLink> links = await GetLinks("pgln", linkType);
+            try
+            {
+                // find a link by the linkType and the identifier type 'gtin'
+                List<ITEDigitalLink> links = await GetLinks("pgln", linkType);
 
-            // if not found return a NotFoundResult
-            if (links == null || links.Count < 1)
-            {
-                return new NotFoundResult();
-            }
-            // else, format the link and return it
-            else
-            {
-                foreach (ITEDigitalLink link in links)
+                // if not found return a NotFoundResult
+                if (links == null || links.Count < 1)
                 {
-                    link.link = link.link.Replace("{pgln}", pgln)
-                                    .Replace("{account_id}", account_id.ToString())
-                                    .Replace("{url}", _configuration.URL);
+                    return new NotFoundResult();
                 }
-                return new OkObjectResult(links);
+                // else, format the link and return it
+                else
+                {
+                    foreach (ITEDigitalLink link in links)
+                    {
+                        link.link = link.link.Replace("{pgln}", pgln)
+                                        .Replace("{account_id}", account_id.ToString())
+                                        .Replace("{url}", _configuration.URL);
+                    }
+                    return new OkObjectResult(links);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
             }
         }
 
@@ -105,23 +129,33 @@ namespace TraceabilityDriverService.Controllers
         [Route("gtin/{gtin}/lot/{lot}")]
         public async Task<IActionResult> ClassEPC(long account_id, string gtin, string lot, [FromQuery] string linkType)
         {
-            // find a link by the linkType and the identifier type 'gtin'
-            List<ITEDigitalLink> links = await GetLinks("epc", linkType);
+            try
+            {
+                // ** for EPCs we always return a link to the EPCIS Query interface regardless of the gtin / lot number provided.
 
-            // if not found return a NotFoundResult
-            if (links == null || links.Count < 1)
-            {
-                return new NotFoundResult();
-            }
-            // else, format the link and return it
-            else
-            {
-                foreach (ITEDigitalLink link in links)
+                // find a link by the linkType and the identifier type 'gtin'
+                List<ITEDigitalLink> links = await GetLinks("epc", linkType);
+
+                // if not found return a NotFoundResult
+                if (links == null || links.Count < 1)
                 {
-                    link.link = link.link.Replace("{account_id}", account_id.ToString())
-                                         .Replace("{url}", _configuration.URL);
+                    return new NotFoundResult();
                 }
-                return new OkObjectResult(links);
+                // else, format the link and return it
+                else
+                {
+                    foreach (ITEDigitalLink link in links)
+                    {
+                        link.link = link.link.Replace("{account_id}", account_id.ToString())
+                                             .Replace("{url}", _configuration.URL);
+                    }
+                    return new OkObjectResult(links);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
             }
         }
 
@@ -129,23 +163,33 @@ namespace TraceabilityDriverService.Controllers
         [Route("gtin/{gtin}/serial/{serial}")]
         public async Task<IActionResult> InstanceEPC(long account_id, string gtin, string serial, [FromQuery] string linkType)
         {
-            // find a link by the linkType and the identifier type 'gtin'
-            List<ITEDigitalLink> links = await GetLinks("epc", linkType);
+            try
+            {
+                // ** for EPCs we always return a link to the EPCIS Query interface regardless of the gtin / serial provided.
 
-            // if not found return a NotFoundResult
-            if (links == null || links.Count < 1)
-            {
-                return new NotFoundResult();
-            }
-            // else, format the link and return it
-            else
-            {
-                foreach (ITEDigitalLink link in links)
+                // find a link by the linkType and the identifier type 'gtin'
+                List<ITEDigitalLink> links = await GetLinks("epc", linkType);
+
+                // if not found return a NotFoundResult
+                if (links == null || links.Count < 1)
                 {
-                    link.link = link.link.Replace("{account_id}", account_id.ToString())
-                                         .Replace("{url}", _configuration.URL);
+                    return new NotFoundResult();
                 }
-                return new OkObjectResult(links);
+                // else, format the link and return it
+                else
+                {
+                    foreach (ITEDigitalLink link in links)
+                    {
+                        link.link = link.link.Replace("{account_id}", account_id.ToString())
+                                             .Replace("{url}", _configuration.URL);
+                    }
+                    return new OkObjectResult(links);
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
             }
         }
 

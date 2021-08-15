@@ -44,7 +44,6 @@ namespace TraceabilityDriverService
 
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddTelerikBlazor();
             services.AddSingleton<ITDConfiguration, TDConfiguration>();
         }
 

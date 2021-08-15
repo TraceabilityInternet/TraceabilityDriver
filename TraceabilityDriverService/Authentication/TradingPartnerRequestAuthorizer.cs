@@ -8,7 +8,7 @@ using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.Interfaces;
 using TraceabilityEngine.Util.Security;
 
-namespace TraceabilityEngine.Service.Util
+namespace TraceabilityDriverService.Authentication
 {
     public static class TradingPartnerRequestAuthorizer
     {
