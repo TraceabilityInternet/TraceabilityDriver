@@ -74,6 +74,7 @@ There are several important fields that need to be configured in the `appsetting
     "AllowedHosts": "*",
     "URL" : "https://localhost:8001/",
     "APIKey": "<insert_api_key_here>",
+    "SolutionProviderAPIKey", "<insert_api_key_here>",
     "MapperDLLPath": "c:\\webservices\\traceability_driver\\mapper\\MyMapper.dll",
     "MapperClassName": "MyMapper.MyMapperClass",
     "ConnectionString": "mongodb://localhost",
