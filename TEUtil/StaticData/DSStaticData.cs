@@ -11,7 +11,7 @@ namespace TraceabilityEngine.Util.StaticData
         {
             string result = string.Empty;
             using (Stream stream = typeof(TEStaticData).Assembly.
-                       GetManifestResourceStream("TEUtil.StaticData.Data." + path))
+                       GetManifestResourceStream("TraceabilityEngine.Util.StaticData.Data." + path))
             {
                 using (StreamReader sr = new StreamReader(stream))
                 {

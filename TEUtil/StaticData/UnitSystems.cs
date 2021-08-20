@@ -76,7 +76,7 @@ namespace TraceabilityEngine.Util.StaticData
         {
             ConcurrentDictionary<string, UnitSystem> unitSystems = new ConcurrentDictionary<string, UnitSystem>();
             EmbeddedResourceLoader loader = new EmbeddedResourceLoader();
-            TEXML xmlUnitSystems = loader.ReadXML("TEUtil.StaticData.Data.UnitSystems.xml");
+            TEXML xmlUnitSystems = loader.ReadXML("TEUtil", "TraceabilityEngine.Util.StaticData.Data.UnitSystems.xml");
             foreach (TEXML xmlUnitSystem in xmlUnitSystems)
             {
                 UnitSystem unitSystem = new UnitSystem(xmlUnitSystem);

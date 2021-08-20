@@ -22,7 +22,8 @@ namespace TraceabilityEngine.Interfaces.Driver
         string Name { get; set; }
         IPGLN PGLN { get; set; }
         string DigitalLinkURL { get; set; }
-        IDID DID { get; set; }
+        IPublicDID PublicDID { get; set; }
+        string APIAccessKey { get; set; }
         TradingPartnerCommunicationProtocol Protocol { get; set; }
 
         string ToJson();

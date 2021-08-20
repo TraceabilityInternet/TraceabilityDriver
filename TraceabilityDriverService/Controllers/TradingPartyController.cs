@@ -55,6 +55,7 @@ namespace TraceabilityDriverService.Controllers
                         HttpClient client = item.Value;
                         client.DefaultRequestHeaders.Clear();
                         client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                        client.DefaultRequestHeaders.Add("x-pgln", account.PGLN?.ToString());
                         var response = await client.GetAsync(url);
 
                         if (response.IsSuccessStatusCode)
@@ -72,6 +73,7 @@ namespace TraceabilityDriverService.Controllers
                             string masterDataURL = links.Find(l => l.linkType == "gs1:masterData").link;
                             client.DefaultRequestHeaders.Clear();
                             client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                            client.DefaultRequestHeaders.Add("x-pgln", account.PGLN?.ToString());
                             var response2 = await client.GetAsync(masterDataURL); // Edited url to masterDataURL
 
                             // if we got a successful response, map the response into the local format and return that.

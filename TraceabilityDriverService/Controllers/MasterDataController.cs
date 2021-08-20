@@ -47,10 +47,9 @@ namespace TraceabilityDriverService.Controllers
             {
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
-                    string authHeader = Request?.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(authHeader, gtin, driverDB, account_id))
+                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(Request, gtin, driverDB, account_id))
                     {
-                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(authHeader, driverDB);
+                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(Request, driverDB, account_id);
 
                         // query the configured url for the trade item
                         string url = _configuration.TradeItemURLTemplate.Replace("{gtin}", gtin)
@@ -103,10 +102,9 @@ namespace TraceabilityDriverService.Controllers
             {
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
-                    string authHeader = Request?.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(authHeader, gln, driverDB, account_id))
+                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(Request, gln, driverDB, account_id))
                     {
-                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(authHeader, driverDB);
+                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(Request, driverDB, account_id);
 
                         // query the configured url for the epc
                         string url = _configuration.LocationURLTemplate.Replace("{gln}", gln)
@@ -158,10 +156,9 @@ namespace TraceabilityDriverService.Controllers
             {
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
-                    string authHeader = Request?.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(authHeader, pgln, driverDB, account_id))
+                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(Request, pgln, driverDB, account_id))
                     {
-                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(authHeader, driverDB);
+                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(Request, driverDB, account_id);
 
                         // query the configured url for the epc
                         string url = _configuration.TradingPartyURLTemplate.Replace("{pgln}", pgln).Replace("{account_id}", account_id.ToString()).Replace("{tradingpartner_id}", tradingpartner_id.ToString());

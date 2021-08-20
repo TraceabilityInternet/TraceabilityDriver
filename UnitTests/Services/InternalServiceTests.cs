@@ -74,7 +74,7 @@ namespace UnitTests.Services
                 tp.Name = "Test TP #1";
                 tp.DigitalLinkURL = "www.google.com";
                 tp.AccountID = account.ID;
-                tp.DID = DID.GenerateNew();
+                tp.PublicDID = DIDFactory.GenerateNew();
                 tp.PGLN = account.PGLN;
 
                 // save the trading partner
@@ -87,7 +87,7 @@ namespace UnitTests.Services
                 Assert.AreEqual(tp.ID, loadedTP.ID);
                 Assert.AreEqual(tp.AccountID, loadedTP.AccountID);
                 Assert.AreEqual(tp.Name, loadedTP.Name);
-                Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
+                Assert.AreEqual(tp.PublicDID.ToString(), loadedTP.PublicDID.ToString());
                 Assert.AreEqual(tp.PGLN, loadedTP.PGLN);
                 Assert.AreEqual(tp.DigitalLinkURL, loadedTP.DigitalLinkURL);
 
@@ -97,7 +97,7 @@ namespace UnitTests.Services
                 Assert.AreEqual(tp.ID, loadedTP.ID);
                 Assert.AreEqual(tp.AccountID, loadedTP.AccountID);
                 Assert.AreEqual(tp.Name, loadedTP.Name);
-                Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
+                Assert.AreEqual(tp.PublicDID.ToString(), loadedTP.PublicDID.ToString());
                 Assert.AreEqual(tp.PGLN, loadedTP.PGLN);
                 Assert.AreEqual(tp.DigitalLinkURL, loadedTP.DigitalLinkURL);
 
@@ -199,7 +199,7 @@ namespace UnitTests.Services
             ITEDriverTradingPartner loadedTP = await controller.Get(account.ID, tp.ID);
             Assert.AreEqual(tp.ID, loadedTP.ID);
             Assert.AreEqual(tp.Name, loadedTP.Name);
-            Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
+            Assert.AreEqual(tp.PublicDID.ToString(), loadedTP.PublicDID.ToString());
             Assert.AreEqual(tp.PGLN, loadedTP.PGLN);
             Assert.AreEqual(tp.DigitalLinkURL, loadedTP.DigitalLinkURL);
 
@@ -220,7 +220,7 @@ namespace UnitTests.Services
             loadedTP = await controller.Get(account.ID, tp.ID);
             Assert.AreEqual(tp.ID, loadedTP.ID);
             Assert.AreEqual(tp.Name, loadedTP.Name);
-            Assert.AreEqual(tp.DID.ToString(), loadedTP.DID.ToString());
+            Assert.AreEqual(tp.PublicDID.ToString(), loadedTP.PublicDID.ToString());
             Assert.AreEqual(tp.PGLN, loadedTP.PGLN);
             Assert.AreEqual(tp.DigitalLinkURL, loadedTP.DigitalLinkURL);
 

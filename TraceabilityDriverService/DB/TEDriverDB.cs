@@ -170,7 +170,7 @@ namespace TraceabilityDriverService.DB
                     // set the DID if it is not set
                     if (IDID.IsNullOrEmpty(account.DID))
                     {
-                        account.DID = DID.GenerateNew();
+                        account.DID = DIDFactory.GenerateNew();
                     }
 
                     // if the EPCIS URL and Digital Link URL are not set, then set that for the account
@@ -232,7 +232,7 @@ namespace TraceabilityDriverService.DB
                     {
                         tradingPartner.ObjectID = existingTP.ObjectID;
                         tradingPartner.ID = existingTP.ID;
-                        tradingPartner.DID = existingTP.DID;
+                        tradingPartner.PublicDID = existingTP.PublicDID;
                     }
 
                     // we need to save the trading partner by the account id and the trading partner pgln

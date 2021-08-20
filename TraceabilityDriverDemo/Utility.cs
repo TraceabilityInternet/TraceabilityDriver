@@ -46,7 +46,7 @@ namespace TraceabilityDriverDemo
         public static async Task<ITEDirectoryServiceProvider> CreateServiceProvider()
         {
             ITEDirectoryServiceProvider serviceProvider = new TEDirectoryServiceProvider();
-            serviceProvider.DID = DID.GenerateNew();
+            serviceProvider.DID = DIDFactory.GenerateNew();
             using (ITEDirectoryDB dirDB = DirectoryServiceUtil.GetDB(ConnectionString01))
             {
                 await dirDB.SaveServiceProviderAsync(serviceProvider);

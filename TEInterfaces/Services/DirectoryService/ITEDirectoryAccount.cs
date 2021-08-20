@@ -19,7 +19,7 @@ namespace TraceabilityEngine.Interfaces.Services.DirectoryService
         string Name { get; set; }
         IPGLN ServiceProviderPGLN { get; set; }
         IPGLN PGLN { get; set; }
-        IDID DID { get; set; }
+        IPublicDID PublicDID { get; set; }
         string DigitalLinkURL { get; set; }
         string ToJson();
         void FromJson(string json);
@@ -37,7 +37,7 @@ namespace TraceabilityEngine.Interfaces.Services.DirectoryService
                 return true;
             }
 
-            if (IDID.IsNullOrEmpty(account.DID))
+            if (IDID.IsNullOrEmpty(account.PublicDID))
             {
                 return true;
             }

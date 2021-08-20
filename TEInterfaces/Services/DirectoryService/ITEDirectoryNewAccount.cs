@@ -12,8 +12,8 @@ namespace TraceabilityEngine.Interfaces.Services.DirectoryService
     {
         ISimpleSignature AccountSignature { get; set; }
         ISimpleSignature ServiceProviderSignature { get; set; }
-        IPGLN ServiceProviderPGLN { get; set; }
         IDID ServiceProviderDID { get; set; }
+        IDID DID { get; set; }
         bool VerifySignature();
         void Sign();
         ITEDirectoryAccount ToAccount();

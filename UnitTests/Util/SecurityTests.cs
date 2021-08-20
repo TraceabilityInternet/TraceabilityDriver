@@ -15,7 +15,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void DID_v1()
         {
-            IDID did1 = DID.GenerateNew();
+            IDID did1 = DIDFactory.GenerateNew();
 
             string data = "Hello Peter!";
             string nunce = Guid.NewGuid().ToString();
@@ -41,7 +41,7 @@ namespace UnitTests.Util
         [TestMethod]
         public void SimpleSignature_v1()
         {
-            IDID did1 = DID.GenerateNew();
+            IDID did1 = DIDFactory.GenerateNew();
 
             string data = "Hello Peter!";
             string nunce = Guid.NewGuid().ToString();

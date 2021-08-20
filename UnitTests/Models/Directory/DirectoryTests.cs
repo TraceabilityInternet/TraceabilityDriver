@@ -17,7 +17,7 @@ namespace UnitTests.Models.Directory
         public void DirectoryAccount()
         {
             TEDirectoryAccount account = new TEDirectoryAccount();
-            account.DID = DID.GenerateNew();
+            account.PublicDID = DIDFactory.GenerateNew();
             account.PGLN = IdentifierFactory.ParsePGLN("urn:epc:id:sgln:08600031303.0.0");
             account.DigitalLinkURL = "www.google.com";
 
@@ -36,10 +36,11 @@ namespace UnitTests.Models.Directory
         public void DirectoryNewAccount()
         {
             TEDirectoryNewAccount account = new TEDirectoryNewAccount();
-            account.DID = DID.GenerateNew();
+            account.DID = DIDFactory.GenerateNew();
+            account.PublicDID = account.DID.ToPublicDID();
             account.PGLN = IdentifierFactory.ParsePGLN("urn:epc:id:sgln:08600031303.0.0");
             account.DigitalLinkURL = "www.google.com";
-            account.ServiceProviderDID = DID.GenerateNew();
+            account.ServiceProviderDID = DIDFactory.GenerateNew();
             account.ServiceProviderPGLN = IdentifierFactory.ParsePGLN("urn:epc:id:sgln:08600031303.0.12");
             account.Sign();
 

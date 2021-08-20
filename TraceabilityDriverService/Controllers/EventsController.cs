@@ -77,6 +77,7 @@ namespace TraceabilityDriverService.Controllers
                         HttpClient client = item.Value;
                         client.DefaultRequestHeaders.Clear();
                         client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                        client.DefaultRequestHeaders.Add("x-pgln", account.PGLN?.ToString());
                         var response = await client.GetAsync(url);
 
                         // make sure that a link was returned to us successfully
@@ -93,10 +94,6 @@ namespace TraceabilityDriverService.Controllers
                             // build the link
                             string epcisURL = links.Find(l => l.linkType == "gs1:epcis").link + "/queries/SimpleEventQuery";
 
-                            // now we have the link to the master data
-                            client.DefaultRequestHeaders.Clear();
-                            client.DefaultRequestHeaders.Add("Authorization", authHeader);
-
                             // build the body of the request in a C# object
                             SimpleEventQuery seQuery = new SimpleEventQuery();
                             seQuery.query = new SimpleEventQuery_Query();
@@ -106,6 +103,9 @@ namespace TraceabilityDriverService.Controllers
                             StringContent content = new StringContent(bodyJSON, Encoding.UTF8, "application/json");
 
                             // make a post against the EPCIS Query Controller "/queries/SimpleEventQuery" method
+                            client.DefaultRequestHeaders.Clear();
+                            client.DefaultRequestHeaders.Add("Authorization", authHeader);
+                            client.DefaultRequestHeaders.Add("x-pgln", account.PGLN?.ToString());
                             var response2 = await client.PostAsync(epcisURL, content); // bad request 400
                             string gs1Format = await response2.Content.ReadAsStringAsync();
 

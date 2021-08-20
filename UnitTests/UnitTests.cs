@@ -39,7 +39,7 @@ namespace UnitTests
         public static async Task<ITEDirectoryServiceProvider> CreateServiceProvider()
         {
             ITEDirectoryServiceProvider serviceProvider = new TEDirectoryServiceProvider();
-            serviceProvider.DID = DID.GenerateNew();
+            serviceProvider.DID = DIDFactory.GenerateNew();
             using (ITEDirectoryDB dirDB = DirectoryServiceUtil.GetDB(ConnectionString01))
             {
                 await dirDB.SaveServiceProviderAsync(serviceProvider);
@@ -56,7 +56,7 @@ namespace UnitTests
             configuration.MapperClassName = "TestDriver.XmlTestDriver";
             configuration.MapperDLLPath = @"C:\GitHub\TraceabilityInternet\TraceabilityDriver\TestDriver\bin\Debug\net5.0\TestDriver.dll";
             configuration.Mapper = TraceabilityDriverServiceFactory.LoadMapper(configuration.MapperDLLPath, configuration.MapperClassName); // Added to prevent null reference exception
-            configuration.RequiresTradingPartnerAuthorization = false;
+            configuration.RequiresTradingPartnerAuthorization = true;
             configuration.DatabaseName = "TraceabilityDriver";
             if (!string.IsNullOrWhiteSpace(directoryURL))
             {

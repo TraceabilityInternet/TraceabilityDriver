@@ -145,10 +145,6 @@ namespace DirectoryService.DB
                 using (ITEDocumentDB docDB = new TEMongoDatabase(_mongoConnectionString, _mongoDBname))
                 {
                     List<ITEDirectoryAccount> accounts = await docDB.LoadAll<ITEDirectoryAccount>(_accountTbl);
-                    foreach (var acc in accounts)
-                    {
-                        acc.DID.PrivateKey = null;
-                    }
                     return accounts;
                 }
             }
@@ -223,9 +219,9 @@ namespace DirectoryService.DB
             try
             {
                 // generate a new did if it doesn't have one set
-                if (IDID.IsNullOrEmpty(account.DID))
+                if (IDID.IsNullOrEmpty(account.PublicDID))
                 {
-                    account.DID = DID.GenerateNew();
+                    account.PublicDID = DIDFactory.GenerateNew();
                 }
 
                 // generate a pgln is it doesn't have one set
@@ -256,7 +252,7 @@ namespace DirectoryService.DB
                 // generate a new did if it doesn't have one set
                 if (IDID.IsNullOrEmpty(serviceProvider.DID))
                 {
-                    serviceProvider.DID = DID.GenerateNew();
+                    serviceProvider.DID = DIDFactory.GenerateNew();
                 }
 
                 // generate a pgln is it doesn't have one set

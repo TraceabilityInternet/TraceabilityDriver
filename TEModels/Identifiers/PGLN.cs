@@ -268,7 +268,51 @@ namespace TraceabilityEngine.Models.Identifiers
         }
         #endregion
 
-        #region IEquatable<GLN>
+        #region IEquatable
+        public bool Equals(IPGLN pgln)
+        {
+            try
+            {
+                if (Object.ReferenceEquals(null, pgln))
+                {
+                    return false;
+                }
+
+                if (Object.ReferenceEquals(this, pgln))
+                {
+                    return true;
+                }
+
+                return this.IsEquals(pgln);
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+        }
+        private bool IsEquals(IPGLN pgln)
+        {
+            try
+            {
+                if (pgln == null) throw new ArgumentNullException(nameof(pgln));
+
+                if (this.ToString() == pgln.ToString())
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
+        }
+
         public bool Equals(PGLN pgln)
         {
             try

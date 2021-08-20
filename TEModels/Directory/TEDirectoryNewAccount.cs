@@ -19,12 +19,13 @@ namespace TraceabilityEngine.Models.Directory
         public ISimpleSignature AccountSignature { get; set; }
         public ISimpleSignature ServiceProviderSignature { get; set; }
         public IDID ServiceProviderDID { get; set; }
+        public IDID DID { get; set; }
 
         public ITEDirectoryAccount ToAccount()
         {
             ITEDirectoryAccount account = new TEDirectoryAccount();
             account.ID = this.ID;
-            account.DID = this.DID;
+            account.PublicDID = this.DID.ToPublicDID();
             account.DigitalLinkURL = this.DigitalLinkURL;
             account.PGLN = this.PGLN;
             account.ServiceProviderPGLN = this.ServiceProviderPGLN;
@@ -38,6 +39,7 @@ namespace TraceabilityEngine.Models.Directory
             this.AccountSignature = SimpleSignatureFactory.Parse(json.Value<string>("AccountSignature"));
             this.ServiceProviderSignature = SimpleSignatureFactory.Parse(json.Value<string>("ServiceProviderSignature"));
             this.ServiceProviderPGLN = IdentifierFactory.ParsePGLN(json.Value<string>("ServiceProviderPGLN"), out string error);
+            this.DID = DIDFactory.Parse(json.Value<string>("DID"));
         }
         public override string ToJson()
         {
@@ -47,6 +49,7 @@ namespace TraceabilityEngine.Models.Directory
             json["AccountSignature"] = this.AccountSignature?.ToString();
             json["ServiceProviderSignature"] = this.ServiceProviderSignature?.ToString();
             json["ServiceProviderPGLN"] = this.ServiceProviderPGLN?.ToString();
+            json["DID"] = this.DID?.ToString();
 
             return json.ToString();
         }
@@ -78,12 +81,12 @@ namespace TraceabilityEngine.Models.Directory
                 return false;
             }
 
-            if (IDID.IsNullOrEmpty(this.DID))
+            if (IDID.IsNullOrEmpty(this.PublicDID))
             {
                 return false;
             }
 
-            if (!this.DID.Verify(this.AccountSignature))
+            if (!this.PublicDID.Verify(this.AccountSignature))
             {
                 return false;
             }
@@ -103,7 +106,7 @@ namespace TraceabilityEngine.Models.Directory
                 throw new NullReferenceException("PGLN is null or empty.");
             }
 
-            if (IDID.IsNullOrEmpty(this.DID))
+            if (IDID.IsNullOrEmpty(this.PublicDID))
             {
                 throw new NullReferenceException("DID is null or empty.");
             }
