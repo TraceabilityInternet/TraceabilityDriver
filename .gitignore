@@ -4,7 +4,6 @@
 
 **/obj
 **/bin
-**/packages
 .vs
 TraceabilityDriverService/Properties/PublishProfiles/FolderProfile.pubxml.user
 TraceabilityDriverService/Properties/PublishProfiles/FolderProfile.pubxml
