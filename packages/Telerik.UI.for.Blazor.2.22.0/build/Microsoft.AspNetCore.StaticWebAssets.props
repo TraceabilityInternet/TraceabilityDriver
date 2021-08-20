@@ -1,0 +1,39 @@
+﻿<Project>
+  <ItemGroup>
+    <StaticWebAsset Include="$(MSBuildThisFileDirectory)..\staticwebassets\css\kendo-theme-bootstrap\all.css">
+      <SourceType>Package</SourceType>
+      <SourceId>Telerik.UI.for.Blazor</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Telerik.UI.for.Blazor</BasePath>
+      <RelativePath>css\kendo-theme-bootstrap\all.css</RelativePath>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$(MSBuildThisFileDirectory)..\staticwebassets\css\kendo-theme-default\all.css">
+      <SourceType>Package</SourceType>
+      <SourceId>Telerik.UI.for.Blazor</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Telerik.UI.for.Blazor</BasePath>
+      <RelativePath>css\kendo-theme-default\all.css</RelativePath>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$(MSBuildThisFileDirectory)..\staticwebassets\css\kendo-theme-material\all.css">
+      <SourceType>Package</SourceType>
+      <SourceId>Telerik.UI.for.Blazor</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Telerik.UI.for.Blazor</BasePath>
+      <RelativePath>css\kendo-theme-material\all.css</RelativePath>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$(MSBuildThisFileDirectory)..\staticwebassets\images\blazor.png">
+      <SourceType>Package</SourceType>
+      <SourceId>Telerik.UI.for.Blazor</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Telerik.UI.for.Blazor</BasePath>
+      <RelativePath>images\blazor.png</RelativePath>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$(MSBuildThisFileDirectory)..\staticwebassets\js\telerik-blazor.js">
+      <SourceType>Package</SourceType>
+      <SourceId>Telerik.UI.for.Blazor</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Telerik.UI.for.Blazor</BasePath>
+      <RelativePath>js\telerik-blazor.js</RelativePath>
+    </StaticWebAsset>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\Telerik.UI.for.Blazor.props" />
+</Project>
