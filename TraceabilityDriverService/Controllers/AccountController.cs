@@ -79,7 +79,7 @@ namespace TraceabilityDriverService.Controllers
 
                 if (IDID.IsNullOrEmpty(account.DID))
                 {
-                    account.DID = DID.GenerateNew(); // first setting of DID.
+                    account.DID = DIDFactory.GenerateNew(); // first setting of DID
                 }
 
                 using (ITEDriverDB driverDB = _configuration.GetDB())

@@ -39,7 +39,7 @@ namespace UnitTests.Services
             DirectoryController controller = new DirectoryController(configuration.Build());
 
             ITEDirectoryServiceProvider serviceProvider = new TEDirectoryServiceProvider();
-            serviceProvider.DID = DID.GenerateNew();
+            serviceProvider.DID = DIDFactory.GenerateNew();
 
             using (ITEDirectoryDB dirDB = DirectoryServiceUtil.GetDB(connectionString))
             {
@@ -47,7 +47,8 @@ namespace UnitTests.Services
             }
 
             ITEDirectoryNewAccount newAccount = new TEDirectoryNewAccount();
-            newAccount.DID = DID.GenerateNew();
+            newAccount.DID = DIDFactory.GenerateNew();
+            newAccount.PublicDID = newAccount.DID.ToPublicDID();
             newAccount.DigitalLinkURL = "www.google.com";
             newAccount.PGLN = IdentifierFactory.ParsePGLN("urn:epc:id:sgln:08600031303.0.0");
             newAccount.ServiceProviderDID = serviceProvider.DID;
@@ -67,7 +68,7 @@ namespace UnitTests.Services
             // add the service provider to the directory service
             string connectionString = "mongodb://localhost";
             ITEDirectoryServiceProvider serviceProvider = new TEDirectoryServiceProvider();
-            serviceProvider.DID = DID.GenerateNew();
+            serviceProvider.DID = DIDFactory.GenerateNew();
             using (ITEDirectoryDB dirDB = DirectoryServiceUtil.GetDB(connectionString))
             {
                 await dirDB.SaveServiceProviderAsync(serviceProvider);
@@ -80,7 +81,8 @@ namespace UnitTests.Services
 
             // create the account and verify the account was created correctly
             ITEDirectoryNewAccount newAccount = new TEDirectoryNewAccount();
-            newAccount.DID = DID.GenerateNew();
+            newAccount.DID = DIDFactory.GenerateNew();
+            newAccount.PublicDID = newAccount.DID.ToPublicDID();
             newAccount.DigitalLinkURL = "www.google.com";
             newAccount.PGLN = IdentifierFactory.ParsePGLN("urn:epc:id:sgln:08600031303.0.0");
             newAccount.ServiceProviderPGLN = serviceProvider.PGLN;

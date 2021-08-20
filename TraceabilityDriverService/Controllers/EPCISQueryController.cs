@@ -48,13 +48,12 @@ namespace TraceabilityDriverService.Controllers
                 {
                     // here we are going to ensure that they are allowed to make this request
                     string queryString = JsonConvert.SerializeObject(query);
-                    string authHeader = Request?.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(authHeader, queryString, driverDB, accountID))
+                    if (!_configuration.RequiresTradingPartnerAuthorization || await TradingPartnerRequestAuthorizer.Authorize(Request, queryString, driverDB, accountID))
                     {
                         // we need the tradingpartner_id because we pass that forward to the solution provider
                         // so that they can provide their own tradingpartner level permissioning and know who is
                         // making the request
-                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(authHeader, driverDB);
+                        long tradingpartner_id = await TradingPartnerRequestAuthorizer.GetTradingPartnerID(Request, driverDB, accountID);
 
                         // we will make a seperate request to the solution provider foreach epc that is being requested
                         foreach (string epc in query.query.MATCH_anyEPC)

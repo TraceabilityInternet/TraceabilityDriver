@@ -79,7 +79,7 @@ namespace TraceabilityEngine.Util.StaticData
             {
                 // load the subscriptions xml
                 EmbeddedResourceLoader loader = new EmbeddedResourceLoader();
-                TEXML xUOMs = loader.ReadXML("TEUtil.StaticData.Data.UOMs.xml");
+                TEXML xUOMs = loader.ReadXML("TEUtil", "TraceabilityEngine.Util.StaticData.Data.UOMs.xml");
                 foreach (TEXML xmlUOM in xUOMs)
                 {
                     UOM uom = new UOM(xmlUOM);

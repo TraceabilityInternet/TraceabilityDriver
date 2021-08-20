@@ -12,25 +12,24 @@ namespace TraceabilityEngine.Interfaces.Models.Events
 {
     public interface ITEEventKDE
     {
-        private static ConcurrentDictionary<string, Type> _initializeDictionary = new ConcurrentDictionary<string, Type>();
-        static ITEEventKDE()
-        {
-            var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes()).Where(t => typeof(ITEEventKDE).IsAssignableFrom(t));
-            foreach (var t in types)
-            {
-                string typeKey = TEEnumUtil.GetEnumKey(t);
-                _initializeDictionary.TryAdd(typeKey, t);
-            }
-        }
+        public static ConcurrentDictionary<string, Type> InitializeDictionary = new ConcurrentDictionary<string, Type>();
         public static ITEEventKDE InitializeFromKey(string key)
         {
-            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentNullException(nameof(key));
-            ITEEventKDE kde = null;
-            if (_initializeDictionary.TryGetValue(key, out Type type))
+            try
             {
-                kde = (ITEEventKDE)Activator.CreateInstance(type);
+                if (string.IsNullOrWhiteSpace(key)) throw new ArgumentNullException(nameof(key));
+                ITEEventKDE kde = null;
+                if (InitializeDictionary.TryGetValue(key, out Type type))
+                {
+                    kde = (ITEEventKDE)Activator.CreateInstance(type);
+                }
+                return kde;
             }
-            return kde;
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
         }
 
         public string Namespace { get; }

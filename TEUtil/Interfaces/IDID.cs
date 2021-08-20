@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TraceabilityEngine.Util.Interfaces
 {
-    public interface IDID
+    public interface IDID : IPublicDID
     {
         public static bool IsNullOrEmpty(IDID did)
         {
@@ -28,14 +28,10 @@ namespace TraceabilityEngine.Util.Interfaces
 
             return false;
         } 
-
-        string ID { get; }
-        string PublicKey { get; set; }
         string PrivateKey { get; set; }
         ISimpleSignature Sign(string value, string nunce);
-        bool Verify(string value, string nunce, string signature);
-        bool Verify(ISimpleSignature signature);
-        string ToString();
-        void Parse(string strValue);
+        new string ToString();
+        new void Parse(string strValue);
+        IPublicDID ToPublicDID();
     }
 }

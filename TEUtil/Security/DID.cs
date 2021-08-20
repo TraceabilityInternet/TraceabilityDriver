@@ -11,21 +11,19 @@ using TraceabilityEngine.Util.Interfaces;
 
 namespace TraceabilityEngine.Util.Security
 {
-    public class DID : IDID
+    public class DID : PublicDID, IDID
     {
-        public static IDID GenerateNew()
+        public static DID GenerateNew()
         {
             RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
             string publicKey = rsa.ToXmlString(false);
             string privateKey = rsa.ToXmlString(true);
             string id = "did:traceabilityengine_v1:" + Guid.NewGuid().ToString();
 
-            IDID did = new DID(id, publicKey, privateKey);
+            DID did = new DID(id, publicKey, privateKey);
             return did;
         }
 
-        public string ID { get; private set; }
-        public string PublicKey { get; set; }
         public string PrivateKey { get; set; }
 
 
@@ -76,37 +74,7 @@ namespace TraceabilityEngine.Util.Security
             }
         }
 
-        public bool Verify(string value, string nunce, string signature)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(this.PublicKey))
-                {
-                    throw new NullReferenceException(this.PublicKey);
-                }
-
-                RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
-                rsa.FromXmlString(this.PublicKey);
-
-                byte[] signatureData = Convert.FromBase64String(signature);
-                byte[] data = Encoding.UTF8.GetBytes(value + nunce);
-
-                bool isVerified = rsa.VerifyData(data, CryptoConfig.MapNameToOID("SHA512"), signatureData);
-                return isVerified;
-            }
-            catch (Exception Ex)
-            {
-                TELogger.Log(0, Ex);
-                throw;
-            }
-        }
-
-        public bool Verify(ISimpleSignature signature)
-        {
-            return Verify(signature.Value, signature.Nunce, signature.Signature);
-        }
-
-        public void Parse(string strValue)
+        public new void Parse(string strValue)
         {
             if (string.IsNullOrWhiteSpace(strValue))
             {
@@ -122,7 +90,7 @@ namespace TraceabilityEngine.Util.Security
             this.PrivateKey = Encoding.UTF8.GetString(Convert.FromBase64String(jKey.Value<string>("PrivateKey")));
         }
 
-        public override string ToString()
+        public new string ToString()
         {
             JObject jKey = new JObject();
             jKey["PublicKey"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(PublicKey ?? ""));
@@ -131,6 +99,11 @@ namespace TraceabilityEngine.Util.Security
 
             string strValue = ID + "." + Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonStr));
             return strValue;
+        }
+
+        public IPublicDID ToPublicDID()
+        {
+            return (IPublicDID)this;
         }
     }
 }

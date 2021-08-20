@@ -32,14 +32,14 @@ namespace TraceabilityEngine.Models.Directory
         public string Name { get; set; }
         public IPGLN ServiceProviderPGLN { get; set; }
         public IPGLN PGLN { get; set; }
-        public IDID DID { get; set; }
+        public IPublicDID PublicDID { get; set; }
         public string DigitalLinkURL { get; set; }
 
         public virtual string ToJson()
         {
             JObject json = new JObject();
             json["PGLN"] = this.PGLN?.ToString();
-            json["DID"] = this.DID?.ToString();
+            json["PublicDID"] = this.PublicDID?.ToString();
             json["DigitalLinkURL"] = this.DigitalLinkURL;
             return json.ToString();
         }
@@ -54,11 +54,11 @@ namespace TraceabilityEngine.Models.Directory
 
             this.PGLN = IdentifierFactory.ParsePGLN(json.Value<string>("PGLN"), out string error);
 
-            string didStr = json.Value<string>("DID");
+            string didStr = json.Value<string>("PublicDID");
             if (!string.IsNullOrWhiteSpace(didStr))
             {
                 IDID did = DIDFactory.Parse(didStr);
-                this.DID = did;
+                this.PublicDID = did;
             }
 
             this.DigitalLinkURL = json.Value<string>("DigitalLinkURL");
@@ -67,7 +67,7 @@ namespace TraceabilityEngine.Models.Directory
         public ITEDriverTradingPartner ToDriverTradingPartner()
         {
             ITEDriverTradingPartner tp = new TEDriverTradingPartner();
-            tp.DID = this.DID;
+            tp.PublicDID = this.PublicDID;
             tp.PGLN = this.PGLN;
             tp.DigitalLinkURL = this.DigitalLinkURL;
             return tp;

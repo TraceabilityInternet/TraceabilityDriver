@@ -105,7 +105,7 @@ namespace TraceabilityDriverService.Controllers
                         return new BadRequestResult();
                     }
                     else if (IPGLN.IsNullOrEmpty(tradingPartner.PGLN) 
-                        || IDID.IsNullOrEmpty(tradingPartner.DID) 
+                        || IDID.IsNullOrEmpty(tradingPartner.PublicDID) 
                         || string.IsNullOrWhiteSpace(tradingPartner.DigitalLinkURL) 
                         || string.IsNullOrWhiteSpace(tradingPartner.Name))
                     {

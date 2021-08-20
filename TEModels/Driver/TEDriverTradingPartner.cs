@@ -26,7 +26,8 @@ namespace TraceabilityEngine.Models.Driver
         public string Name { get; set; }
         public IPGLN PGLN { get; set; }
         public string DigitalLinkURL { get; set; }
-        public IDID DID { get; set; }
+        public IPublicDID PublicDID { get; set; }
+        public string APIAccessKey { get; set; }
         public TradingPartnerCommunicationProtocol Protocol { get; set; }
 
         public TEDriverTradingPartner()
@@ -39,14 +40,14 @@ namespace TraceabilityEngine.Models.Driver
             this.Name = account.Name;
             this.PGLN = account.PGLN;
             this.DigitalLinkURL = account.DigitalLinkURL;
-            this.DID = account.DID;
+            this.PublicDID = account.DID;
         }
 
         public string ToJson()
         {
             JObject json = new JObject();
             json["DigitalLinkURL"] = this.DigitalLinkURL;
-            json["DID"] = this.DID?.ToString();
+            json["PublicDID"] = this.PublicDID?.ToString();
             json["Name"] = this.Name;
             json["AccountID"] = this.AccountID;
             json["ID"] = this.ID;
@@ -59,7 +60,7 @@ namespace TraceabilityEngine.Models.Driver
         {
             JObject json = JObject.Parse(jsonStr);
             this.DigitalLinkURL = json.Value<string>("DigitalLinkURL");
-            this.DID = DIDFactory.Parse(json.Value<string>("DID"));
+            this.PublicDID = DIDFactory.ParsePublic(json.Value<string>("PublicDID"));
             this.Name = json.Value<string>("Name");
             this.ID = json.Value<long>("ID");
             this.AccountID = json.Value<long>("AccountID");

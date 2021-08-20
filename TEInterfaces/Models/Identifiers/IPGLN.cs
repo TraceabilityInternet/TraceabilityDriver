@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TraceabilityEngine.Util;
 
 namespace TraceabilityEngine.Interfaces.Models.Identifiers
 {
-    public interface IPGLN
+    public interface IPGLN : IEquatable<IPGLN> 
     {
         public static bool IsNullOrEmpty(IPGLN pgln)
         {

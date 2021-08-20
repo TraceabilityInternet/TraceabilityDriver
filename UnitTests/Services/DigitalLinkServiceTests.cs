@@ -152,6 +152,7 @@ namespace UnitTests.Services
                 ITEDriverAccount account01 = await CreateAccount(client, 1);
                 ITEDriverAccount account02 = await CreateAccount(client, 2);
                 ITEDriverTradingPartner tp = await AddTradingPartner(client, account01, account02.PGLN);
+                ITEDriverTradingPartner tp2 = await AddTradingPartner(client, account02, account01.PGLN);
 
                 // request the events
                 string json = await client.GetEventsAsync(account01.ID, tp.ID, "urn:epc:class:lgtin:08600031303.00.METAL");
@@ -190,6 +191,7 @@ namespace UnitTests.Services
                 ITEDriverAccount account01 = await CreateAccount(client, 1);
                 ITEDriverAccount account02 = await CreateAccount(client, 2);
                 ITEDriverTradingPartner tp = await AddTradingPartner(client, account01, account02.PGLN);
+                ITEDriverTradingPartner tp2 = await AddTradingPartner(client, account02, account01.PGLN);
 
                 // request the trade item
                 string json = await client.GetTradeItemAsync(account01.ID, tp.ID, "urn:epc:idpat:sgtin:08600031303.00");
@@ -229,6 +231,7 @@ namespace UnitTests.Services
                 ITEDriverAccount account01 = await CreateAccount(client, 1);
                 ITEDriverAccount account02 = await CreateAccount(client, 2);
                 ITEDriverTradingPartner tp = await AddTradingPartner(client, account01, account02.PGLN);
+                ITEDriverTradingPartner tp2 = await AddTradingPartner(client, account02, account01.PGLN);
 
                 // request the location
                 string json = await client.GetLocationAsync(account01.ID, tp.ID, "urn:epc:id:sgln:08600031303.0.0"); // EPCIS URN format is 13 digits?
@@ -269,6 +272,7 @@ namespace UnitTests.Services
                 ITEDriverAccount account01 = await CreateAccount(client, 1);
                 ITEDriverAccount account02 = await CreateAccount(client, 2);
                 ITEDriverTradingPartner tp = await AddTradingPartner(client, account01, account02.PGLN);
+                ITEDriverTradingPartner tp2 = await AddTradingPartner(client, account02, account01.PGLN);
 
                 // request the location
                 string json = await client.GetTradingPartyAsync(account01.ID, tp.ID, "urn:epc:id:sgln:08600031303.4.0"); // EPCIS URN format is 13 digits?
