@@ -40,7 +40,7 @@ namespace TraceabilityEngine.Models.Driver
             this.Name = account.Name;
             this.PGLN = account.PGLN;
             this.DigitalLinkURL = account.DigitalLinkURL;
-            this.PublicDID = account.DID;
+            this.PublicDID = account.DID.ToPublicDID();
         }
 
         public string ToJson()

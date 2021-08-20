@@ -96,7 +96,6 @@ namespace UnitTests.Services
             await UnitTests.ClearDatabases();
             await CreateLinks();
 
-
             string td01URL = "http://localhost:1377";
             string td02URL = "http://localhost:1378";
             string solutionProviderURL = "http://localhost:1370";
