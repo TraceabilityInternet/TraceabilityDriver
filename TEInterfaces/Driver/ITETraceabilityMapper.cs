@@ -13,8 +13,8 @@ namespace TraceabilityEngine.Interfaces.Driver
 {
     public interface ITETraceabilityMapper
     {
-        string ReadEPCISData(ITETraceabilityData data);
-        ITETraceabilityData WriteEPCISData(string localEvents);
+        string ReadEPCISData(ITEEPCISDocument data);
+        ITEEPCISDocument WriteEPCISData(string localEvents);
 
         string MapToLocalTradeItems(List<ITEProduct> products);
         List<ITEProduct> MapToGS1TradeItems(string localTradeItems);

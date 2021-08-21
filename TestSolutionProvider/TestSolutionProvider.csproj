@@ -45,7 +45,7 @@
     <ProjectReference Include="..\TEModels\TEModels.csproj" />
     <ProjectReference Include="..\TEServiceUtil\TEServiceUtil.csproj" />
     <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
-    <ProjectReference Include="..\TestDriver\TestDriver.csproj" />
+    <ProjectReference Include="..\TestMappers\TestMappers.csproj" />
     <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
     <ProjectReference Include="..\TraceabilityDriverService\TraceabilityDriverService.csproj" />
   </ItemGroup>

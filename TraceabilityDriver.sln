@@ -37,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TEClients", "TEClients\TECl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TEServiceUtil", "TEServiceUtil\TEServiceUtil.csproj", "{33B284D6-04B9-4E2C-BC76-3A378FBA20B0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestDriver", "TestDriver\TestDriver.csproj", "{55280BA6-E592-4C70-A7CD-3CA2EA1C098E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestMappers", "TestMappers\TestMappers.csproj", "{55280BA6-E592-4C70-A7CD-3CA2EA1C098E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installers", "Installers", "{06432E1D-45B1-4DD8-A904-4FEF9D6DE1B3}"
 EndProject
@@ -66,9 +66,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{97AAFD
 		Images\Traceability Internet Organization-D2.png = Images\Traceability Internet Organization-D2.png
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSolutionProvider", "TestSolutionProvider\TestSolutionProvider.csproj", "{1D4FDE1C-F55E-4E79-97A4-30C9E9DC74E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestSolutionProvider", "TestSolutionProvider\TestSolutionProvider.csproj", "{1D4FDE1C-F55E-4E79-97A4-30C9E9DC74E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraceabilityDriverDemo", "TraceabilityDriverDemo\TraceabilityDriverDemo.csproj", "{E3651F0F-6FAA-4681-8C61-50482F3DF326}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TraceabilityDriverDemo", "TraceabilityDriverDemo\TraceabilityDriverDemo.csproj", "{E3651F0F-6FAA-4681-8C61-50482F3DF326}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

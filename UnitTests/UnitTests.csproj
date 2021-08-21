@@ -49,10 +49,14 @@
     <ProjectReference Include="..\TEMongoDB\TEMongoDB.csproj" />
     <ProjectReference Include="..\TEServiceUtil\TEServiceUtil.csproj" />
     <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
-    <ProjectReference Include="..\TestDriver\TestDriver.csproj" />
+    <ProjectReference Include="..\TestMappers\TestMappers.csproj" />
     <ProjectReference Include="..\TestSolutionProvider\TestSolutionProvider.csproj" />
     <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
     <ProjectReference Include="..\TraceabilityDriverService\TraceabilityDriverService.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Mappers\Data\" />
   </ItemGroup>
 
 </Project>

@@ -661,7 +661,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        this.EventsList = new ObservableCollection<ITEEvent>(await SolutionProviderService.GetEventsAsync());
+        this.EventsList = new ObservableCollection<ITEEvent>((await SolutionProviderService.GetEventsAsync()).Events);
         base.OnInitialized();
     }
 
@@ -693,7 +693,7 @@
                 }
 
                 this.showRequestData = false;
-                this.EventsList = new ObservableCollection<ITEEvent>(await SolutionProviderService.GetEventsAsync());
+                this.EventsList = new ObservableCollection<ITEEvent>((await SolutionProviderService.GetEventsAsync()).Events);
                 StateHasChanged();
             }
         }

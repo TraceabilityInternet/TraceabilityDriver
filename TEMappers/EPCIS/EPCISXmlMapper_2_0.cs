@@ -29,7 +29,7 @@ namespace TraceabilityEngine.Mappers.EPCIS
             }
         }
 
-        public string ConvertFromEvents(ITETraceabilityData data)
+        public string WriteEPCISData(ITEEPCISDocument data)
         {
             try
             {
@@ -114,11 +114,11 @@ namespace TraceabilityEngine.Mappers.EPCIS
 
         #region Convert from XML to C# Models
 
-        public ITETraceabilityData ReadEPCISData(string value)
+        public ITEEPCISDocument ReadEPCISData(string value)
         {
             try
             {
-                ITETraceabilityData data = new TETraceabilityData();
+                ITEEPCISDocument data = new TEEPCISDocument();
 
                 // validate the XML against the schema
                 TEXML xml = TEXML.CreateFromString(value);

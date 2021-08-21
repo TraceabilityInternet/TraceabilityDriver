@@ -17,6 +17,7 @@ using TraceabilityEngine.Interfaces.Models;
 using TraceabilityEngine.Interfaces.Models.Events;
 using TraceabilityEngine.Mappers.EPCIS;
 using TraceabilityEngine.Models;
+using TraceabilityEngine.Models.Events;
 using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.Interfaces;
 using TraceabilityEngine.Util.ObjectPooling;
@@ -44,7 +45,7 @@ namespace TraceabilityDriverService.Controllers
         {
             try
             {
-                ITETraceabilityData data = new TETraceabilityData();
+                ITEEPCISDocument data = new TEEPCISDocument();
 
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
@@ -80,7 +81,7 @@ namespace TraceabilityDriverService.Controllers
                                 // into the common data model and add those events to the list of events that we will return.
                                 var response = await client.GetAsync(url);
                                 string localData = await response.Content.ReadAsStringAsync();
-                                ITETraceabilityData this_data = _configuration.Mapper.WriteEPCISData(localData);
+                                ITEEPCISDocument this_data = _configuration.Mapper.WriteEPCISData(localData);
                                 data.Merge(this_data);
                             }
                         }

@@ -74,9 +74,9 @@ namespace UnitTests.Services
 
                 // account #1 requests event data from account #2
                 string json = await td01Client.GetEventsAsync(account01.ID, tp01.ID, "urn:epc:class:lgtin:08600031303.00.METAL"); // EPC from first entry in Events.xml
-                var events = config01.Mapper.WriteEPCISData(json);
-                Assert.IsNotNull(events);
-                Assert.AreEqual(events.Count, 2);
+                var doc = config01.Mapper.WriteEPCISData(json);
+                Assert.IsNotNull(doc);
+                Assert.AreEqual(doc.Events.Count, 2);
 
                 //// account #1 requests master data from account #2
                 json = await td01Client.GetTradeItemAsync(account01.ID, tp01.ID, "urn:epc:idpat:sgtin:08600031303.00");
@@ -130,9 +130,9 @@ namespace UnitTests.Services
 
                 // account #1 requests event data from account #2
                 string json = await td01Client.GetEventsAsync(account01.ID, tp01.ID, "urn:epc:class:lgtin:08600031303.00.METAL"); // EPC from first entry in Events.xml
-                var events = config01.Mapper.WriteEPCISData(json);
-                Assert.IsNotNull(events);
-                Assert.AreEqual(events.Count, 2);
+                var doc = config01.Mapper.WriteEPCISData(json);
+                Assert.IsNotNull(doc);
+                Assert.AreEqual(doc.Events.Count, 2);
 
                 //// account #1 requests master data from account #2
                 json = await td01Client.GetTradeItemAsync(account01.ID, tp01.ID, "urn:epc:idpat:sgtin:08600031303.00");

@@ -8,7 +8,7 @@ namespace TraceabilityEngine.Interfaces.Mappers
 {
     public interface ITEEPCISMapper
     {
-        string WriteEPCISData(ITETraceabilityData data, Dictionary<string, string> cbvMappings = null);
-        ITETraceabilityData ReadEPCISData(string value);
+        string WriteEPCISData(ITEEPCISDocument data);
+        ITEEPCISDocument ReadEPCISData(string value);
     }
 }

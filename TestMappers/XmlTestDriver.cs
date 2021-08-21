@@ -18,15 +18,16 @@ using TraceabilityEngine.Models.TradingParty;
 using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.StaticData;
 
-namespace TestDriver
+namespace TestMappers
 {
     public class XmlTestDriver : ITETraceabilityMapper
     {
-        public List<ITEEvent> WriteEPCISData(string localEvents)
+        public ITEEPCISDocument WriteEPCISData(string localEvents)
         {
             try
             {
-                List<ITEEvent> events = new List<ITEEvent>();
+                ITEEPCISDocument data = new TEEPCISDocument();
+
                 TEXML xml = TEXML.CreateFromString(localEvents);
                 foreach (TEXML xEvent in xml.ChildElements)
                 {
@@ -106,10 +107,10 @@ namespace TestDriver
                     IPGLN owner = IdentifierFactory.ParsePGLN(dataOwnerStr, out error);
                     cte.Owner = owner;
 
-                    events.Add(cte);
+                    data.Events.Add(cte);
                 }
 
-                return events;
+                return data;
             }
             catch (Exception Ex)
             {
@@ -118,12 +119,12 @@ namespace TestDriver
             }
         }
 
-        public string MapToLocalEvents(List<ITEEvent> gs1Events)
+        public string ReadEPCISData(ITEEPCISDocument data)
         {
             try
             {
                 TEXML xml = new TEXML("Events");
-                foreach (ITEEvent cte in gs1Events)
+                foreach (ITEEvent cte in data.Events)
                 {
                     TEXML xEvent = null;
 

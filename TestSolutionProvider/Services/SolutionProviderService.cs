@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using TestDriver;
+using TestMappers;
 using TraceabilityDriverService;
 using TraceabilityEngine.Clients;
 using TraceabilityEngine.Interfaces.Driver;
@@ -59,11 +59,11 @@ namespace TestSolutionProvider.Services
             this._client.BaseAddress = new Uri(url);
         }
 
-        public async Task<List<ITEEvent>> GetEventsAsync()
+        public async Task<ITEEPCISDocument> GetEventsAsync()
         {
             string dataStr = await GetData("events");
-            var events = this.Mapper.WriteEPCISData(dataStr);
-            return events;
+            var data = this.Mapper.WriteEPCISData(dataStr);
+            return data;
         }
 
         public async Task<List<ITEProduct>> GetProductsAsync()
@@ -127,8 +127,8 @@ namespace TestSolutionProvider.Services
                 await SaveData(localFormat, "event");
 
                 // now we are going to request the GTINs
-                List<ITEEvent> events = Mapper.WriteEPCISData(localFormat);
-                foreach (var cte in events)
+                ITEEPCISDocument data = Mapper.WriteEPCISData(localFormat);
+                foreach (var cte in data.Events)
                 {
                     // request the gtins
                     foreach (var piRef in cte.Products)

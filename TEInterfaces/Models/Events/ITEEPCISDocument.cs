@@ -8,14 +8,14 @@ using TraceabilityEngine.Interfaces.Models.Locations;
 using TraceabilityEngine.Interfaces.Models.Products;
 using TraceabilityEngine.Interfaces.Models.TradingParty;
 
-namespace TraceabilityEngine.Interfaces.Models
+namespace TraceabilityEngine.Interfaces.Models.Events
 {
-    public interface ITEEPCISData
+    public interface ITEEPCISDocument
     {
         public List<ITEEvent> Events { get; set; }
         public List<ITEProduct> ProductDefinitions { get; set; }
         public List<ITELocation> Locations { get; set; }
         public List<ITETradingParty> TradingParties { get; set; }
-        public void Merge(ITEEPCISData data);
+        public void Merge(ITEEPCISDocument data);
     }
 }

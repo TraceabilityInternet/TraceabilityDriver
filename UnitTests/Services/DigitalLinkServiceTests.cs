@@ -159,9 +159,9 @@ namespace UnitTests.Services
 
                 // this request returned the JSON in GS1 Web Vocab format
                 // we are going to map that into the ITEProduct models
-                var events = config.Mapper.WriteEPCISData(json);
-                Assert.IsNotNull(events);
-                Assert.AreEqual(events.Count, 2);
+                var doc = config.Mapper.WriteEPCISData(json);
+                Assert.IsNotNull(doc);
+                Assert.AreEqual(doc.Events.Count, 2);
             }
         }
 

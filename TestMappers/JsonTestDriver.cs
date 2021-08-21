@@ -14,13 +14,13 @@ using TraceabilityEngine.Models.Products;
 using TraceabilityEngine.Models.TradingParty;
 using TraceabilityEngine.Util;
 
-namespace TestDriver
+namespace TestMappers
 {
     public class JsonTestDriver : ITETraceabilityMapper
     {
-        public List<ITEEvent> WriteEPCISData(string localEvents)
+        public ITEEPCISDocument WriteEPCISData(string localEvents)
         {
-            List<ITEEvent> events = new List<ITEEvent>();
+            ITEEPCISDocument data = new TEEPCISDocument();
             try
             {
                 JArray jArray = JArray.Parse(localEvents);
@@ -103,16 +103,16 @@ namespace TestDriver
                     IPGLN owner = IdentifierFactory.ParsePGLN(dataOwnerStr, out error);
                     cte.Owner = owner;
 
-                    events.Add(cte);
+                    data.Events.Add(cte);
                 }
 
-                return events;
+                return data;
             }
             catch (Exception Ex)
             {
                 TELogger.Log(0, Ex);
             }
-            return events;
+            return data;
         }
 
         public List<ITELocation> MapToGS1Locations(string localLocations)
@@ -180,12 +180,12 @@ namespace TestDriver
             return tps;
         }
 
-        public string MapToLocalEvents(List<ITEEvent> gs1Events)
+        public string ReadEPCISData(ITEEPCISDocument data)
         {
             JArray jEvents = new JArray();
             try
             {
-                foreach (ITEEvent cte in gs1Events)
+                foreach (ITEEvent cte in data.Events)
                 {
                     JObject jEvent = new JObject();
 

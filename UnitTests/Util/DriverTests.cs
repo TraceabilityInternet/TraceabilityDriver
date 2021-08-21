@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using TestDriver;
+using TestMappers;
 using TraceabilityDriverService;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
@@ -33,9 +33,9 @@ namespace UnitTests.Util
     [TestClass]
     public class DriverTests
     {
-        public List<ITEEvent> GetEvents()
+        public ITEEPCISDocument GetEPCISDocument()
         {
-            List<ITEEvent> events = new List<ITEEvent>();
+            ITEEPCISDocument doc = new TEEPCISDocument();
 
             IGLN metalMine = new GLN("urn:epc:id:sgln:08600031303.0");
             IGLN processingPlant = new GLN("urn:epc:id:sgln:08600031303.1");
@@ -58,7 +58,7 @@ namespace UnitTests.Util
                 createEvent.BusinessStep = "urn:gdst:bizStep:fishingEvent";
                 createEvent.Location = new TEEventLocation(metalMine);
                 createEvent.AddProduct(metalOre, 100, "KGM");
-                events.Add(createEvent);
+                doc.Events.Add(createEvent);
             }
 
             // transformation
@@ -72,10 +72,10 @@ namespace UnitTests.Util
                 transformEvent.Location = new TEEventLocation(processingPlant);
                 transformEvent.AddInput(metalOre, 100, "KGM");
                 transformEvent.AddOutput(steel, 75, "KGM");
-                events.Add(transformEvent);
+                doc.Events.Add(transformEvent);
             }
 
-            return events;
+            return doc;
         }
 
         public List<ITELocation> GetLocations()
@@ -145,12 +145,12 @@ namespace UnitTests.Util
 
             ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
 
-            List<ITEEvent> events = GetEvents();
-            string xml = driver.MapToLocalEvents(events);
-            List<ITEEvent> eventsAfter = driver.WriteEPCISData(xml);
+            ITEEPCISDocument doc = GetEPCISDocument();
+            string xml = driver.ReadEPCISData(doc);
+            ITEEPCISDocument docAfter = driver.WriteEPCISData(xml);
 
-            string gs1Json = mapper.ConvertFromEvents(events);
-            string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);
+            string gs1Json = mapper.WriteEPCISData(doc);
+            string gs1JsonAfter = mapper.WriteEPCISData(docAfter);
 
             JObject gs1JObj = JObject.Parse(gs1Json);
             JObject gs1JObjAfter = JObject.Parse(gs1Json);
@@ -287,12 +287,12 @@ namespace UnitTests.Util
 
             ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
 
-            List<ITEEvent> events = GetEvents();
-            string json = driver.MapToLocalEvents(events);
-            List<ITEEvent> eventsAfter = driver.WriteEPCISData(json);
+            ITEEPCISDocument doc = GetEPCISDocument();
+            string json = driver.ReadEPCISData(doc);
+            ITEEPCISDocument docAfter = driver.WriteEPCISData(json);
 
-            string gs1Json = mapper.ConvertFromEvents(events);
-            string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);
+            string gs1Json = mapper.WriteEPCISData(doc);
+            string gs1JsonAfter = mapper.WriteEPCISData(docAfter);
 
             JObject gs1JObj = JObject.Parse(gs1Json);
             JObject gs1JObjAfter = JObject.Parse(gs1Json);

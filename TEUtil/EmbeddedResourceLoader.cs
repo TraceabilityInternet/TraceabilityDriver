@@ -79,7 +79,29 @@ namespace TraceabilityEngine.Util
                 TELogger.Log(0, ex);
             }
             return result;
+        }
 
+        public string ReadString(string assemblyName, string ResourceName)
+        {
+            string result = string.Empty;
+            try
+            {
+                Assembly assembly = GetAssembly(assemblyName);
+                using (Stream stream = assembly.GetManifestResourceStream(ResourceName))
+                {
+                    using (StreamReader sr = new StreamReader(stream))
+                    {
+                        result = sr.ReadToEnd();
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                TELogger.Log(0, "ResourceName = " + ResourceName);
+                TELogger.Log(0, ex);
+            }
+            return result;
         }
 
         public TEXML ReadXML(string ResourceName)

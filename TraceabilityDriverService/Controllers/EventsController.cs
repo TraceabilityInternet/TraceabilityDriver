@@ -112,7 +112,7 @@ namespace TraceabilityDriverService.Controllers
 
                             // convert the events from the EPCIS format to the local format
                             ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
-                            ITETraceabilityData data = mapper.ReadEPCISData(gs1Format);
+                            ITEEPCISDocument data = mapper.ReadEPCISData(gs1Format);
                             string localFormat = _configuration.Mapper.ReadEPCISData(data);
                             return localFormat;
                         }

@@ -31,7 +31,7 @@ namespace TraceabilityEngine.Mappers.EPCIS
         /// <param name="cbvMappings">This is a list of mappings that are used to map non-CBV dispositions and business steps into CBV compliant values.</param>
         /// <exception cref="TEMappingException"></exception>
         /// <returns>A string JSON value of the EPCIS events.</returns>
-        public string WriteEPCISData(ITETraceabilityData data, Dictionary<string, string> cbvMappings = null)
+        public string WriteEPCISData(ITEEPCISDocument data)
         {
             JObject json = new JObject();
 
@@ -86,26 +86,12 @@ namespace TraceabilityEngine.Mappers.EPCIS
 
                 if (!string.IsNullOrWhiteSpace(cte.BusinessStep))
                 {
-                    if (cbvMappings != null && cbvMappings.ContainsKey(cte.BusinessStep))
-                    {
-                        jCTE["bizStep"] = cbvMappings[cte.BusinessStep];
-                    }
-                    else
-                    {
-                        jCTE["bizStep"] = cte.BusinessStep;
-                    }
+                    jCTE["bizStep"] = cte.BusinessStep;
                 }
 
                 if (!string.IsNullOrWhiteSpace(cte.Disposition))
                 {
-                    if (cbvMappings != null && cbvMappings.ContainsKey(cte.Disposition))
-                    {
-                        jCTE["disposition"] = cbvMappings[cte.Disposition];
-                    }
-                    else
-                    {
-                        jCTE["disposition"] = cte.Disposition;
-                    }
+                    jCTE["disposition"] = cte.Disposition;
                 }
 
                 if (cte.PersistentDisposition != null)
@@ -363,7 +349,7 @@ namespace TraceabilityEngine.Mappers.EPCIS
         /// </summary>
         /// <param name="jsonStr"></param>
         /// <returns></returns>
-        public ITETraceabilityData ReadEPCISData(string jsonStr)
+        public ITEEPCISDocument ReadEPCISData(string jsonStr)
         {
             try
             {
@@ -385,7 +371,7 @@ namespace TraceabilityEngine.Mappers.EPCIS
 
                 ValidateJson(json);
 
-                ITETraceabilityData data = new TETraceabilityData();
+                ITEEPCISDocument data = new TEEPCISDocument();
                 if (json["epcisBody"] != null)
                 {
                     if (json["epcisBody"]["eventList"] != null && json["epcisBody"]["eventList"] is JArray)
@@ -834,9 +820,9 @@ namespace TraceabilityEngine.Mappers.EPCIS
         private void ValidateJson(JObject json)
         {
             // run the json through the schema to ensure it is correct
-            string jsonSchemaPath = "TEMappers.EPCIS.EPCIS-JSON-Schema_2_0.json";
+            string jsonSchemaPath = "TraceabilityEngine.Mappers.EPCIS.EPCIS-JSON-Schema_2_0.json";
             EmbeddedResourceLoader loader = new EmbeddedResourceLoader();
-            string jsonSchemaString = loader.ReadString(jsonSchemaPath);
+            string jsonSchemaString = loader.ReadString("TEMappers", jsonSchemaPath);
             if (string.IsNullOrWhiteSpace(jsonSchemaString))
             {
                 throw new TEMappingException($"Failed to load the JSON Schema from the embedded resources. The path used was ${jsonSchemaPath}");

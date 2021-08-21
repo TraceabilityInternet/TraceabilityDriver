@@ -17,7 +17,7 @@ namespace TestSolutionProvider.Services
         public string DataURL { get; set; }
         public ITETraceabilityMapper Mapper { get; set; }
 
-        public Task<List<ITEEvent>> GetEventsAsync();
+        public Task<ITEEPCISDocument> GetEventsAsync();
         public Task<List<ITEProduct>> GetProductsAsync();
         public Task<List<ITELocation>> GetLocationsAsync();
         public Task<List<ITETradingParty>> GetTradingPartiesAsync();
