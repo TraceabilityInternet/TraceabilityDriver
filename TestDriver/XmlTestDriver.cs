@@ -22,7 +22,7 @@ namespace TestDriver
 {
     public class XmlTestDriver : ITETraceabilityMapper
     {
-        public List<ITEEvent> MapToGS1Events(string localEvents)
+        public List<ITEEvent> WriteEPCISData(string localEvents)
         {
             try
             {

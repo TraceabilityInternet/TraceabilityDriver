@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TraceabilityEngine.Interfaces.Mappers;
+using TraceabilityEngine.Interfaces.Models;
 using TraceabilityEngine.Interfaces.Models.Common;
 using TraceabilityEngine.Interfaces.Models.Events;
 using TraceabilityEngine.Interfaces.Models.Identifiers;
@@ -20,7 +21,7 @@ using TraceabilityEngine.Util;
 
 namespace TraceabilityEngine.Mappers.EPCIS
 {
-    public class EPCISJsonMapper_2_0 : GS1WebVocabMapper, ITEEventMapper
+    public class EPCISJsonMapper_2_0 : GS1WebVocabMapper, ITEEPCISMapper
     {
         /// <summary>
         /// This takes a list of events and maps them into the EPCIS 2.0 JSON format. At the end it also validates the mapping by using the 
@@ -30,7 +31,7 @@ namespace TraceabilityEngine.Mappers.EPCIS
         /// <param name="cbvMappings">This is a list of mappings that are used to map non-CBV dispositions and business steps into CBV compliant values.</param>
         /// <exception cref="TEMappingException"></exception>
         /// <returns>A string JSON value of the EPCIS events.</returns>
-        public string ConvertFromEvents(List<ITEEvent> ctes, Dictionary<string, string> cbvMappings = null)
+        public string WriteEPCISData(ITETraceabilityData data, Dictionary<string, string> cbvMappings = null)
         {
             JObject json = new JObject();
 
@@ -45,7 +46,7 @@ namespace TraceabilityEngine.Mappers.EPCIS
 
             JObject epcisBody = new JObject();
             JArray jEventList = new JArray();
-            foreach (ITEEvent cte in ctes) 
+            foreach (ITEEvent cte in data.Events) 
             {
                 JObject jCTE = new JObject();
 
@@ -362,459 +363,467 @@ namespace TraceabilityEngine.Mappers.EPCIS
         /// </summary>
         /// <param name="jsonStr"></param>
         /// <returns></returns>
-        public List<ITEEvent> ConvertToEvents(string jsonStr)
+        public ITETraceabilityData ReadEPCISData(string jsonStr)
         {
-            if (string.IsNullOrWhiteSpace(jsonStr)) throw new ArgumentNullException(nameof(jsonStr));
-
-            JObject json = null;
             try
             {
-                json = JObject.Parse(jsonStr);
-            }
-            catch (Exception Ex)
-            {
-                throw new TEMappingException("Failed to parse the JSON.", Ex);
-            }
-            if (json == null)
-            {
-                throw new TEMappingException("Failed to parse the JSON. After parsing the JObject was NULL.");
-            }
+                if (string.IsNullOrWhiteSpace(jsonStr)) throw new ArgumentNullException(nameof(jsonStr));
 
-            ValidateJson(json);
-
-            List<ITEEvent> ctes = new List<ITEEvent>();
-            if (json["epcisBody"] != null)
-            {
-                if (json["epcisBody"]["eventList"] != null && json["epcisBody"]["eventList"] is JArray)
+                JObject json = null;
+                try
                 {
-                    JArray jCTEs = json["epcisBody"]["eventList"] as JArray;
-                    foreach (JObject jCTE in jCTEs)
+                    json = JObject.Parse(jsonStr);
+                }
+                catch (Exception Ex)
+                {
+                    throw new TEMappingException("Failed to parse the JSON.", Ex);
+                }
+                if (json == null)
+                {
+                    throw new TEMappingException("Failed to parse the JSON. After parsing the JObject was NULL.");
+                }
+
+                ValidateJson(json);
+
+                ITETraceabilityData data = new TETraceabilityData();
+                if (json["epcisBody"] != null)
+                {
+                    if (json["epcisBody"]["eventList"] != null && json["epcisBody"]["eventList"] is JArray)
                     {
-                        ITEEvent cte = null;
+                        JArray jCTEs = json["epcisBody"]["eventList"] as JArray;
+                        foreach (JObject jCTE in jCTEs)
+                        {
+                            ITEEvent cte = null;
 
-                        string eventType = jCTE["isA"].ToString();
-                        switch (eventType)
-                        {
-                            case "ObjectEvent":
-                                {
-                                    cte = new TEObjectEvent();
-                                    cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
-                                    break;
-                                }
-                            case "TransactionEvent":
-                                {
-                                    cte = new TETransactionEvent();
-                                    cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
-                                    break;
-                                }
-                            case "TransformationEvent":
-                                {
-                                    cte = new TETransformationEvent();
-                                    break;
-                                }
-                            case "AggregationEvent":
-                                {
-                                    cte = new TEAggregationEvent();
-                                    cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
-                                    break;
-                                }
-                            case "AssociationEvent":
-                                {
-                                    cte = new TEAssociationEvent();
-                                    cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
-                                    break;
-                                }
-                            default:
-                                {
-                                    throw new TEMappingException($"The eventType '{eventType}' is not recognized.");
-                                }
-                        }
-
-                        if (jCTE["eventID"] != null)
-                        {
-                            cte.EventID = jCTE["eventID"].Value<string>();
-                        }
-                        
-                        cte.EventTime = jCTE["eventTime"].Value<DateTime>();
-                        cte.EventTimeOffset = ConvertFromOffset(jCTE["eventTimeZoneOffset"]?.Value<string>() ?? "+00:00");
-                        cte.BusinessStep = jCTE["bizStep"]?.Value<string>();
-                        cte.Disposition = jCTE["disposition"]?.Value<string>();
-                        if (jCTE["persistentDisposition"] != null)
-                        {
-                            cte.PersistentDisposition = new TEPersistentDisposition();
-                            if (jCTE["persistentDisposition"]["set"] != null)
+                            string eventType = jCTE["isA"].ToString();
+                            switch (eventType)
                             {
-                                cte.PersistentDisposition.Set = new List<string>();
-                                foreach (JToken jT in jCTE["persistentDisposition"]["set"])
-                                {
-                                    string set = jT.ToString();
-                                    cte.PersistentDisposition.Set.Add(set);
-                                }
-                            }
-                            if (jCTE["persistentDisposition"]["unset"] != null)
-                            {
-                                cte.PersistentDisposition.Unset = new List<string>();
-                                foreach (JToken jT in jCTE["persistentDisposition"]["unset"])
-                                {
-                                    string unset = jT.ToString();
-                                    cte.PersistentDisposition.Unset.Add(unset);
-                                }
-                            }
-                        }
-
-                        cte.DataOwner = IdentifierFactory.ParsePGLN(jCTE["cbvmda:informationProvider"]?.Value<string>());
-                        cte.Owner = IdentifierFactory.ParsePGLN(jCTE["gdst:productOwner"]?.Value<string>());
-
-                        if (jCTE["readPoint"]?["id"] != null)
-                        {
-                            cte.ReadPoint = new TEEventReadPoint();
-                            cte.ReadPoint.ID = jCTE["readPoint"]["id"].Value<string>();
-                        }
-
-                        if (jCTE["bizLocation"]?["id"] != null)
-                        {
-                            cte.Location = new TEEventLocation();
-                            cte.Location.GLN = IdentifierFactory.ParseGLN(jCTE["bizLocation"]["id"].Value<string>());
-                        }
-
-                        if (jCTE["sourceList"] != null && jCTE["sourceList"] is JArray)
-                        {
-                            cte.SourceList = new List<ITEEventSource>();
-                            foreach (JObject jSource in jCTE["sourceList"])
-                            {
-                                TEEventSource source = new TEEventSource();
-                                source.RawType = jSource["type"].Value<string>();
-                                source.Value = jSource["source"].Value<string>();
-                                cte.SourceList.Add(source);
-                            }
-                        }
-
-                        if (jCTE["destinationList"] != null && jCTE["destinationList"] is JArray)
-                        {
-                            cte.DestinationList = new List<ITEEventDestination>();
-                            foreach (JObject jDestination in jCTE["destinationList"])
-                            {
-                                TEEventDestination dest = new TEEventDestination();
-                                dest.RawType = jDestination["type"].Value<string>();
-                                dest.Value = jDestination["destination"].Value<string>();
-                                cte.DestinationList.Add(dest);
-                            }
-                        }
-
-                        if (jCTE["bizTransactionList"] != null && jCTE["bizTransactionList"] is JArray)
-                        {
-                            cte.BusinessTransactions = new List<ITEEventBusinessTransaction>();
-                            foreach (JObject jBizTransaction in jCTE["bizTransactionList"])
-                            {
-                                TEEventBusinessTransaction bizTransaction = new TEEventBusinessTransaction();
-                                bizTransaction.RawType = jBizTransaction["type"].Value<string>();
-                                bizTransaction.Value = jBizTransaction["bizTransaction"].Value<string>();
-                                cte.BusinessTransactions.Add(bizTransaction);
-                            }
-                        }
-
-                        if (jCTE["errorDeclaration"] != null)
-                        {
-                            JObject jErrorDeclaration = jCTE["errorDeclaration"] as JObject;
-                            cte.ErrorDeclaration = new TEErrorDeclaration();
-                            cte.ErrorDeclaration.DeclarationTime = jErrorDeclaration.Value<DateTime>("declarationTime");
-                            cte.ErrorDeclaration.RawReason = jErrorDeclaration.Value<string>("reason");
-                            
-                            if (jErrorDeclaration["correctiveEventIDs"] != null && jErrorDeclaration["correctiveEventIDs"] is JArray)
-                            {
-                                cte.ErrorDeclaration.CorrectingEventIDs = new List<string>();
-                                JArray jCorrectiveIDs = jErrorDeclaration["correctiveEventIDs"] as JArray;
-                                foreach (JToken jID in jCorrectiveIDs)
-                                {
-                                    cte.ErrorDeclaration.CorrectingEventIDs.Add(jID.Value<string>());
-                                }
-                            }
-                        }
-
-                        // sensor report list
-                        cte.SensorElementList = new List<ITESensorElement>();
-                        if (jCTE["sensorElementList"] != null && jCTE["sensorElementList"] is JArray)
-                        {
-                            foreach (JObject jSensor in jCTE["sensorElementList"])
-                            {
-                                TESensorElement element = new TESensorElement();
-                                element.DeviceID = GetUri(jSensor["sensorMetadata"], "deviceID");
-                                element.DeviceMetaData = jSensor["sensorMetadata"]?.Value<string>("deviceMetaData");
-                                element.RawData = GetUri(jSensor["sensorMetadata"], "rawData");
-                                element.TimeStamp = jSensor["sensorMetadata"]?.Value<DateTime?>("time");
-                                element.Reports = new List<ITESensorReport>();
-                                if (jSensor["sensorReport"] != null && jSensor["sensorReport"] is JArray)
-                                {
-                                    foreach (JObject jReport in jSensor["sensorReport"])
+                                case "ObjectEvent":
                                     {
-                                        TESensorReport report = new TESensorReport();
-                                        report.Type = GetUri(jReport, "type");
-                                        report.TimeStamp = jReport["time"]?.Value<DateTime?>();
+                                        cte = new TEObjectEvent();
+                                        cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
+                                        break;
+                                    }
+                                case "TransactionEvent":
+                                    {
+                                        cte = new TETransactionEvent();
+                                        cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
+                                        break;
+                                    }
+                                case "TransformationEvent":
+                                    {
+                                        cte = new TETransformationEvent();
+                                        break;
+                                    }
+                                case "AggregationEvent":
+                                    {
+                                        cte = new TEAggregationEvent();
+                                        cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
+                                        break;
+                                    }
+                                case "AssociationEvent":
+                                    {
+                                        cte = new TEAssociationEvent();
+                                        cte.Action = (TEEventAction)Enum.Parse(typeof(TEEventAction), jCTE["action"].Value<string>());
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        throw new TEMappingException($"The eventType '{eventType}' is not recognized.");
+                                    }
+                            }
 
-                                        double value = jReport["value"]?.Value<double>() ?? 0;
-                                        string uom = jReport["uom"]?.Value<string>() ?? "";
-                                        report.Measurement = new TraceabilityEngine.Util.StaticData.TEMeasurement(value, uom);
-                                        element.Reports.Add(report);
+                            if (jCTE["eventID"] != null)
+                            {
+                                cte.EventID = jCTE["eventID"].Value<string>();
+                            }
+
+                            cte.EventTime = jCTE["eventTime"].Value<DateTime>();
+                            cte.EventTimeOffset = ConvertFromOffset(jCTE["eventTimeZoneOffset"]?.Value<string>() ?? "+00:00");
+                            cte.BusinessStep = jCTE["bizStep"]?.Value<string>();
+                            cte.Disposition = jCTE["disposition"]?.Value<string>();
+                            if (jCTE["persistentDisposition"] != null)
+                            {
+                                cte.PersistentDisposition = new TEPersistentDisposition();
+                                if (jCTE["persistentDisposition"]["set"] != null)
+                                {
+                                    cte.PersistentDisposition.Set = new List<string>();
+                                    foreach (JToken jT in jCTE["persistentDisposition"]["set"])
+                                    {
+                                        string set = jT.ToString();
+                                        cte.PersistentDisposition.Set.Add(set);
                                     }
                                 }
-                                cte.SensorElementList.Add(element);
+                                if (jCTE["persistentDisposition"]["unset"] != null)
+                                {
+                                    cte.PersistentDisposition.Unset = new List<string>();
+                                    foreach (JToken jT in jCTE["persistentDisposition"]["unset"])
+                                    {
+                                        string unset = jT.ToString();
+                                        cte.PersistentDisposition.Unset.Add(unset);
+                                    }
+                                }
                             }
-                        }
 
-                        // ilmd
-                        if (jCTE["ilmd"] != null)
-                        {
-                            cte.ILMD = new TEILMD();
-                            JObject jILMD = jCTE["ilmd"] as JObject;
+                            cte.DataOwner = IdentifierFactory.ParsePGLN(jCTE["cbvmda:informationProvider"]?.Value<string>());
+                            cte.Owner = IdentifierFactory.ParsePGLN(jCTE["gdst:productOwner"]?.Value<string>());
+
+                            if (jCTE["readPoint"]?["id"] != null)
+                            {
+                                cte.ReadPoint = new TEEventReadPoint();
+                                cte.ReadPoint.ID = jCTE["readPoint"]["id"].Value<string>();
+                            }
+
+                            if (jCTE["bizLocation"]?["id"] != null)
+                            {
+                                cte.Location = new TEEventLocation();
+                                cte.Location.GLN = IdentifierFactory.ParseGLN(jCTE["bizLocation"]["id"].Value<string>());
+                            }
+
+                            if (jCTE["sourceList"] != null && jCTE["sourceList"] is JArray)
+                            {
+                                cte.SourceList = new List<ITEEventSource>();
+                                foreach (JObject jSource in jCTE["sourceList"])
+                                {
+                                    TEEventSource source = new TEEventSource();
+                                    source.RawType = jSource["type"].Value<string>();
+                                    source.Value = jSource["source"].Value<string>();
+                                    cte.SourceList.Add(source);
+                                }
+                            }
+
+                            if (jCTE["destinationList"] != null && jCTE["destinationList"] is JArray)
+                            {
+                                cte.DestinationList = new List<ITEEventDestination>();
+                                foreach (JObject jDestination in jCTE["destinationList"])
+                                {
+                                    TEEventDestination dest = new TEEventDestination();
+                                    dest.RawType = jDestination["type"].Value<string>();
+                                    dest.Value = jDestination["destination"].Value<string>();
+                                    cte.DestinationList.Add(dest);
+                                }
+                            }
+
+                            if (jCTE["bizTransactionList"] != null && jCTE["bizTransactionList"] is JArray)
+                            {
+                                cte.BusinessTransactions = new List<ITEEventBusinessTransaction>();
+                                foreach (JObject jBizTransaction in jCTE["bizTransactionList"])
+                                {
+                                    TEEventBusinessTransaction bizTransaction = new TEEventBusinessTransaction();
+                                    bizTransaction.RawType = jBizTransaction["type"].Value<string>();
+                                    bizTransaction.Value = jBizTransaction["bizTransaction"].Value<string>();
+                                    cte.BusinessTransactions.Add(bizTransaction);
+                                }
+                            }
+
+                            if (jCTE["errorDeclaration"] != null)
+                            {
+                                JObject jErrorDeclaration = jCTE["errorDeclaration"] as JObject;
+                                cte.ErrorDeclaration = new TEErrorDeclaration();
+                                cte.ErrorDeclaration.DeclarationTime = jErrorDeclaration.Value<DateTime>("declarationTime");
+                                cte.ErrorDeclaration.RawReason = jErrorDeclaration.Value<string>("reason");
+
+                                if (jErrorDeclaration["correctiveEventIDs"] != null && jErrorDeclaration["correctiveEventIDs"] is JArray)
+                                {
+                                    cte.ErrorDeclaration.CorrectingEventIDs = new List<string>();
+                                    JArray jCorrectiveIDs = jErrorDeclaration["correctiveEventIDs"] as JArray;
+                                    foreach (JToken jID in jCorrectiveIDs)
+                                    {
+                                        cte.ErrorDeclaration.CorrectingEventIDs.Add(jID.Value<string>());
+                                    }
+                                }
+                            }
+
+                            // sensor report list
+                            cte.SensorElementList = new List<ITESensorElement>();
+                            if (jCTE["sensorElementList"] != null && jCTE["sensorElementList"] is JArray)
+                            {
+                                foreach (JObject jSensor in jCTE["sensorElementList"])
+                                {
+                                    TESensorElement element = new TESensorElement();
+                                    element.DeviceID = GetUri(jSensor["sensorMetadata"], "deviceID");
+                                    element.DeviceMetaData = jSensor["sensorMetadata"]?.Value<string>("deviceMetaData");
+                                    element.RawData = GetUri(jSensor["sensorMetadata"], "rawData");
+                                    element.TimeStamp = jSensor["sensorMetadata"]?.Value<DateTime?>("time");
+                                    element.Reports = new List<ITESensorReport>();
+                                    if (jSensor["sensorReport"] != null && jSensor["sensorReport"] is JArray)
+                                    {
+                                        foreach (JObject jReport in jSensor["sensorReport"])
+                                        {
+                                            TESensorReport report = new TESensorReport();
+                                            report.Type = GetUri(jReport, "type");
+                                            report.TimeStamp = jReport["time"]?.Value<DateTime?>();
+
+                                            double value = jReport["value"]?.Value<double>() ?? 0;
+                                            string uom = jReport["uom"]?.Value<string>() ?? "";
+                                            report.Measurement = new TraceabilityEngine.Util.StaticData.TEMeasurement(value, uom);
+                                            element.Reports.Add(report);
+                                        }
+                                    }
+                                    cte.SensorElementList.Add(element);
+                                }
+                            }
+
+                            // ilmd
+                            if (jCTE["ilmd"] != null)
+                            {
+                                cte.ILMD = new TEILMD();
+                                JObject jILMD = jCTE["ilmd"] as JObject;
+
+                                // kdes
+                                cte.ILMD.KDEs = new List<ITEEventKDE>();
+                                foreach (JProperty jProp in jILMD.Properties())
+                                {
+                                    string name = jProp.Name;
+                                    ITEEventKDE kde = ITEEventKDE.InitializeFromKey(name);
+                                    if (kde != null)
+                                    {
+                                        kde.JsonValue = jCTE[name];
+                                        cte.ILMD.KDEs.Add(kde);
+                                    }
+                                }
+                            }
+
+                            // certifications
+                            cte.Certificates = GetCertificates(jCTE, "gs1:certification");
+
+                            // attachments
+                            cte.Attachments = GetAttachments(jCTE, "gs1:referencedFile");
+
+                            // products
+                            if (jCTE["outputEPCList"] is JArray && cte is ITETransformationEvent)
+                            {
+                                ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
+                                foreach (JToken jEPC in jCTE["outputEPCList"])
+                                {
+                                    string epcStr = jEPC.Value<string>();
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from outputEPCList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Instance;
+                                    transformEvent.AddOutput(epc);
+                                }
+                            }
+
+                            if (jCTE["inputEPCList"] is JArray && cte is ITETransformationEvent)
+                            {
+                                ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
+                                foreach (JToken jEPC in jCTE["inputEPCList"])
+                                {
+                                    string epcStr = jEPC.Value<string>();
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from inputEPCList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Instance;
+                                    transformEvent.AddInput(epc);
+                                }
+                            }
+
+                            if (jCTE["epcList"] is JArray && cte is ITEObjectEvent)
+                            {
+                                ITEObjectEvent objEvent = (ITEObjectEvent)cte;
+                                foreach (JToken jEPC in jCTE["epcList"])
+                                {
+                                    string epcStr = jEPC.Value<string>();
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from epcList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Instance;
+                                    objEvent.AddProduct(epc);
+                                }
+                            }
+
+                            if (jCTE["epcList"] is JArray && cte is ITETransactionEvent)
+                            {
+                                ITETransactionEvent transactionEvent = (ITETransactionEvent)cte;
+                                foreach (JToken jEPC in jCTE["epcList"])
+                                {
+                                    string epcStr = jEPC.Value<string>();
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from epcList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Instance;
+                                    transactionEvent.AddProduct(epc);
+                                }
+                            }
+
+                            if (jCTE["childEPCs"] is JArray && cte is ITEAssociationEvent)
+                            {
+                                ITEAssociationEvent associationEvent = (ITEAssociationEvent)cte;
+                                foreach (JToken jEPC in jCTE["childEPCs"])
+                                {
+                                    string epcStr = jEPC.Value<string>();
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from childEPCs on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Instance;
+                                    associationEvent.AddChild(epc);
+                                }
+                            }
+
+                            if (jCTE["childEPCs"] is JArray && cte is ITEAggregationEvent)
+                            {
+                                ITEAggregationEvent aggEvent = (ITEAggregationEvent)cte;
+                                foreach (JToken jEPC in jCTE["childEPCs"])
+                                {
+                                    string epcStr = jEPC.Value<string>();
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from childEPCs on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Instance;
+                                    aggEvent.AddChild(epc);
+                                }
+                            }
+
+                            if (jCTE["outputQuantityList"] is JArray && cte is ITETransformationEvent)
+                            {
+                                ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
+                                foreach (JObject jQuantity in jCTE["outputQuantityList"])
+                                {
+                                    string epcStr = jQuantity.Value<string>("epcClass");
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from outputQuantityList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Class;
+                                    double quantity = jQuantity.Value<double>("quantity");
+                                    string uom = jQuantity.Value<string>("uom") ?? "EA";
+                                    transformEvent.AddOutput(epc, quantity, uom);
+                                }
+                            }
+
+                            if (jCTE["inputQuantityList"] is JArray && cte is ITETransformationEvent)
+                            {
+                                ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
+                                foreach (JObject jQuantity in jCTE["inputQuantityList"])
+                                {
+                                    string epcStr = jQuantity.Value<string>("epcClass");
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from inputQuantityList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Class;
+                                    double quantity = jQuantity.Value<double>("quantity");
+                                    string uom = jQuantity.Value<string>("uom") ?? "EA";
+                                    transformEvent.AddInput(epc, quantity, uom);
+                                }
+                            }
+
+                            if (jCTE["quantityList"] is JArray && cte is ITEObjectEvent)
+                            {
+                                ITEObjectEvent objEvent = (ITEObjectEvent)cte;
+                                foreach (JObject jQuantity in jCTE["quantityList"])
+                                {
+                                    string epcStr = jQuantity.Value<string>("epcClass");
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from quantityList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Class;
+                                    double quantity = jQuantity.Value<double>("quantity");
+                                    string uom = jQuantity.Value<string>("uom") ?? "EA";
+                                    objEvent.AddProduct(epc, quantity, uom);
+                                }
+                            }
+
+                            if (jCTE["quantityList"] is JArray && cte is ITETransactionEvent)
+                            {
+                                ITETransactionEvent transactionEvent = (ITETransactionEvent)cte;
+                                foreach (JObject jQuantity in jCTE["quantityList"])
+                                {
+                                    string epcStr = jQuantity.Value<string>("epcClass");
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from quantityList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Class;
+                                    double quantity = jQuantity.Value<double>("quantity");
+                                    string uom = jQuantity.Value<string>("uom") ?? "EA";
+                                    transactionEvent.AddProduct(epc, quantity, uom);
+                                }
+                            }
+
+                            if (jCTE["childQuantityList"] is JArray && cte is ITEAssociationEvent)
+                            {
+                                ITEAssociationEvent assEvent = (ITEAssociationEvent)cte;
+                                foreach (JObject jQuantity in jCTE["childQuantityList"])
+                                {
+                                    string epcStr = jQuantity.Value<string>("epcClass");
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from childQuantityList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Class;
+                                    double quantity = jQuantity.Value<double>("quantity");
+                                    string uom = jQuantity.Value<string>("uom") ?? "EA";
+                                    assEvent.AddChild(epc, quantity, uom);
+                                }
+                            }
+
+                            if (jCTE["childQuantityList"] is JArray && cte is ITEAggregationEvent)
+                            {
+                                ITEAggregationEvent aggEvent = (ITEAggregationEvent)cte;
+                                foreach (JObject jQuantity in jCTE["childQuantityList"])
+                                {
+                                    string epcStr = jQuantity.Value<string>("epcClass");
+                                    if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
+                                    {
+                                        throw new TEMappingException($"Failed to parse EPC {epcStr} from childQuantityList on event {cte.EventID}.");
+                                    }
+                                    epc.Type = EPCType.Class;
+                                    double quantity = jQuantity.Value<double>("quantity");
+                                    string uom = jQuantity.Value<string>("uom") ?? "EA";
+                                    aggEvent.AddChild(epc, quantity, uom);
+                                }
+                            }
+
+                            if (jCTE["parentID"] != null)
+                            {
+                                string parentID = jCTE.Value<string>("parentID");
+                                if (!EPC.TryParse(parentID, out IEPC epc, out string error))
+                                {
+                                    throw new TEMappingException($"Failed to parse Parent ID {parentID} from parentID on event {cte.EventID}.");
+                                }
+                                if (cte is ITEAssociationEvent)
+                                {
+                                    (cte as ITEAssociationEvent).ParentID = epc;
+                                }
+                                else if (cte is ITEAggregationEvent)
+                                {
+                                    (cte as ITEAggregationEvent).ParentID = epc;
+                                }
+                            }
 
                             // kdes
-                            cte.ILMD.KDEs = new List<ITEEventKDE>();
-                            foreach (JProperty jProp in jILMD.Properties())
+                            foreach (JProperty jProp in jCTE.Properties())
                             {
                                 string name = jProp.Name;
                                 ITEEventKDE kde = ITEEventKDE.InitializeFromKey(name);
                                 if (kde != null)
                                 {
                                     kde.JsonValue = jCTE[name];
-                                    cte.ILMD.KDEs.Add(kde);
+                                    cte.KDEs.Add(kde);
                                 }
                             }
+
+                            data.Events.Add(cte);
                         }
-
-                        // certifications
-                        cte.Certificates = GetCertificates(jCTE, "gs1:certification");
-
-                        // attachments
-                        cte.Attachments = GetAttachments(jCTE, "gs1:referencedFile");
-
-                        // products
-                        if (jCTE["outputEPCList"] is JArray && cte is ITETransformationEvent)
-                        {
-                            ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
-                            foreach (JToken jEPC in jCTE["outputEPCList"])
-                            {
-                                string epcStr = jEPC.Value<string>();
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from outputEPCList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Instance;
-                                transformEvent.AddOutput(epc);
-                            }
-                        }
-
-                        if (jCTE["inputEPCList"] is JArray && cte is ITETransformationEvent)
-                        {
-                            ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
-                            foreach (JToken jEPC in jCTE["inputEPCList"])
-                            {
-                                string epcStr = jEPC.Value<string>();
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from inputEPCList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Instance;
-                                transformEvent.AddInput(epc);
-                            }
-                        }
-
-                        if (jCTE["epcList"] is JArray && cte is ITEObjectEvent)
-                        {
-                            ITEObjectEvent objEvent = (ITEObjectEvent)cte;
-                            foreach (JToken jEPC in jCTE["epcList"])
-                            {
-                                string epcStr = jEPC.Value<string>();
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from epcList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Instance;
-                                objEvent.AddProduct(epc);
-                            }
-                        }
-
-                        if (jCTE["epcList"] is JArray && cte is ITETransactionEvent)
-                        {
-                            ITETransactionEvent transactionEvent = (ITETransactionEvent)cte;
-                            foreach (JToken jEPC in jCTE["epcList"])
-                            {
-                                string epcStr = jEPC.Value<string>();
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from epcList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Instance;
-                                transactionEvent.AddProduct(epc);
-                            }
-                        }
-
-                        if (jCTE["childEPCs"] is JArray && cte is ITEAssociationEvent)
-                        {
-                            ITEAssociationEvent associationEvent = (ITEAssociationEvent)cte;
-                            foreach (JToken jEPC in jCTE["childEPCs"])
-                            {
-                                string epcStr = jEPC.Value<string>();
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from childEPCs on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Instance;
-                                associationEvent.AddChild(epc);
-                            }
-                        }
-
-                        if (jCTE["childEPCs"] is JArray && cte is ITEAggregationEvent)
-                        {
-                            ITEAggregationEvent aggEvent = (ITEAggregationEvent)cte;
-                            foreach (JToken jEPC in jCTE["childEPCs"])
-                            {
-                                string epcStr = jEPC.Value<string>();
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from childEPCs on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Instance;
-                                aggEvent.AddChild(epc);
-                            }
-                        }
-
-                        if (jCTE["outputQuantityList"] is JArray && cte is ITETransformationEvent)
-                        {
-                            ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
-                            foreach (JObject jQuantity in jCTE["outputQuantityList"])
-                            {
-                                string epcStr = jQuantity.Value<string>("epcClass");
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from outputQuantityList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Class;
-                                double quantity = jQuantity.Value<double>("quantity");
-                                string uom = jQuantity.Value<string>("uom") ?? "EA";
-                                transformEvent.AddOutput(epc, quantity, uom);
-                            }
-                        }
-
-                        if (jCTE["inputQuantityList"] is JArray && cte is ITETransformationEvent)
-                        {
-                            ITETransformationEvent transformEvent = (ITETransformationEvent)cte;
-                            foreach (JObject jQuantity in jCTE["inputQuantityList"])
-                            {
-                                string epcStr = jQuantity.Value<string>("epcClass");
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from inputQuantityList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Class;
-                                double quantity = jQuantity.Value<double>("quantity");
-                                string uom = jQuantity.Value<string>("uom") ?? "EA";
-                                transformEvent.AddInput(epc, quantity, uom);
-                            }
-                        }
-
-                        if (jCTE["quantityList"] is JArray && cte is ITEObjectEvent)
-                        {
-                            ITEObjectEvent objEvent = (ITEObjectEvent)cte;
-                            foreach (JObject jQuantity in jCTE["quantityList"])
-                            {
-                                string epcStr = jQuantity.Value<string>("epcClass");
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from quantityList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Class;
-                                double quantity = jQuantity.Value<double>("quantity");
-                                string uom = jQuantity.Value<string>("uom") ?? "EA";
-                                objEvent.AddProduct(epc, quantity, uom);
-                            }
-                        }
-                        
-                        if (jCTE["quantityList"] is JArray && cte is ITETransactionEvent)
-                        {
-                            ITETransactionEvent transactionEvent = (ITETransactionEvent)cte;
-                            foreach (JObject jQuantity in jCTE["quantityList"])
-                            {
-                                string epcStr = jQuantity.Value<string>("epcClass");
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from quantityList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Class;
-                                double quantity = jQuantity.Value<double>("quantity");
-                                string uom = jQuantity.Value<string>("uom") ?? "EA";
-                                transactionEvent.AddProduct(epc, quantity, uom);
-                            }
-                        }
-
-                        if (jCTE["childQuantityList"] is JArray && cte is ITEAssociationEvent)
-                        {
-                            ITEAssociationEvent assEvent = (ITEAssociationEvent)cte;
-                            foreach (JObject jQuantity in jCTE["childQuantityList"])
-                            {
-                                string epcStr = jQuantity.Value<string>("epcClass");
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from childQuantityList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Class;
-                                double quantity = jQuantity.Value<double>("quantity");
-                                string uom = jQuantity.Value<string>("uom") ?? "EA";
-                                assEvent.AddChild(epc, quantity, uom);
-                            }
-                        }
-
-                        if (jCTE["childQuantityList"] is JArray && cte is ITEAggregationEvent)
-                        {
-                            ITEAggregationEvent aggEvent = (ITEAggregationEvent)cte;
-                            foreach (JObject jQuantity in jCTE["childQuantityList"])
-                            {
-                                string epcStr = jQuantity.Value<string>("epcClass");
-                                if (!EPC.TryParse(epcStr, out IEPC epc, out string error))
-                                {
-                                    throw new TEMappingException($"Failed to parse EPC {epcStr} from childQuantityList on event {cte.EventID}.");
-                                }
-                                epc.Type = EPCType.Class;
-                                double quantity = jQuantity.Value<double>("quantity");
-                                string uom = jQuantity.Value<string>("uom") ?? "EA";
-                                aggEvent.AddChild(epc, quantity, uom);
-                            }
-                        }
-
-                        if (jCTE["parentID"] != null)
-                        {
-                            string parentID = jCTE.Value<string>("parentID");
-                            if (!EPC.TryParse(parentID, out IEPC epc, out string error))
-                            {
-                                throw new TEMappingException($"Failed to parse Parent ID {parentID} from parentID on event {cte.EventID}.");
-                            }
-                            if (cte is ITEAssociationEvent)
-                            {
-                                (cte as ITEAssociationEvent).ParentID = epc;
-                            }
-                            else if (cte is ITEAggregationEvent)
-                            {
-                                (cte as ITEAggregationEvent).ParentID = epc;
-                            }
-                        }
-
-                        // kdes
-                        foreach (JProperty jProp in jCTE.Properties())
-                        {
-                            string name = jProp.Name;
-                            ITEEventKDE kde = ITEEventKDE.InitializeFromKey(name);
-                            if (kde != null)
-                            {
-                                kde.JsonValue = jCTE[name];
-                                cte.KDEs.Add(kde);
-                            }
-                        }
-
-                        ctes.Add(cte);
                     }
                 }
-            }
 
-            return ctes;
+                return data;
+            }
+            catch (Exception Ex)
+            {
+                TELogger.Log(0, Ex);
+                throw;
+            }
         }
 
         /// <summary>

@@ -9,7 +9,7 @@ using TraceabilityEngine.Mappers;
 
 namespace TEMappers.GS1.WebVocab
 {
-    public class EventWebVocabMapper : GS1WebVocabMapper, ITEEventMapper
+    public class EventWebVocabMapper : GS1WebVocabMapper, ITEEPCISMapper
     {
         public string ConvertFromEvents(List<ITEEvent> ctes, Dictionary<string, string> cbvMappings = null)
         {

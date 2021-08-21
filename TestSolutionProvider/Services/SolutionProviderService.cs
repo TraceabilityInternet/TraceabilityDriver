@@ -62,7 +62,7 @@ namespace TestSolutionProvider.Services
         public async Task<List<ITEEvent>> GetEventsAsync()
         {
             string dataStr = await GetData("events");
-            var events = this.Mapper.MapToGS1Events(dataStr);
+            var events = this.Mapper.WriteEPCISData(dataStr);
             return events;
         }
 
@@ -127,7 +127,7 @@ namespace TestSolutionProvider.Services
                 await SaveData(localFormat, "event");
 
                 // now we are going to request the GTINs
-                List<ITEEvent> events = Mapper.MapToGS1Events(localFormat);
+                List<ITEEvent> events = Mapper.WriteEPCISData(localFormat);
                 foreach (var cte in events)
                 {
                     // request the gtins

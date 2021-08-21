@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TraceabilityEngine.Interfaces.Models;
 using TraceabilityEngine.Interfaces.Models.Events;
 using TraceabilityEngine.Interfaces.Models.Locations;
 using TraceabilityEngine.Interfaces.Models.Products;
@@ -12,8 +13,8 @@ namespace TraceabilityEngine.Interfaces.Driver
 {
     public interface ITETraceabilityMapper
     {
-        string MapToLocalEvents(List<ITEEvent> gs1Events);
-        List<ITEEvent> MapToGS1Events(string localEvents);
+        string ReadEPCISData(ITETraceabilityData data);
+        ITETraceabilityData WriteEPCISData(string localEvents);
 
         string MapToLocalTradeItems(List<ITEProduct> products);
         List<ITEProduct> MapToGS1TradeItems(string localTradeItems);

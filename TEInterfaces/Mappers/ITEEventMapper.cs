@@ -2,12 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TraceabilityEngine.Interfaces.Models;
 
 namespace TraceabilityEngine.Interfaces.Mappers
 {
-    public interface ITEEventMapper
+    public interface ITEEPCISMapper
     {
-        string ConvertFromEvents(List<ITEEvent> ctes, Dictionary<string, string> cbvMappings = null);
-        List<ITEEvent> ConvertToEvents(string value);
+        string WriteEPCISData(ITETraceabilityData data, Dictionary<string, string> cbvMappings = null);
+        ITETraceabilityData ReadEPCISData(string value);
     }
 }

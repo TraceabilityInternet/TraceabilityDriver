@@ -338,12 +338,34 @@ namespace UnitTests.Mappers
         [TestMethod]
         public void JSON_2_0()
         {
-            ITEEventMapper mapper = new EPCISJsonMapper_2_0();
+            ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
             foreach (ITEEvent cte in events)
             {
                 List<ITEEvent> eventsBefore = new List<ITEEvent>() { cte };
                 string jsonStr = mapper.ConvertFromEvents(eventsBefore, new Dictionary<string, string>());
-                List<ITEEvent> eventsAfter = mapper.ConvertToEvents(jsonStr);
+                List<ITEEvent> eventsAfter = mapper.ReadEPCISData(jsonStr);
+                string jsonBefore = JArray.Parse(JsonConvert.SerializeObject(eventsBefore)).ToString(Formatting.Indented);
+                string jsonAfter = JArray.Parse(JsonConvert.SerializeObject(eventsAfter)).ToString(Formatting.Indented);
+                if (Debugger.IsAttached)
+                {
+                    if (jsonBefore != jsonAfter)
+                    {
+                        Debugger.Break();
+                    }
+                }
+                Assert.AreEqual(jsonBefore, jsonAfter, "Failed to serialize / deserialize to and from the EPCIS 2.0 JSON format.");
+            }
+        }
+
+        [TestMethod]
+        public void XML_2_0()
+        {
+            ITEEPCISMapper mapper = new EPCISXmlMapper_2_0();
+            foreach (ITEEvent cte in events)
+            {
+                List<ITEEvent> eventsBefore = new List<ITEEvent>() { cte };
+                string jsonStr = mapper.ConvertFromEvents(eventsBefore, new Dictionary<string, string>());
+                List<ITEEvent> eventsAfter = mapper.ReadEPCISData(jsonStr);
                 string jsonBefore = JArray.Parse(JsonConvert.SerializeObject(eventsBefore)).ToString(Formatting.Indented);
                 string jsonAfter = JArray.Parse(JsonConvert.SerializeObject(eventsAfter)).ToString(Formatting.Indented);
                 if (Debugger.IsAttached)

@@ -143,11 +143,11 @@ namespace UnitTests.Util
             ITETraceabilityMapper driver = TraceabilityDriverServiceFactory.LoadMapper(dll, className);
             Assert.IsNotNull(driver);
 
-            ITEEventMapper mapper = new EPCISJsonMapper_2_0();
+            ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
 
             List<ITEEvent> events = GetEvents();
             string xml = driver.MapToLocalEvents(events);
-            List<ITEEvent> eventsAfter = driver.MapToGS1Events(xml);
+            List<ITEEvent> eventsAfter = driver.WriteEPCISData(xml);
 
             string gs1Json = mapper.ConvertFromEvents(events);
             string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);
@@ -285,11 +285,11 @@ namespace UnitTests.Util
             ITETraceabilityMapper driver = new JsonTestDriver();
             Assert.IsNotNull(driver);
 
-            ITEEventMapper mapper = new EPCISJsonMapper_2_0();
+            ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
 
             List<ITEEvent> events = GetEvents();
             string json = driver.MapToLocalEvents(events);
-            List<ITEEvent> eventsAfter = driver.MapToGS1Events(json);
+            List<ITEEvent> eventsAfter = driver.WriteEPCISData(json);
 
             string gs1Json = mapper.ConvertFromEvents(events);
             string gs1JsonAfter = mapper.ConvertFromEvents(eventsAfter);

@@ -18,7 +18,7 @@ namespace TestDriver
 {
     public class JsonTestDriver : ITETraceabilityMapper
     {
-        public List<ITEEvent> MapToGS1Events(string localEvents)
+        public List<ITEEvent> WriteEPCISData(string localEvents)
         {
             List<ITEEvent> events = new List<ITEEvent>();
             try

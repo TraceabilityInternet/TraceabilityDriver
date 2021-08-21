@@ -13,8 +13,10 @@ using TraceabilityDriverService.Models;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
+using TraceabilityEngine.Interfaces.Models;
 using TraceabilityEngine.Interfaces.Models.Events;
 using TraceabilityEngine.Mappers.EPCIS;
+using TraceabilityEngine.Models;
 using TraceabilityEngine.Util;
 using TraceabilityEngine.Util.Interfaces;
 using TraceabilityEngine.Util.ObjectPooling;
@@ -42,7 +44,7 @@ namespace TraceabilityDriverService.Controllers
         {
             try
             {
-                List<ITEEvent> events = new List<ITEEvent>();
+                ITETraceabilityData data = new TETraceabilityData();
 
                 using (ITEDriverDB driverDB = _configuration.GetDB())
                 {
@@ -78,8 +80,8 @@ namespace TraceabilityDriverService.Controllers
                                 // into the common data model and add those events to the list of events that we will return.
                                 var response = await client.GetAsync(url);
                                 string localData = await response.Content.ReadAsStringAsync();
-                                List<ITEEvent> theseEvents = _configuration.Mapper.MapToGS1Events(localData);
-                                events.AddRange(theseEvents);
+                                ITETraceabilityData this_data = _configuration.Mapper.WriteEPCISData(localData);
+                                data.Merge(this_data);
                             }
                         }
                     }
@@ -91,8 +93,8 @@ namespace TraceabilityDriverService.Controllers
 
                 // take the events that we have collected and map them from the common data model into the EPCIS 2.0 JSON format
                 // and return that data format.
-                ITEEventMapper mapper = new EPCISJsonMapper_2_0();
-                string gs1Events = mapper.ConvertFromEvents(events);
+                ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
+                string gs1Events = mapper.WriteEPCISData(data);
                 return new OkObjectResult(gs1Events);
             }
             catch (Exception Ex)

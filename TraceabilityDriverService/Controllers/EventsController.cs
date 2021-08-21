@@ -16,6 +16,7 @@ using TraceabilityDriverService.Models;
 using TraceabilityDriverService.Services.Interfaces;
 using TraceabilityEngine.Interfaces.Driver;
 using TraceabilityEngine.Interfaces.Mappers;
+using TraceabilityEngine.Interfaces.Models;
 using TraceabilityEngine.Interfaces.Models.DigitalLink;
 using TraceabilityEngine.Interfaces.Models.Events;
 using TraceabilityEngine.Interfaces.Models.Identifiers;
@@ -110,9 +111,9 @@ namespace TraceabilityDriverService.Controllers
                             string gs1Format = await response2.Content.ReadAsStringAsync();
 
                             // convert the events from the EPCIS format to the local format
-                            ITEEventMapper mapper = new EPCISJsonMapper_2_0();
-                            List<ITEEvent> events = mapper.ConvertToEvents(gs1Format);
-                            string localFormat = _configuration.Mapper.MapToLocalEvents(events);
+                            ITEEPCISMapper mapper = new EPCISJsonMapper_2_0();
+                            ITETraceabilityData data = mapper.ReadEPCISData(gs1Format);
+                            string localFormat = _configuration.Mapper.ReadEPCISData(data);
                             return localFormat;
                         }
                         else
