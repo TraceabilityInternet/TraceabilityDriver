@@ -19,7 +19,7 @@ using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services
 {
-    public class MongoDBService
+    public class MongoDBService : IMongoDBService
     {
         private readonly IMongoCollection<EPCISEventDocument> _eventsCollection;
         private readonly IMongoCollection<MasterDataDocument> _masterDataCollection;
@@ -30,10 +30,10 @@ namespace TraceabilityDriver.Services
         {
             var mongoClient = new MongoClient(configuration["MongoDB:ConnectionString"]);
             var database = mongoClient.GetDatabase(configuration["MongoDB:DatabaseName"]);
-            
+
             _eventsCollection = database.GetCollection<EPCISEventDocument>(configuration["MongoDB:EventsCollectionName"]);
             _masterDataCollection = database.GetCollection<MasterDataDocument>(configuration["MongoDB:MasterDataCollectionName"]);
-            
+
             _jsonMapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
             _xmlMapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
 
@@ -53,10 +53,11 @@ namespace TraceabilityDriver.Services
             // Store events
             foreach (var evt in events)
             {
-                var eventJson = Newtonsoft.Json.JsonConvert.SerializeObject(evt, new JsonSerializerSettings() {
+                var eventJson = Newtonsoft.Json.JsonConvert.SerializeObject(evt, new JsonSerializerSettings()
+                {
                     TypeNameHandling = TypeNameHandling.All
                 });
-                
+
                 var eventDoc = new EPCISEventDocument
                 {
                     EventId = evt.EventID.ToString(),
@@ -82,13 +83,13 @@ namespace TraceabilityDriver.Services
                         eventDoc.PartyPGLNs.Add(gdstEvent.InformationProvider.ToString());
                     }
                 }
-                
+
                 // Add source and destination PGLNs/GLNs
                 foreach (var source in evt.SourceList)
                 {
                     if (!string.IsNullOrWhiteSpace(source.Value))
                     {
-                        if (source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor || 
+                        if (source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor ||
                             source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Owner)
                         {
                             eventDoc.PartyPGLNs.Add(source.Value);
@@ -99,12 +100,12 @@ namespace TraceabilityDriver.Services
                         }
                     }
                 }
-                
+
                 foreach (var dest in evt.DestinationList)
                 {
                     if (!string.IsNullOrWhiteSpace(dest.Value))
                     {
-                        if (dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor || 
+                        if (dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor ||
                             dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Owner)
                         {
                             eventDoc.PartyPGLNs.Add(dest.Value);
@@ -115,12 +116,12 @@ namespace TraceabilityDriver.Services
                         }
                     }
                 }
-                
+
                 // Check if event with this ID already exists
                 var filterBuilder = Builders<EPCISEventDocument>.Filter;
                 var filter = filterBuilder.Eq(e => e.EventId, evt.EventID.ToString());
                 var existingEvent = await _eventsCollection.Find(filter).FirstOrDefaultAsync();
-                
+
                 if (existingEvent == null)
                 {
                     // Insert new event
@@ -130,7 +131,7 @@ namespace TraceabilityDriver.Services
                 {
                     // Preserve the _id field from the existing document
                     eventDoc.Id = existingEvent.Id;
-                    
+
                     // Replace existing event
                     await _eventsCollection.ReplaceOneAsync(filter, eventDoc);
                 }
@@ -142,10 +143,11 @@ namespace TraceabilityDriver.Services
             // Store master data
             foreach (var element in masterData)
             {
-                var elementJson = Newtonsoft.Json.JsonConvert.SerializeObject(element, new JsonSerializerSettings() {
+                var elementJson = Newtonsoft.Json.JsonConvert.SerializeObject(element, new JsonSerializerSettings()
+                {
                     TypeNameHandling = TypeNameHandling.All
                 });
-                
+
                 var masterDataDoc = new MasterDataDocument
                 {
                     ElementId = element.ID,
@@ -157,7 +159,7 @@ namespace TraceabilityDriver.Services
                 var filterBuilder = Builders<MasterDataDocument>.Filter;
                 var filter = filterBuilder.Eq(m => m.ElementId, element.ID);
                 var existingMasterData = await _masterDataCollection.Find(filter).FirstOrDefaultAsync();
-                
+
                 if (existingMasterData == null)
                 {
                     // Insert new master data
@@ -167,7 +169,7 @@ namespace TraceabilityDriver.Services
                 {
                     // Preserve the _id field from the existing document
                     masterDataDoc.Id = existingMasterData.Id;
-                    
+
                     // Replace existing master data
                     await _masterDataCollection.ReplaceOneAsync(filter, masterDataDoc);
                 }
@@ -183,7 +185,7 @@ namespace TraceabilityDriver.Services
             if (options.query.MATCH_anyEPC.Count > 0)
             {
                 var epcFilters = new List<FilterDefinition<EPCISEventDocument>>();
-                
+
                 foreach (var epc in options.query.MATCH_anyEPC)
                 {
                     if (epc.EndsWith('*'))
@@ -196,7 +198,7 @@ namespace TraceabilityDriver.Services
                         epcFilters.Add(filterBuilder.AnyEq(e => e.EPCs, epc));
                     }
                 }
-                
+
                 filter = filter & filterBuilder.Or(epcFilters);
             }
 
@@ -205,7 +207,7 @@ namespace TraceabilityDriver.Services
             {
                 filter = filter & filterBuilder.Gte(e => e.EventTime, options.query.GE_eventTime.Value);
             }
-            
+
             if (options.query.LE_eventTime.HasValue)
             {
                 filter = filter & filterBuilder.Lt(e => e.EventTime, options.query.LE_eventTime.Value);
@@ -217,7 +219,7 @@ namespace TraceabilityDriver.Services
                 filter = filter & filterBuilder.Gte(e => e.RecordTime, options.query.GE_recordTime.Value);
             }
 
-            if (options.query.LE_recordTime.HasValue)   
+            if (options.query.LE_recordTime.HasValue)
             {
                 filter = filter & filterBuilder.Lt(e => e.RecordTime, options.query.LE_recordTime.Value);
             }
@@ -225,7 +227,7 @@ namespace TraceabilityDriver.Services
             // Add bizStep filters
             if (options.query.EQ_bizStep?.Count > 0)
             {
-                var eventTypeFilters = options.query.EQ_bizStep.Select(et => 
+                var eventTypeFilters = options.query.EQ_bizStep.Select(et =>
                     filterBuilder.Eq(e => e.BizStep, et.ToString())).ToList();
                 filter = filter & filterBuilder.Or(eventTypeFilters);
             }
@@ -233,7 +235,7 @@ namespace TraceabilityDriver.Services
             // Add action filters
             if (options.query.EQ_action?.Count > 0)
             {
-                var actionFilters = options.query.EQ_action.Select(a => 
+                var actionFilters = options.query.EQ_action.Select(a =>
                     filterBuilder.Eq(e => e.Action, a.ToString())).ToList();
                 filter = filter & filterBuilder.Or(actionFilters);
             }
@@ -241,18 +243,18 @@ namespace TraceabilityDriver.Services
             // Add location filters
             if (options.query.EQ_bizLocation.Count > 0)
             {
-                var locationFilters = options.query.EQ_bizLocation.Select(loc => 
+                var locationFilters = options.query.EQ_bizLocation.Select(loc =>
                     filterBuilder.AnyEq(e => e.LocationGLNs, loc.ToString())).ToList();
                 filter = filter & filterBuilder.Or(locationFilters);
             }
 
             // Execute query
             var eventDocs = await _eventsCollection.Find(filter).ToListAsync();
-            
+
             // Convert results back to EPCIS events
             var result = new EPCISQueryDocument();
             result.Events = new List<IEvent>();
-            
+
             foreach (var doc in eventDocs)
             {
                 var evt = Newtonsoft.Json.JsonConvert.DeserializeObject<IEvent>(doc.EventJson, new JsonSerializerSettings
@@ -301,9 +303,9 @@ namespace TraceabilityDriver.Services
                 new CreateIndexModel<EPCISEventDocument>(
                     Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.Action))
             };
-            
+
             await _eventsCollection.Indexes.CreateManyAsync(eventIndexes);
-            
+
             // Create index for master data collection
             await _masterDataCollection.Indexes.CreateOneAsync(
                 new CreateIndexModel<MasterDataDocument>(

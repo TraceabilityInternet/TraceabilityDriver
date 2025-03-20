@@ -16,7 +16,7 @@ public class TDEventMapping
     /// <summary>
     /// The JSON object to map.
     /// </summary>
-    public JObject JSON { get; set; } = new JObject();
+    public JObject JSON { get; set; } = [];
 
     /// <summary>
     /// Generates the fields from the JSON object.

@@ -139,11 +139,11 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             dataTable.Rows.Add(1, "Event1");
 
             _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
-            _mockEventsTableMappingService.Setup(m => m.MapEvents(selector.EventMapping, It.Is<DataTable>(d => d.Rows.Count > 0)))
+            _mockEventsTableMappingService.Setup(m => m.MapEvents(selector.EventMapping, It.Is<DataTable>(d => d.Rows.Count > 0), It.IsAny<CancellationToken>()))
                 .Returns(new List<CommonEvent> { new CommonEvent { EventId = "123", EventType = "Fishing" } });
 
             // Act
-            var events = await _connector.GetEventsAsync(selector);
+            var events = await _connector.GetEventsAsync(selector, CancellationToken.None);
 
             // Assert
             Assert.That(events, Is.Not.Null);
@@ -165,7 +165,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
 
             // Act & Assert
-            Assert.ThrowsAsync<Exception>(() => _connector.GetEventsAsync(selector));
+            Assert.ThrowsAsync<Exception>(() => _connector.GetEventsAsync(selector, CancellationToken.None));
         }
     }
 }

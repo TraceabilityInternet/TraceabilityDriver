@@ -5,6 +5,6 @@ namespace TraceabilityDriver.Services
 {
     public interface IEventsTableMappingService
     {
-        List<CommonEvent> MapEvents(TDEventMapping eventMapping, DataTable dataTable);
+        List<CommonEvent> MapEvents(TDEventMapping eventMapping, DataTable dataTable, CancellationToken cancellationToken);
     }
 }

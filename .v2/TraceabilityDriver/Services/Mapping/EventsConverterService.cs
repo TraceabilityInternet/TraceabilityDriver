@@ -21,7 +21,7 @@ public class EventsConverterService : IEventsConverterService
     /// <summary>
     /// Converts the common events to EPCIS events.
     /// </summary>
-    public async Task<EPCISDocument> ConvertEventsAsync(List<CommonEvent> events)
+    public Task<EPCISDocument> ConvertEventsAsync(List<CommonEvent> events)
     {
         EPCISDocument doc = new EPCISDocument();
 
@@ -39,7 +39,7 @@ public class EventsConverterService : IEventsConverterService
             }
         }
 
-        return doc;
+        return Task.FromResult(doc);
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class EventsConverterService : IEventsConverterService
     {
         GDSTFishingEvent epcisEvent = new GDSTFishingEvent
         {
-            
+
         };
 
         doc.Events.Add(epcisEvent);

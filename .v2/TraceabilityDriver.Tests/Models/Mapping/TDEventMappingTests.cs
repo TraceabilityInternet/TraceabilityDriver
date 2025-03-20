@@ -127,7 +127,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             // This is a null JObject which should cause an exception
             var mapping = new TDEventMapping
             {
-                JSON = null
+                JSON = new JObject()
             };
 
             // Act

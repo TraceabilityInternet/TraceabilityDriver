@@ -1,24 +1,25 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Threading;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services.Connectors;
 
 namespace TraceabilityDriver.Services;
 
-public class SynchronizeService : IHostedService
+public class SynchronizeService : IHostedService, ISynchronizeService
 {
     private readonly ILogger<SynchronizeService> _logger;
     private readonly ITDConnectorFactory _connectorFactory;
     private readonly IEventsMergerService _eventsMergerService;
-    private readonly EventsConverterService _eventsConverterService;
-    private readonly MongoDBService _mongoDBService;
+    private readonly IEventsConverterService _eventsConverterService;
+    private readonly IMongoDBService _mongoDBService;
 
     public SynchronizeService(
         ILogger<SynchronizeService> logger,
         ITDConnectorFactory connectorFactory,
         IEventsMergerService eventsMergerService,
-        EventsConverterService eventsConverterService,
-        MongoDBService mongoDBService)
+        IEventsConverterService eventsConverterService,
+        IMongoDBService mongoDBService)
     {
         _logger = logger;
         _connectorFactory = connectorFactory;
@@ -29,6 +30,16 @@ public class SynchronizeService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        // Start task that repeats until the cancellation token is called.
+        Task.Run(async () =>
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await SynchronizeAsync(cancellationToken);
+                await Task.Delay(60000, cancellationToken);
+            }
+        }, cancellationToken);
+
         return Task.CompletedTask;
     }
 
@@ -40,7 +51,7 @@ public class SynchronizeService : IHostedService
     /// <summary>
     /// Synchronizes the data from the database to the event store.
     /// </summary>
-    private async Task SynchronizeAsync()
+    public async Task SynchronizeAsync(CancellationToken cancellationToken)
     {
         /// TODO: Implement the logic to synchronize the data from the database to the event store.
         _logger.LogInformation("Synchronizing data from the database(s) to the event store.");
@@ -72,7 +83,7 @@ public class SynchronizeService : IHostedService
                 }
 
                 /// Process the mappings.
-                await ProcessMappingsAsync(mappingFile, mapping);
+                await ProcessMappingsAsync(mappingFile, mapping, cancellationToken);
 
                 _logger.LogInformation("Successfully processed the mapping file: {MappingFile}", mappingFile);
             }
@@ -83,28 +94,49 @@ public class SynchronizeService : IHostedService
         }
     }
 
-    internal async Task ProcessMappingsAsync(string mappingFile, TDMappingConfiguration mapping)
+    /// <summary>
+    /// Processes mappings defined in a configuration, handling events and storing them in a database.
+    /// </summary>
+    /// <param name="mappingFile">Specifies the file containing the mapping configurations to be processed.</param>
+    /// <param name="mapping">Contains the configuration details for the mappings, including selectors and connections.</param>
+    /// <returns>This method does not return a value.</returns>
+    public async Task ProcessMappingsAsync(string mappingFile, TDMappingConfiguration mapping, CancellationToken cancellationToken)
     {
         foreach (var map in mapping.Mappings)
         {
+            /// Check for cancellation.
+            if (cancellationToken.IsCancellationRequested) return;
+
             try
             {
                 List<CommonEvent> events = new List<CommonEvent>();
 
                 foreach (var selector in map.Selectors)
                 {
+                    /// Check for cancellation.
+                    if (cancellationToken.IsCancellationRequested) return;
+
                     /// Create the connector.
                     var connector = _connectorFactory.CreateConnector(mapping.Connections[selector.Database]);
 
                     /// Get the events.
-                    events.AddRange(await connector.GetEventsAsync(selector));
+                    events.AddRange(await connector.GetEventsAsync(selector, cancellationToken));
                 }
+
+                /// Check for cancellation.
+                if (cancellationToken.IsCancellationRequested) return;
 
                 /// Merge the events.
                 var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
 
+                /// Check for cancellation.
+                if (cancellationToken.IsCancellationRequested) return;
+
                 /// Convert the events.
                 var epcisDoc = await _eventsConverterService.ConvertEventsAsync(mergedEvents);
+
+                /// Check for cancellation.
+                if (cancellationToken.IsCancellationRequested) return;
 
                 /// Save the events.
                 await _mongoDBService.StoreEventsAsync(epcisDoc.Events);
@@ -121,7 +153,13 @@ public class SynchronizeService : IHostedService
         }
     }
 
-    internal bool VerifyMapping(string mappingFile, TDMappingConfiguration mapping)
+    /// <summary>
+    /// Verifies that the mapping is valid.
+    /// </summary>
+    /// <param name="mappingFile">The mapping configuration file.</param>
+    /// <param name="mapping">The mapping file path.</param>
+    /// <returns></returns>
+    public bool VerifyMapping(string mappingFile, TDMappingConfiguration mapping)
     {
         foreach (var map in mapping.Mappings)
         {
@@ -138,7 +176,13 @@ public class SynchronizeService : IHostedService
         return true;
     }
 
-    internal async Task<bool> TestConnectionsAsync(string mappingFile, TDMappingConfiguration mapping)
+    /// <summary>
+    /// Tests the validity of database connections defined in the provided mapping configuration.
+    /// </summary>
+    /// <param name="mappingFile">Specifies the file that contains the mapping configuration for the connections.</param>
+    /// <param name="mapping">Contains the configuration details for the connections to be tested.</param>
+    /// <returns>Indicates whether all tested connections are valid.</returns>
+    public async Task<bool> TestConnectionsAsync(string mappingFile, TDMappingConfiguration mapping)
     {
         // Test each connection.
         bool allConnectionsValid = true;

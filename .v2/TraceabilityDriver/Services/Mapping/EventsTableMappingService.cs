@@ -26,12 +26,15 @@ public class EventsTableMappingService : IEventsTableMappingService
     /// <param name="eventMapping">The event mapping object.</param>
     /// <param name="dataTable">The data table to map from.</param>
     /// <returns>A list of mapped events.</returns>
-    public List<CommonEvent> MapEvents(TDEventMapping eventMapping, DataTable dataTable)
+    public List<CommonEvent> MapEvents(TDEventMapping eventMapping, DataTable dataTable, CancellationToken cancellationToken)
     {
         var events = new List<CommonEvent>();
 
         foreach (DataRow row in dataTable.Rows)
         {
+            // Check for cancellation.
+            if (cancellationToken.IsCancellationRequested) return events;
+
             var commonEvent = MapDataRowToCommonEvent(eventMapping, row);
             events.Add(commonEvent);
         }

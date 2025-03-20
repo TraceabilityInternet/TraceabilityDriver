@@ -22,6 +22,16 @@ public class CommonEvent
     public DateTimeOffset? EventTime { get; set; } = null;
 
     /// <summary>
+    /// The information provider of the event information.
+    /// </summary>
+    public CommonParty? InformationProvider { get; set; } = null;
+
+    /// <summary>
+    /// The owner of the product at the time of the event.
+    /// </summary>
+    public CommonParty? ProductOwner { get; set; } = null;
+
+    /// <summary>
     /// The location of the event.
     /// </summary>
     public CommonLocation? Location { get; set; } = null;

@@ -10,7 +10,7 @@ public interface ITDConnector
     /// <summary>
     /// Returns one or more events from the database using the selector.
     /// </summary>
-    Task<IEnumerable<CommonEvent>> GetEventsAsync(TDMappingSelector selector);
+    Task<IEnumerable<CommonEvent>> GetEventsAsync(TDMappingSelector selector, CancellationToken cancelToken);
 
     /// <summary>
     /// Tests the connection to the database.

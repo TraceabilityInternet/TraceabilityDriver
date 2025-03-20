@@ -44,22 +44,34 @@ public class TDSqlServerConnector : ITDConnector
     /// <summary>
     /// Returns one or more events from the database using the selector.
     /// </summary>
-    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDMappingSelector selector)
+    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDMappingSelector selector, CancellationToken cancellationToken)
     {
         try
         {
+            /// Check for cancellation.
+            if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
             using (var connection = new SqlConnection(_configuration.ConnectionString))
             {
                 await connection.OpenAsync();
+
+                /// Check for cancellation.
+                if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
 
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
                     adapter.SelectCommand = new SqlCommand(selector.Selector, connection);
 
+                    /// Check for cancellation.
+                    if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
                     DataTable dataTable = new DataTable();
                     adapter.Fill(dataTable);
 
-                    List<CommonEvent> events = _eventsTableMappingService.MapEvents(selector.EventMapping, dataTable);
+                    /// Check for cancellation.
+                    if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+                    List<CommonEvent> events = _eventsTableMappingService.MapEvents(selector.EventMapping, dataTable, cancellationToken);
 
                     return events;
                 }

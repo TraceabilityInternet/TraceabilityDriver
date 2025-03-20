@@ -82,10 +82,6 @@ public class CommonProduct
     /// <param name="other">The product instance to merge with the current one.</param>
     public void Merge(CommonProduct other)
     {
-        if (this.Name == null && other.Name != null)
-        {
-            this.Name = other.Name;
-        }
         if (this.LotNumber == null && other.LotNumber != null)
         {
             this.LotNumber = other.LotNumber;
@@ -94,14 +90,6 @@ public class CommonProduct
         {
             this.SerialNumber = other.SerialNumber;
         }
-        if (this.ProductForm == null && other.ProductForm != null)
-        {
-            this.ProductForm = other.ProductForm;
-        }
-        if (this.Species == null && other.Species != null)
-        {
-            this.Species = other.Species;
-        }
         if (this.Quantity == 0 && other.Quantity != 0)
         {
             this.Quantity = other.Quantity;
@@ -109,6 +97,14 @@ public class CommonProduct
         if (this.UoM == null && other.UoM != null)
         {
             this.UoM = other.UoM;
+        }
+        if (this.ProductDefinition == null && other.ProductDefinition != null)
+        {
+            this.ProductDefinition = other.ProductDefinition;
+        }
+        else if (this.ProductDefinition != null && other.ProductDefinition != null)
+        {
+            this.ProductDefinition.Merge(other.ProductDefinition);
         }
     }
 }

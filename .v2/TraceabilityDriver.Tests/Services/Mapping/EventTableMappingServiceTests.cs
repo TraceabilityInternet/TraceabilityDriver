@@ -46,7 +46,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             dataTable.Rows.Add("Event2");
 
             // Act
-            var result = _service.MapEvents(eventMapping, dataTable);
+            var result = _service.MapEvents(eventMapping, dataTable, CancellationToken.None);
 
             // Assert
             Assert.That(result, Is.Not.Null);
