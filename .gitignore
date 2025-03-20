@@ -2,10 +2,6 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-**/obj
-**/bin
-.vs
-TraceabilityDriverService/Properties/PublishProfiles/FolderProfile.pubxml.user
-TraceabilityDriverService/Properties/PublishProfiles/FolderProfile.pubxml
-TraceabilityDriverService/.config/dotnet-tools.json
-TraceabilityDriverService/TraceabilityDriverService.csproj.user
+/.v2/.vs/.v2
+/.v2/.vscode
+/.v2/TraceabilityDriver/Properties
