@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<FoodBeverageRefrigerationClaimCodes>
-  <FoodBeverageRefrigerationClaimCode Key="gs1:FoodBeverageRefrigerationClaimCode-CAN_BE_REFRIGERATED" Name="Can be Refrigerated" />
-  <FoodBeverageRefrigerationClaimCode Key="gs1:FoodBeverageRefrigerationClaimCode-MUST_BE_REFRIGERATED" Name="Must be Refrigerated" />
-  <FoodBeverageRefrigerationClaimCode Key="gs1:FoodBeverageRefrigerationClaimCode-SHELF_STABLE" Name="Shelf Stable" />
-  <FoodBeverageRefrigerationClaimCode Key="gs1:FoodBeverageRefrigerationClaimCode-UNIDENTIFIED" Name="Unidentified" />
-</FoodBeverageRefrigerationClaimCodes>

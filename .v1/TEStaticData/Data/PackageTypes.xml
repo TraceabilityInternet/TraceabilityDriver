@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<PackageTypes>
+  <PackageType Key="AA" Name="Intermediate Bulk Container, rigid plastic"></PackageType>
+  <PackageType Key="AE" Name="Aerosol"></PackageType>
+  <PackageType Key="AM" Name="Ampoul"></PackageType>
+  <PackageType Key="BA" Name="Barrel"></PackageType>
+  <PackageType Key="BBG" Name="Bag in Box"></PackageType>
+  <PackageType Key="BG" Name="Bag"></PackageType>
+  <PackageType Key="BJ" Name="Bucket"></PackageType>
+  <PackageType Key="BK" Name="Basket"></PackageType>
+  <PackageType Key="BO" Name="Bottle"></PackageType>
+  <PackageType Key="BPG" Name="Blister Pack"></PackageType>
+  <PackageType Key="BRI" Name="Brick"></PackageType>
+  <PackageType Key="BX" Name="Box"></PackageType>
+  <PackageType Key="CG" Name="Cage"></PackageType>
+  <PackageType Key="CM" Name="Card"></PackageType>
+  <PackageType Key="CMS" Name="Clam Shell"></PackageType>
+  <PackageType Key="CNG" Name="Can"></PackageType>
+  <PackageType Key="CR" Name="Crate"></PackageType>
+  <PackageType Key="CS" Name="Case"></PackageType>
+  <PackageType Key="CT" Name="Carton"></PackageType>
+  <PackageType Key="CU" Name="Cup / Tub"></PackageType>
+  <PackageType Key="CY" Name="Cylinder"></PackageType>
+  <PackageType Key="EN" Name="Envelope"></PackageType>
+  <PackageType Key="GTG" Name="Gabletop"></PackageType>
+  <PackageType Key="JR" Name="Jar"></PackageType>
+  <PackageType Key="MPG" Name="Multipack"></PackageType>
+  <PackageType Key="NE" Name="Not Packed"></PackageType>
+  <PackageType Key="NT" Name="Net"></PackageType>
+  <PackageType Key="PB" Name="Pallet Box"></PackageType>
+  <PackageType Key="PLP" Name="Peel Pack"></PackageType>
+  <PackageType Key="PO" Name="Pouch"></PackageType>
+  <PackageType Key="PT" Name="Pot"></PackageType>
+  <PackageType Key="PU" Name="Tray"></PackageType>
+  <PackageType Key="PUG" Name="Packed, Unspecified"></PackageType>
+  <PackageType Key="PX" Name="Pallet"></PackageType>
+  <PackageType Key="RK" Name="Rack"></PackageType>
+  <PackageType Key="RL" Name="Reel"></PackageType>
+  <PackageType Key="STR" Name="Stretchwrapped"></PackageType>
+  <PackageType Key="SW" Name="Shrinkwrapped"></PackageType>
+  <PackageType Key="SY" Name="Sleeve"></PackageType>
+  <PackageType Key="TU" Name="Tube"></PackageType>
+  <PackageType Key="WRP" Name="Wrapper"></PackageType>
+  <PackageType Key="X11" Name="Banded Package"></PackageType>
+  <PackageType Key="ZU" Name="Flexible Intermediate Bulk Container"></PackageType>
+</PackageTypes>
+

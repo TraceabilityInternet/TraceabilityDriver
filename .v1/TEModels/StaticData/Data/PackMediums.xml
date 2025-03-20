@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<PackMediums>
+  <PackMedium Key="urn:foodontology:packmedium:none" Name="None"></PackMedium>
+  <PackMedium Key="urn:foodontology:packmedium:olive_oil" Name="Olive Oil"></PackMedium>
+  <PackMedium Key="urn:foodontology:packmedium:evoo" Name="Extra Virgin Olive Oil"></PackMedium>
+  <PackMedium Key="urn:foodontology:packmedium:water" Name="Water"></PackMedium>
+</PackMediums>

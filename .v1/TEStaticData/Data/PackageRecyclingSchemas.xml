@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RecyclingSchemas>
+  <RecyclingSchema Key="gs1:PackagingRecyclingSchemeCode-A_PULLO" Name="A Pullo" />
+  <RecyclingSchema Key="gs1:PackagingRecyclingSchemeCode-ALKO" Name="Alko" />
+  <RecyclingSchema Key="gs1:PackagingRecyclingSchemeCode-EKO_PULLO" Name="Eko Pullo" />
+  <RecyclingSchema Key="gs1:PackagingRecyclingSchemeCode-PALPA" Name="Palpa" />
+</RecyclingSchemas>

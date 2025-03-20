@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<AttachmentTypes>
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-DIET_CERTIFICATE" Name="Diet Certificate" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-DOCUMENT" Name="Document" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-GROUP_CHARACTERISTIC_SHEET" Name="Group Characteristic Sheet" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-LOGO" Name="Logo" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-MARKETING_INFORMATION" Name="Marketing Information" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-OUT_OF_PACKAGE_IMAGE" Name="Out of Package Image" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-PLANOGRAM" Name="Planogram" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-PRODUCT_LABEL_IMAGE" Name="Product Label Image" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-SAFETY_DATA_SHEET" Name="Safety Data Sheet" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-SAFETY_SUMMARY_SHEET" Name="Safety Summary Sheet" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-TRADE_ITEM_DESCRIPTION" Name="Trade Item Description" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-VIDEO" Name="Video" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-WARRANTY_INFORMATION" Name="Warranty Inforamtion" FactType="Product" />
+  <AttachmentType Key="gs1:ReferencedFileTypeCode-WEBSITE" Name="Website" FactType="Product" />
+</AttachmentTypes>

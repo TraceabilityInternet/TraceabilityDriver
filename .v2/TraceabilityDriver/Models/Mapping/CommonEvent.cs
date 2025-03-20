@@ -1,0 +1,94 @@
+namespace TraceabilityDriver.Models.Mapping;
+
+/// <summary>
+/// The common event model that data from the database is mapped to
+/// then the common event is used to create an event in the event store.
+/// </summary>
+public class CommonEvent
+{
+    /// <summary>
+    /// The id of the event. This is used for merging the events together.
+    /// </summary>
+    public string? EventId { get; set; } = null;
+
+    /// <summary>
+    /// The type of the event.
+    /// </summary>
+    public string? EventType { get; set; } = null;
+
+    /// <summary>
+    /// The time of the event.
+    /// </summary>
+    public DateTimeOffset? EventTime { get; set; } = null;
+
+    /// <summary>
+    /// The location of the event.
+    /// </summary>
+    public CommonLocation? Location { get; set; } = null;
+
+    /// <summary>
+    /// The certificates of the event.
+    /// </summary>
+    public CommonCertificates? Certificates { get; set; } = null;
+
+    /// <summary>
+    /// The product of the event.
+    /// </summary>
+    public List<CommonProduct>? Products { get; set; } = null;
+
+    /// <summary>
+    /// Merges property values from the source onto the target
+    /// only if that property value has no value and the source
+    /// has a value.
+    /// </summary>
+    /// <param name="target">The object to copy values to.</param>
+    /// <param name="source">The object to copy values from.</param>
+    public void Merge(CommonEvent source)
+    {
+        if (this.EventTime == null && source.EventTime != null)
+        {
+            this.EventTime = source.EventTime;
+        }
+
+        if (this.Location == null && source.Location != null)
+        {
+            this.Location = source.Location;
+        }
+        else if (this.Location != null && source.Location != null)
+        {
+            this.Location.Merge(source.Location);
+        }
+
+        if (this.Certificates == null && source.Certificates != null)
+        {
+            this.Certificates = source.Certificates;
+        }
+        else if (this.Certificates != null && source.Certificates != null)
+        {
+            this.Certificates.Merge(source.Certificates);
+        }
+
+        if (this.Products == null && source.Products != null)
+        {
+            this.Products = source.Products;
+        }
+        else if (this.Products != null && source.Products != null)
+        {
+            foreach (var product in source.Products)
+            {
+                var thisProduct = this.Products.FirstOrDefault(p => p.ProductId == product.ProductId);
+
+                if (thisProduct == null)
+                {
+                    this.Products.Add(product);
+                }
+                else
+                {
+                    thisProduct.Merge(product);
+                }
+            }
+        }
+    }
+}
+
+

@@ -1,0 +1,65 @@
+﻿@page "/"
+@namespace DirectoryService.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DirectoryService</title>
+    <base href="~/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link rel="stylesheet" href="_content/Telerik.UI.for.Blazor/css/kendo-theme-default/all.css" />
+    <script src="_content/Telerik.UI.for.Blazor/js/telerik-blazor.js" defer></script>
+</head>
+<body>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+    <script>
+        window.downloadFromByteArray = function(byteArray, fileName, contentType)
+        {
+
+            // Convert base64 string to numbers array.
+            const numArray = atob(byteArray).split('').map(c => c.charCodeAt(0));
+
+            // Convert numbers array to Uint8Array object.
+            const uint8Array = new Uint8Array(numArray);
+
+            // Wrap it by Blob object.
+            const blob = new Blob([uint8Array], { type: contentType });
+
+            // Create "object URL" that is linked to the Blob object.
+            const url = URL.createObjectURL(blob);
+
+            // Invoke download helper function that implemented in 
+            // the earlier section of this article.
+            downloadFromUrl(url, fileName);
+
+            // At last, release unused resources.
+            URL.revokeObjectURL(url);
+        }
+
+        window.downloadFromUrl = function (url, fileName) {
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName ?? '';
+            anchorElement.click();
+            anchorElement.remove();
+        }
+    </script>
+</body>
+</html>

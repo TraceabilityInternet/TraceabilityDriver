@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<SharpnessOfCheeseCodes>
+  <SharpnessOfCheeseCode Key="gs1:SharpnessOfCheeseCode-EXTRA_EXTRA_SHARP" Name="Extra Extra Sharp" />
+  <SharpnessOfCheeseCode Key="gs1:SharpnessOfCheeseCode-EXTRA_SHARP" Name="Extra Sharp" />
+  <SharpnessOfCheeseCode Key="gs1:SharpnessOfCheeseCode-MILD" Name="Mild" />
+  <SharpnessOfCheeseCode Key="gs1:SharpnessOfCheeseCode-REGULAR" Name="Regular" />
+  <SharpnessOfCheeseCode Key="gs1:SharpnessOfCheeseCode-SHARP" Name="Sharp" />
+  <SharpnessOfCheeseCode Key="gs1:SharpnessOfCheeseCode-UNCLASSIFIED" Name="Unclassified" />
+</SharpnessOfCheeseCodes>
+

@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>..\bin\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>C:\DSTFS\FoodDetective\Utilities\FoodDetectiveUtilities\bin\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Allergens\**" />
+    <Compile Remove="FoodCategories\**" />
+    <Compile Remove="FoodProfiles\**" />
+    <Compile Remove="StaticData\**" />
+    <EmbeddedResource Remove="Allergens\**" />
+    <EmbeddedResource Remove="FoodCategories\**" />
+    <EmbeddedResource Remove="FoodProfiles\**" />
+    <EmbeddedResource Remove="StaticData\**" />
+    <None Remove="Allergens\**" />
+    <None Remove="FoodCategories\**" />
+    <None Remove="FoodProfiles\**" />
+    <None Remove="StaticData\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="FDLanguageString.cs" />
+    <Compile Remove="Products\FDCategory.cs" />
+    <Compile Remove="Products\FDCategoryItem.cs" />
+    <Compile Remove="Products\FDCategoryItemOptions.cs" />
+    <Compile Remove="Products\FDCategoryItemSummary.cs" />
+    <Compile Remove="Products\FDCategoryProfile.cs" />
+    <Compile Remove="Products\FDCategoryProfileSummary.cs" />
+    <Compile Remove="Products\FDClaim.cs" />
+    <Compile Remove="Products\FDProductIngredient.cs" />
+    <Compile Remove="Products\FDProductScraped.cs" />
+    <Compile Remove="Products\FDProductSearchResult.cs" />
+    <Compile Remove="Products\FDShoppingCartItem.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Identifiers\GS1AICodes.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Identifiers\GS1AICodes.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TEInterfaces\TEInterfaces.csproj" />
+    <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
+    <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
+  </ItemGroup>
+
+</Project>

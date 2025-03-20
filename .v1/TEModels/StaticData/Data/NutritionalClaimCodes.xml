@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<NutritionalClaimCodes>
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-ADDITIVE_FREE" Name="Additive Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-ARTIFICIALLY_SWEETENED" Name="Artificially Sweetened" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-CHOLESTEROL_FREE" Name="Cholesterol Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-COLOURING_AGENT_FREE" Name="Colouring Agent Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-CONTAINS_GLYZYRRHIZIN" Name="Contains Glyzrrhizin" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-CONTAINS_LIQUORICE" Name="Contains Liqourice" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-CONTAINS_SOY" Name="Contains Soy" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-EGG_FREE" Name="Egg Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-ENERGY_FREE" Name="Energy Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-ENERGY_REDUCED" Name="Energy Reduced" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-ENRICHED_OR_FORTIFIED_IN_VITAMINS_AND_OR_MINERALS" Name="Enriched or Fortified in Vitamins and/or Minerals" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-FAT_FREE" Name="Fat Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-FREE_FROM_GLUTEN" Name="Free from Gluten" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-GUARANTEED_LACTOSE_FREE" Name="Guaranteed Lactose Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-HIGH_FIBRE" Name="High Fibre" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-HIGH_PROTEIN" Name="High Protein" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-HIGH_VITAMINS_AND_OR_MINERALS" Name="High Vitamins and/or Minerals" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LACTOSE_FREE" Name="Lactose Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LIGHT_LITE" Name="Light / Lite" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_ENERGY" Name="Low Energy" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_PROTEIN" Name="Lot Protein" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_FAT" Name="Lot Fat" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_LACTOSE" Name="Low Lactose" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_SATURATED_FAT" Name="Low Saturated Fat" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_SODIUM_SALT" Name="Low Sodium/Salt" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-LOW_SUGARS" Name="Low Sugars" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-MILK_FREE" Name="Milk Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-MILK_PROTEIN_FREE" Name="Milk Protein Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-NATURAL_SOURCE_OF_VITAMINS_AND_OR_MINERALS" Name="Natural Source of Vitamins and/or Minerals" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-WITH_NO_ADDED_SUGARS" Name="With No Added Sugars" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-NON_ALCOHOLIC" Name="Non-Alcoholic" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-NUT_FREE" Name="Nut Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-PEANUT_FREE" Name="Peanut Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-PRESERVATIVE_FREE" Name="Preservative Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SATURATED_FAT_FREE" Name="Saturated Fat Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SODIUM_FREE_OR_SALT_FREE" Name="Sodium Free or Salt Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SOURCE_OF_FIBRE" Name="Source of Fibre" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SOURCE_OF_PROTEIN" Name="Source of Protein" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SOY_FREE" Name="Soy Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-STRONGLY_SALTED" Name="Strongly Salted" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SUGARS_FREE" Name="Sugars Free" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_AGAVE_SYRUP" Name="Sweetened with Agave Syrup" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_CANE_SUGAR" Name="Sweetened with Cane Sugar" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_CORN_SYRUP" Name="Sweetened with Corn Syrup" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_FRUCTOSE" Name="Sweetened with Fructose" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_FRUIT_JUICE" Name="Sweetened with Fruit Juice" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_FRUIT_SYRUP" Name="Sweetened with Fruit Syrup" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_HONEY" Name="Sweetened with Honey" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_MALT" Name="Sweetened with Malt" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_RAW_BEET_SUGAR" Name="Sweetened with Raw Beet Sugar" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-SWEETENED_WITH_WHITE_SUGAR" Name="Sweetend with White Sugar" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-VERY_LOW_GLUTEN" Name="Very Low Gluten" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-VERY_LOW_SODIUM_SALT" Name="Very Low Sodium Salt" />
+  <NutritionalClaimCode Key="gs1:NutritionalClaimTypeCode-WHEAT_FREE" Name="Wheat Free" />
+</NutritionalClaimCodes>

@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<MaturationMethodCodes>
-  <MaturationMethodCode Key="gs1:MaturationMethodCode-JET_FRESH" Name="Jet Fresh" />
-  <MaturationMethodCode Key="gs1:MaturationMethodCode-PRECONDITIONED" Name="Preconditioned" />
-  <MaturationMethodCode Key="gs1:MaturationMethodCode-TREE_VINE_RIPE" Name="Tree Vine Ripe" />
-</MaturationMethodCodes>

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EPCIS\EPCglobal-epcis-2_0.xsd" />
+    <None Remove="EPCIS\EPCIS-JSON-Schema_2_0.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="EPCIS\EPCglobal-epcis-2_0.xsd" />
+    <EmbeddedResource Include="EPCIS\EPCIS-JSON-Schema_2_0.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TEInterfaces\TEInterfaces.csproj" />
+    <ProjectReference Include="..\TEModels\TEModels.csproj" />
+    <ProjectReference Include="..\TEStaticData\TEStaticData.csproj" />
+    <ProjectReference Include="..\TEUtil\TEUtil.csproj" />
+  </ItemGroup>
+
+</Project>

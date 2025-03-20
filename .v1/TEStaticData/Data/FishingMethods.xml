@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<FishingMethods>
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:BuoyGear"        AlternateKey="FM_BG" Description="BUOY GEAR" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:ButterflyTrawl" AlternateKey="FM_BT" Description="BUTTERFLY TRAWL" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Chunking"    AlternateKey="FM_CHUNK" Description="CHUNKING" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:DipNte"    AlternateKey="FM_DN" Description="DIP NET" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Diver"    AlternateKey="FM_DI" Description="DIVER" IsSelected="false" Expression="DIVER*" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:DredgeBoat"    AlternateKey="FAO_4.1" Description="DREDGES (Boat dredges)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:DredgeHand" NMFSFishingMethodCode="HAN"   AlternateKey="FAO_4.2" Description="DREDGES (Hand dredges)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:DredgeMech"    AlternateKey="FM_DR_MD" Description="DREDGES (Mechanized dredges)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Dredge"    AlternateKey="FAO_4" Description="DREDGES (unspecified)" Expression="DREDGES*" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:FaillingGear.CastNet"    AlternateKey="FAO_6.1" Description="FALLING GEAR (Cast nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:FaillingGear.LaternNet"    AlternateKey="FM_FG_CP" Description="FALLING GEAR (Cover pots/Latern nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:FallingGear.Unk"    AlternateKey="FAO_6.2" Description="FALLING GEAR (Not Specified)" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:FallingGear"    AlternateKey="FAO_6" Description="FALLING GEAR" IsSelected="true" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Unknown"    AlternateKey="FM_GNK;FM_MG_DN;FM_UN" Description="GEAR NOT KNOWN OR NOT SPECIFIED" Expression="etc*;Gear not know*" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Multiple"    AlternateKey="FM_MM" Description="MULTIPLE METHODS" Expression="VARIOUS;MULTIPLE * METHODS" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet.Drift"  NMFSFishingMethodCode="GIL"   AlternateKey="FAO_7.2" Description="GILLNETS and ENTANGLING NETS (Driftnets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet.Encircling"  NMFSFishingMethodCode="GIL"   AlternateKey="FAO_7.3" Description="GILLNETS and ENTANGLING NETS (Encircling gillnets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet.Anchor"    NMFSFishingMethodCode="GIL" AlternateKey="FAO_7.1" Description="GILLNETS and ENTANGLING NETS (gillnets (anchored)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet.Stake"    NMFSFishingMethodCode="GIL" AlternateKey="FAO_7.4" Description="GILLNETS and ENTANGLING NETS (Gillnets on stakes)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet.Trammel"  NMFSFishingMethodCode="GIL"  AlternateKey="FAO_7.6" Description="GILLNETS and ENTANGLING NETS (gillnets + trammel nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet.Tramme"   NMFSFishingMethodCode="GIL" AlternateKey="FAO_7.5" Description="GILLNETS and ENTANGLING NETS (tramme nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Gillnet"   NMFSFishingMethodCode="GIL" AlternateKey="FM_GEN_GI;FM_GEN_EN;FAO_7" Description="GILLNETS and ENTANGLING NETS" Expression="GILLNET*;GILL NET*" IsSelected="true" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Harpoon" NMFSFishingMethodCode="HAR"   AlternateKey="FAO_10"    Description="GRAPPLING AND WOUNDING (Harpoons)" Expression="*Harpoons*" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Hand"  NMFSFishingMethodCode="HAN"   AlternateKey="FM_HAND"   Description="HAND GATHERED" Expression="*HAND*" IsSelected="true" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Machine"    AlternateKey="FM_HM_HM" Description="HARVESTING MACHINES (Harvesting machines)" Expression="Harvesting Machines*" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Machine.Mech"    AlternateKey="FAO_11.2" Description="HARVESTING MACHINES (Mechanized dredges)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Machine.Pump"    AlternateKey="FAO_11.1" Description="HARVESTING MACHINES (Pumps)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL"    AlternateKey="FM_HL;FM_HL_NS;FAO_9"    Description="HOOKES AND LINES" Expression="HOOK*LINE*;HK AND LN*" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Hand" NMFSFishingMethodCode="HAN"   AlternateKey="FAO_9.1;FM_HL_HL" Description="HOOKES AND LINES (Hand-operated pole-and-lines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Deep"    AlternateKey="FM_HL_DS" Description="HOOKS AND LINES (Deep-set)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Drift"  NMFSFishingMethodCode="LL"    AlternateKey="FAO_9.4" Description="HOOKS AND LINES (Drifting longlines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Green"    AlternateKey="FM_HL_GS" Description="HOOKS AND LINES (Greenstick)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Mech"   NMFSFishingMethodCode="PL"   AlternateKey="FAO_9.2" Description="HOOKS AND LINES (Hand/pole-lines (mechanical))" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Circle" NMFSFishingMethodCode="HAN" AlternateKey="FM_HL_CH" Description="HOOKS AND LINES (Hooks and lines (circle hook))" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Scale"    AlternateKey="FM_HL_SH" Description="HOOKS AND LINES (Hooks and lines (scalefish hook))" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Jig"    AlternateKey="FM_HL_JI" Description="HOOKS AND LINES (Jig)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Long"   NMFSFishingMethodCode="LL" AlternateKey="FAO_9.5" Description="HOOKS AND LINES (Longlines (not specified))" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Set"    NMFSFishingMethodCode="LL" AlternateKey="FAO_9.3" Description="HOOKS AND LINES (Set longlines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.SetCirle" NMFSFishingMethodCode="LL"   AlternateKey="FM_HL_LLCH" Description="HOOKS AND LINES (Set longlines(circle hook))" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Shallow"    AlternateKey="FM_HL_SS" Description="HOOKS AND LINES (Shallow-set)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Trolling"  NMFSFishingMethodCode="TRO"  AlternateKey="FAO_9.6" Description="HOOKS AND LINES (Trolling lines)" IsSelected="false" Expression="*TROLL*"/>
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Trot"    AlternateKey="FM_HL_TR" Description="HOOKS AND LINES (Trotline)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:HL.Vert"    AlternateKey="FM_HL_VL" Description="HOOKS AND LINES (Vertical Lines)" IsSelected="false" />
+
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:LiftNet.Boat"    AlternateKey="FAO_5.2" Description="LIFT NETS (Boat-operated lift nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:LiftNet"    AlternateKey="FAO_5" Description="LIFT NETS (Lift nets (not specified)" Expression="LIFT NET*" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:LiftNet.Portable"    AlternateKey="FAO_5.1" Description="LIFT NETS (Portable lift nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:LiftNet.Shore"    AlternateKey="FAO_5.3" Description="LIFT NETS (Shore-operated stationary lift nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:LiftNet.Reef"    AlternateKey="FM_LN_RE" Description="LIFT NETS (Reefnets)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:LongLine" NMFSFishingMethodCode="LL"   AlternateKey="FM_LL" Description="LONG LINES" Expression="*LONGLINE*;LONG LINE*" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc"        AlternateKey="FM_MG_MG" Description="MISCELLANEOUS GEAR (Miscellaneous gear)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.Din"    AlternateKey="FM_MG_DIN" Description="MISCELLANEOUS GEAR (Drive-in Net)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.Electric"    AlternateKey="FM_MG_EF" Description="MISCELLANEOUS GEAR (Electric fishing)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.Hand" NMFSFishingMethodCode="HAN"   AlternateKey="FM_MG_HI" Description="MISCELLANEOUS GEAR (Hand Implements)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Pushnet.Butterfly"    AlternateKey="FM_MG_PBN" Description="MISCELLANEOUS GEAR (Pushed butterfly net)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Pushnet.Skimmer"    AlternateKey="FM_MG_PSN" Description="MISCELLANEOUS GEAR (Pushed skimmer net)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Pushnet"    AlternateKey="FM_MG_PU" Description="MISCELLANEOUS GEAR (Pushnets)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:PoleLine" NMFSFishingMethodCode="PL"   AlternateKey="FM_PL_LN_HK_LN" Description="PL - POLE AND LINE, HOOK AND LINE" Expression="*POLE AND LINE*;POLE * LINE" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.Rake"    AlternateKey="FM_MG_RKHG" Description="MISCELLANEOUS GEAR (Rake/Hand gathered)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.ScissorNet"    AlternateKey="FM_MG_SCISSOR_NETS" Description="MISCELLANEOUS GEAR (Scissor nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.ScoopNet"    AlternateKey="FM_MG_SCOOPNET" Description="MISCELLANEOUS GEAR (Scoopnet)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.SmallMesh"    AlternateKey="FM_MG_SMG" Description="MISCELLANEOUS GEAR (small mesh gear)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Misc.Tackle"    AlternateKey="FM_MG_TA" Description="MISCELLANEOUS GEAR (tackle)" IsSelected="false" />
+
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:PureSeine"  NMFSFishingMethodCode="PS"   AlternateKey="FM_PS;FM_PS_UN" Description="PURSE SEINE" Expression="*PURSE SEINE*" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:PureSeine.Dolphin" NMFSFishingMethodCode="PS"    AlternateKey="FM_PS_DSPS" Description="PURSE SEINE (Dolphin set purse seine)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:PureSeine.FAD"   NMFSFishingMethodCode="PS" AlternateKey="FM_PS_FOF" Description="PURSE SEINE (Floating object or FAD)" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:PureSeine.2Boats"  NMFSFishingMethodCode="PSD"   AlternateKey="FM_PS_TBO" Description="PURSE SEINE (two boat operated)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:PureSeine.1Boat"  NMFSFishingMethodCode="PS"  AlternateKey="FM_PS_OBO" Description="PURSE SEINE (one boat operated)" IsSelected="false" />
+
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Recreationl" NMFSFishingMethodCode="SPO"   AlternateKey="FM_RFG" Description="RECREATIONAL FISHING GEAR" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:ReefNet"    AlternateKey="FM_RN" Description="REEF NET" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:RopeGrown"    AlternateKey="FM_ROPE" Description="ROPE GROWN" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets.Beach" NMFSFishingMethodCode="HS"   AlternateKey="FAO_2.1" Description="SEINE NETS (Beach seines)" Expression="*SEINE NETS*BOAT*" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets.Boat"    AlternateKey="FAO_2.2" Description="SEINE NETS (Boat or vessel seines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets.Danish"    AlternateKey="FM_SN_DS" Description="SEINE NETS (Boat seines - Danish seines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets.Pair"    AlternateKey="FM_SN_PS" Description="SEINE NETS (Boat seines - pair seines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets.Scottish"    AlternateKey="FM_SN_SS" Description="SEINE NETS (Boat seines - Scottish seines)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets"    AlternateKey="FAO_2" Description="SEINE NETS (not specified)" Expression="*SEINE NETS*" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SeineNets.Suripera"    AlternateKey="FM_SN_SU" Description="SEINE NETS (Suripera)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SkimmerTrawl" NMFSFishingMethodCode="TRW"    AlternateKey="FM_ST" Description="SKIMMER TRAWL" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SurroundingNets.Ring"         AlternateKey="FM_SN_RN" Description="SURROUNDING NETS (Ring nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SurroundingNets"              AlternateKey="FAO_1" Description="SURROUNDING NETS (Unspecified)" Expression="SURROUNDING * NETS" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SurroundingNets.PurseSeines"  AlternateKey="FAO_1.1" Description="SURROUNDING NETS (PURSE SEINES)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:SurroundingNets.Lampara"      AlternateKey="FAO_1.2" Description="SURROUNDING NETS (Without purse lines (lampara))" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.Aerial" NMFSFishingMethodCode="TRA"   AlternateKey="FAO_8.6" Description="TRAPS (Aerial traps)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.Fence"  NMFSFishingMethodCode="TRA"  AlternateKey="FAO_8.5" Description="TRAPS (Barriers, fences, weirs, etc)" IsSelected="false" Expression="Traps - Barriers"/>
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.CragRing" NMFSFishingMethodCode="TRA"   AlternateKey="FM_TR_CR" Description="TRAPS (Crab rings)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.Fyke"    NMFSFishingMethodCode="TRA" AlternateKey="FAO_8.3" Description="TRAPS (Fyke nets)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.Pots"   NMFSFishingMethodCode="TRA" AlternateKey="FAO_8.2" Description="TRAPS (Pots)" IsSelected="false" Expression="Traps - Pots"/>
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.Stationary" NMFSFishingMethodCode="TRA"   AlternateKey="FAO_8.1" Description="TRAPS (Stationary uncovered pound nets)" Expression="Traps - Stationary uncovered pound nets" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps.Stow"  NMFSFishingMethodCode="TRA"  AlternateKey="FAO_8.4" Description="TRAPS (Stow nets)" IsSelected="false" Expression="Traps - Stow nets"/>
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Traps"  NMFSFishingMethodCode="TRA"  AlternateKey="FAO_8" Description="TRAPS (Traps (not specified)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom"  NMFSFishingMethodCode="TRW"  AlternateKey="FAO_3.1" Description="TRAWLS (Bottom trawls - (not specified)" Expression="TRAWL*" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Beam"  NMFSFishingMethodCode="TRW"  AlternateKey="FAO_3.1.1" Description="TRAWLS (Bottom trawls - beam trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.LargeMesh"  NMFSFishingMethodCode="TRW"  AlternateKey="FM_TRW_LMBT" Description="TRAWLS (Bottom trawls - Large mesh bottom trawl)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Magdalena" NMFSFishingMethodCode="TRW"   AlternateKey="FM_TRW_MABT" Description="TRAWLS (Bottom trawls - Magdalena Artisanal bottom trawl)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Nephrops" NMFSFishingMethodCode="TRW"    AlternateKey="FM_TRW_NT" Description="TRAWLS (Bottom trawls - nephrops trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Otter" NMFSFishingMethodCode="TRW"   AlternateKey="FAO_3.1.2" Description="TRAWLS (Bottom trawls - otter trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Pair"   NMFSFishingMethodCode="PTM" AlternateKey="FAO_3.1.3" Description="TRAWLS (Bottom trawls - pair trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Shrimp.Ted" NMFSFishingMethodCode="TRW"   AlternateKey="FM_TRW_STWT" Description="TRAWLS (Bottom trawls - shrimp trawls with TED)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.Shrimp" NMFSFishingMethodCode="TRW"    AlternateKey="FM_TRW_ST" Description="TRAWLS (Bottom trawls - shrimp trawls)" IsSelected="false" Expression="shrimp trawl*"/>
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Bottom.SmallMesh" NMFSFishingMethodCode="TRW"    AlternateKey="FM_TRW_SMBT" Description="TRAWLS (Bottom trawls - Small mesh bottom trawl)" IsSelected="false" />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Midwater"  NMFSFishingMethodCode="MWT"   AlternateKey="FAO_3.2" Description="TRAWLS (Midwater trawls - midwater trawls)" Expression="MID WATER TRAWL" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Midwater.Other" NMFSFishingMethodCode="MWT"   AlternateKey="FAO_3.2.1" Description="TRAWLS (Midwater trawls - otter trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Midwater.Pair" NMFSFishingMethodCode="MWT"   AlternateKey="FAO_3.2.2" Description="TRAWLS (Midwater trawls - pair trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Midwater.Shrimp" NMFSFishingMethodCode="MWT"   AlternateKey="FM_TRW_MST" Description="TRAWLS (Midwater trawls - shrimp trawls)" IsSelected="false"  />
+
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl"   NMFSFishingMethodCode="TRW"             AlternateKey="FAO_3;FM_TRW_ONS;FM_OTTER_TRAWLS" Description="TRAWLS (not specified)" IsSelected="true" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Twin"  NMFSFishingMethodCode="PTM"         AlternateKey="FAO_3.3" Description="TRAWLS (Otter twin trawls)" IsSelected="false" />
+  <FishingMethod Key="urn:traceregister.com:FishingMethod:Trawl.Pair"  NMFSFishingMethodCode="PTM"         AlternateKey="FM_TRW_PNS" Description="TRAWLS (Pair trawls (not specified)" IsSelected="false" />
+
+</FishingMethods>

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TestData>
+  <AICodesCount>476</AICodesCount>
+  <Codes>
+    <Code label="SSCC" ai="00"/>
+    <Code label="GTIN" ai="01"/>
+    <Code label="CONTENT" ai="02"/>
+    <Code label="BATCH/LOT" ai="10"/>
+    <Code label="PROD DATE" ai="11"/>
+    <Code label="DUE DATE" ai="12"/>
+    <Code label="PACK DATE" ai="13"/>
+    <Code label="BEST BEFORE or BEST BY" ai="15"/>
+    <Code label="SELL BY" ai="16"/>
+    <Code label="USE BY OR EXPIRY" ai="17"/>
+    <Code label="VARIANT" ai="20"/>
+    <Code label="SERIAL" ai="21"/>
+    <Code label="CPV" ai="22"/>
+  </Codes>
+</TestData>
