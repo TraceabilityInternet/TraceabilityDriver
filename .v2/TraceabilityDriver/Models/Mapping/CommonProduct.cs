@@ -28,7 +28,7 @@ public class CommonProduct
     /// <summary>
     /// The quantity of the product.
     /// </summary>
-    public decimal? Quantity { get; set; } = 0;
+    public double? Quantity { get; set; } = 0;
 
     /// <summary>
     /// The unit of measure for the product.

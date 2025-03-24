@@ -42,6 +42,8 @@ public class EventsMergeByIdService : IEventsMergerService
             {
                 evt.Merge(other);
             }
+
+            mergedEvents.Add(evt);
         }
 
         return Task.FromResult(mergedEvents);

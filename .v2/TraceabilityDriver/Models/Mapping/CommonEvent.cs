@@ -1,10 +1,13 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace TraceabilityDriver.Models.Mapping;
 
 /// <summary>
 /// The common event model that data from the database is mapped to
 /// then the common event is used to create an event in the event store.
 /// </summary>
-public class CommonEvent
+public class CommonEvent : CommonBaseModel
 {
     /// <summary>
     /// The id of the event. This is used for merging the events together.
@@ -47,6 +50,11 @@ public class CommonEvent
     public List<CommonProduct>? Products { get; set; } = null;
 
     /// <summary>
+    /// The catch information related to the event.
+    /// </summary>
+    public CommonCatchInformation? CatchInformation { get; set; } = null;
+
+    /// <summary>
     /// Merges property values from the source onto the target
     /// only if that property value has no value and the source
     /// has a value.
@@ -60,6 +68,27 @@ public class CommonEvent
             this.EventTime = source.EventTime;
         }
 
+        // Product Owner
+        if (this.ProductOwner == null && source.ProductOwner != null)
+        {
+            this.ProductOwner = source.ProductOwner;
+        }
+        else if (this.ProductOwner != null && source.ProductOwner != null)
+        {
+            this.ProductOwner.Merge(source.ProductOwner);
+        }
+
+        // Information Provider
+        if (this.InformationProvider == null && source.InformationProvider != null)
+        {
+            this.InformationProvider = source.InformationProvider;
+        }
+        else if (this.InformationProvider != null && source.InformationProvider != null)
+        {
+            this.InformationProvider.Merge(source.InformationProvider);
+        }
+
+        // Location
         if (this.Location == null && source.Location != null)
         {
             this.Location = source.Location;
@@ -69,6 +98,7 @@ public class CommonEvent
             this.Location.Merge(source.Location);
         }
 
+        // Certificates
         if (this.Certificates == null && source.Certificates != null)
         {
             this.Certificates = source.Certificates;
@@ -78,6 +108,17 @@ public class CommonEvent
             this.Certificates.Merge(source.Certificates);
         }
 
+        // Catch Information
+        if (this.CatchInformation == null && source.CatchInformation != null)
+        {
+            this.CatchInformation = source.CatchInformation;
+        }
+        else if (this.CatchInformation != null && source.CatchInformation != null)
+        {
+            this.CatchInformation.Merge(source.CatchInformation);
+        }
+
+        // Products
         if (this.Products == null && source.Products != null)
         {
             this.Products = source.Products;
@@ -98,6 +139,20 @@ public class CommonEvent
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Generates a SHA-256 hash from the event ID and returns in the format "urn:uuid:{hash}".
+    /// </summary>
+    /// <returns>The event ID.</returns>
+    public Uri GetEpcisEventId()
+    {
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(this.EventId);
+
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventId}"));
+
+        return new Uri($"urn:uuid:{BitConverter.ToString(hash).Replace("-", "")}");
     }
 }
 

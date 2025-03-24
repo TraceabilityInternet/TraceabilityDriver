@@ -5,3 +5,6 @@
 /.v2/.vs/.v2
 /.v2/.vscode
 /.v2/TraceabilityDriver/Properties
+/.v2/TraceabilityDriver/Properties/launchSettings.json
+/.v2/.vs/ProjectEvaluation
+/.v2/TraceabilityDriver/Logs

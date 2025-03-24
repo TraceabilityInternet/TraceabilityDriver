@@ -5,7 +5,7 @@ namespace TraceabilityDriver.Services.Connectors;
 /// <summary>
 /// The factory for creating a connector.
 /// </summary>
-public class TDConnectorFactory
+public class TDConnectorFactory : ITDConnectorFactory
 {
     private readonly ILogger<TDConnectorFactory> _logger;
     private readonly IServiceProvider _serviceProvider;

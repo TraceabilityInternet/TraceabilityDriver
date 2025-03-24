@@ -19,10 +19,14 @@ using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services
 {
+    /// <summary>
+    /// Service for storing and querying EPCIS events and master data in a MongoDB database.
+    /// </summary>
     public class MongoDBService : IMongoDBService
     {
         private readonly IMongoCollection<EPCISEventDocument> _eventsCollection;
         private readonly IMongoCollection<MasterDataDocument> _masterDataCollection;
+        private readonly IMongoCollection<SyncHistoryItem> _syncHistoryCollection;
         private readonly IEPCISQueryDocumentMapper _jsonMapper;
         private readonly IEPCISQueryDocumentMapper _xmlMapper;
 
@@ -33,6 +37,7 @@ namespace TraceabilityDriver.Services
 
             _eventsCollection = database.GetCollection<EPCISEventDocument>(configuration["MongoDB:EventsCollectionName"]);
             _masterDataCollection = database.GetCollection<MasterDataDocument>(configuration["MongoDB:MasterDataCollectionName"]);
+            _syncHistoryCollection = database.GetCollection<SyncHistoryItem>(configuration["MongoDB:SyncHistoryCollectionName"]);
 
             _jsonMapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
             _xmlMapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
@@ -40,6 +45,11 @@ namespace TraceabilityDriver.Services
             CreateIndexes().Wait();
         }
 
+        /// <summary>
+        /// Initializes the database if it hasn't been initialized yet. Checks if the events collection is empty before
+        /// proceeding.
+        /// </summary>
+        /// <returns>Returns a Task that completes when the database initialization check is done.</returns>
         public async Task InitializeDatabase()
         {
             if (await _eventsCollection.CountDocumentsAsync(new BsonDocument()) > 0)
@@ -48,6 +58,12 @@ namespace TraceabilityDriver.Services
             }
         }
 
+        /// <summary>
+        /// Stores a list of events asynchronously in a database, either inserting new records or updating existing
+        /// ones.
+        /// </summary>
+        /// <param name="events">A collection of event objects to be serialized and stored in the database.</param>
+        /// <returns>A task representing the asynchronous operation of storing the events.</returns>
         public async Task StoreEventsAsync(List<IEvent> events)
         {
             // Store events
@@ -138,6 +154,11 @@ namespace TraceabilityDriver.Services
             }
         }
 
+        /// <summary>
+        /// Stores a list of vocabulary elements in a database, either inserting new entries or updating existing ones.
+        /// </summary>
+        /// <param name="masterData">A collection of vocabulary elements to be stored or updated in the database.</param>
+        /// <returns>This method does not return a value.</returns>
         public async Task StoreMasterDataAsync(List<IVocabularyElement> masterData)
         {
             // Store master data
@@ -176,6 +197,22 @@ namespace TraceabilityDriver.Services
             }
         }
 
+        /// <summary>
+        /// Stores synchronization history data for tracking purposes.
+        /// </summary>
+        /// <param name="syncHistory">Contains the details of the synchronization event to be stored.</param>
+        /// <returns>This method does not return a value.</returns>
+        public async Task StoreSyncHistory(SyncHistoryItem syncHistory)
+        {
+            await _syncHistoryCollection.InsertOneAsync(syncHistory);
+        }
+
+        /// <summary>
+        /// Queries events based on various filters such as EPC, event time, record time, business step, action, and
+        /// location.
+        /// </summary>
+        /// <param name="options">Contains the criteria for filtering events during the query process.</param>
+        /// <returns>An EPCISQueryDocument containing the list of events that match the specified filters.</returns>
         public async Task<EPCISQueryDocument> QueryEvents(EPCISQueryParameters options)
         {
             var filterBuilder = Builders<EPCISEventDocument>.Filter;
@@ -267,6 +304,12 @@ namespace TraceabilityDriver.Services
             return result;
         }
 
+        /// <summary>
+        /// Queries master data based on a unique identifier and returns the corresponding vocabulary element.
+        /// </summary>
+        /// <param name="identifier">The unique identifier used to locate the specific master data entry.</param>
+        /// <returns>An instance of IVocabularyElement representing the deserialized master data.</returns>
+        /// <exception cref="Exception">Thrown when the master data cannot be found or fails to deserialize.</exception>
         public async Task<IVocabularyElement> QueryMasterData(string identifier)
         {
             var filterBuilder = Builders<MasterDataDocument>.Filter;
@@ -278,6 +321,22 @@ namespace TraceabilityDriver.Services
             }) ?? throw new Exception($"Master data for identifier {identifier} not found or failed to deserialize.");
         }
 
+        /// <summary>
+        /// Gets the latest syncs.
+        /// </summary>
+        /// <param name="top">Limit the number returned.</param>
+        /// <returns>The syncs returned.</returns>
+        public async Task<List<SyncHistoryItem>> GetLatestSyncs(int top = 10)
+        {
+            var sort = Builders<SyncHistoryItem>.Sort.Descending(s => s.EndTime);
+            return await _syncHistoryCollection.Find(new BsonDocument()).Sort(sort).Limit(top).ToListAsync();
+        }
+
+        /// <summary>
+        /// Creates indexes for the events and master data collections to optimize query performance and ensure
+        /// uniqueness.
+        /// </summary>
+        /// <returns>This method does not return a value.</returns>
         private async Task CreateIndexes()
         {
             // Create indexes for events collection
@@ -311,6 +370,11 @@ namespace TraceabilityDriver.Services
                 new CreateIndexModel<MasterDataDocument>(
                     Builders<MasterDataDocument>.IndexKeys.Ascending(m => m.ElementId),
                     new CreateIndexOptions { Unique = true }));
+
+            // Add end time index to the sync history collection
+            await _syncHistoryCollection.Indexes.CreateOneAsync(
+                new CreateIndexModel<SyncHistoryItem>(
+                    Builders<SyncHistoryItem>.IndexKeys.Ascending(s => s.EndTime)));
         }
     }
 } 

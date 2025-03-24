@@ -1,9 +1,8 @@
 ﻿
 namespace TraceabilityDriver.Services
 {
-    public interface ISynchronizeService
+    public interface ISynchronizeService : IHostedService
     {
-        Task StartAsync(CancellationToken cancellationToken);
-        Task StopAsync(CancellationToken cancellationToken);
+        Task SynchronizeAsync(CancellationToken cancellationToken);
     }
 }
