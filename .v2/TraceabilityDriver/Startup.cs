@@ -35,37 +35,25 @@ namespace TraceabilityDriver
 
             // SERVICES
             services.AddSingleton<IMongoDBService, MongoDBService>();
-            services.AddHostedService<ISynchronizeService, SynchronizeService>();
-
-            // HANGFIRE
-            //services.AddHangfire(configuration => configuration
-            //    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-            //    .UseSimpleAssemblyNameTypeSerializer()
-            //    .UseRecommendedSerializerSettings()
-            //    .UseMongoStorage(Configuration["MongoDB:ConnectionString"], new MongoStorageOptions
-            //    {
-            //        MigrationOptions = new MongoMigrationOptions()
-            //        {
-            //            MigrationStrategy = new MigrateMongoMigrationStrategy(),
-            //            BackupStrategy = new CollectionMongoBackupStrategy()
-            //        },
-            //        Prefix = "hangfire.mongo",
-            //        CheckConnection = true
-            //    }));
-
-            services.AddHangfireServer();
+            services.AddSingleton<ISynchronizeService, SynchronizeService>();
+            services.AddHostedService<HostedSyncService>();
 
             // CONNECTORS
             services.AddSingleton<ITDConnectorFactory, TDConnectorFactory>();
             services.AddTransient<TDSqlServerConnector>();
 
             // MAPPING
+            services.AddScoped<IMappingContext, MappingContext>();
+            services.AddTransient<IMappingSource, LocalMappingSource>();
             services.AddTransient<IEventsTableMappingService, EventsTableMappingService>();
             services.AddTransient<IEventsConverterService, EventsConverterService>();
             services.AddTransient<IEventsMergerService, EventsMergeByIdService>();
 
             // MAPPING FUNCTIONS
             services.AddSingleton<IMappingFunctionFactory, MappingFunctionFactory>();
+            services.AddKeyedTransient<IMappingFunction, DictionaryMappingFunction>("dictionary");
+            services.AddKeyedTransient<IMappingFunction, GenerateIdentifierFunction>("generateidentifier");
+            services.AddKeyedTransient<IMappingFunction, JoinFunction>("join");
 
             // BLAZOR
             services.AddRazorComponents()
@@ -86,14 +74,6 @@ namespace TraceabilityDriver
 
             app.UseHttpsRedirection();
             app.UseSerilogRequestLogging(); // Add HTTP request logging
-
-            //app.UseHangfireDashboard();
-
-            //// Schedule the synchronization job to run at midnight every day
-            //RecurringJob.AddOrUpdate<ISynchronizeService>(
-            //    "daily-synchronization",
-            //    service => service.SynchronizeAsync(CancellationToken.None),
-            //    Cron.Daily(0, 0));
 
             app.UseRouting();
 

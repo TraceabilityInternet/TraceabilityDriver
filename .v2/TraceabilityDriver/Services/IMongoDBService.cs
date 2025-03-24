@@ -1,11 +1,13 @@
 ﻿using OpenTraceability.Interfaces;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services
 {
     public interface IMongoDBService
     {
+        Task<List<SyncHistoryItem>> GetLatestSyncs(int top = 10);
         Task InitializeDatabase();
         Task<EPCISQueryDocument> QueryEvents(EPCISQueryParameters options);
         Task<IVocabularyElement> QueryMasterData(string identifier);

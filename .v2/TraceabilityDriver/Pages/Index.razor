@@ -1,4 +1,94 @@
 ﻿@page "/"
+@using TraceabilityDriver.Models.MongoDB
+@using TraceabilityDriver.Services
 
-<h1>Hello, Blazor Server!</h1>
-<p>Welcome to your Blazor Server + Web API app.</p>
+@implements IDisposable
+
+@inject ISynchronizeService SyncService
+
+<div class="container" style="width: 1000px">
+    @if (_item != null)
+    {
+        <div class="row py-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Current Sync</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>@_item.Status</p>
+                        <div class="progress mb-3" style="height: 20px;">
+                            @{
+                                var progressPercentage = _item.TotalItems > 0 ? (_item.ItemsProcessed * 100 / _item.TotalItems) : 0;
+                            }
+                            <div class="progress-bar" role="progressbar" style="width: @progressPercentage%;"
+                                 aria-valuenow="@_item.ItemsProcessed" aria-valuemin="0" aria-valuemax="@_item.TotalItems">
+                                @_item.ItemsProcessed / @_item.TotalItems (@progressPercentage%)
+                            </div>
+                        </div>
+                        <p><strong>Started:</strong> @_item.StartTime.ToString("g")</p>
+                        @if (_item.EndTime.HasValue)
+                        {
+                            <p><strong>Completed:</strong> @_item.EndTime.Value.ToString("g")</p>
+                            <p><strong>Duration:</strong> @((_item.EndTime.Value - _item.StartTime).ToString(@"hh\:mm\:ss"))</p>
+                        }
+                        <p><strong>Events Created:</strong> @_item.EventsCreated</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="row py-4">
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Events</h3>
+                </div>
+                <div class="card-body">
+                    <p>33,000</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Master Data</h3>
+                </div>
+                <div class="card-body">
+                    <p>33,000</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Syncs</h3>
+                </div>
+                <div class="card-body">
+                    <p>10</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    SyncHistoryItem? _item = null;
+
+    protected override void OnInitialized()
+    {
+        _item = SyncService.CurrentSync;
+        SyncService.OnSynchronizeStatusChanged += OnSyncStatusChanged;
+    }
+
+    void OnSyncStatusChanged(SyncHistoryItem sync)
+    {
+        _item = sync;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        SyncService.OnSynchronizeStatusChanged -= OnSyncStatusChanged;
+    }
+}

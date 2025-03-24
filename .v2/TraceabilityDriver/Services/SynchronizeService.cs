@@ -2,9 +2,13 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Threading;
 using TraceabilityDriver.Models.Mapping;
+using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Services.Connectors;
+using TraceabilityDriver.Services.Mapping;
 
 namespace TraceabilityDriver.Services;
+
+public delegate void OnSynchronizeStatusChanged(SyncHistoryItem syncHistoryItem);
 
 public class SynchronizeService : ISynchronizeService
 {
@@ -12,14 +16,18 @@ public class SynchronizeService : ISynchronizeService
     private readonly ITDConnectorFactory _connectorFactory;
     private readonly IEventsMergerService _eventsMergerService;
     private readonly IEventsConverterService _eventsConverterService;
+    private readonly IMappingSource _mappingSource;
     private readonly IMongoDBService _mongoDBService;
+
+    private SyncHistoryItem? _currentSync = null;
 
     public SynchronizeService(
         ILogger<SynchronizeService> logger,
         ITDConnectorFactory connectorFactory,
         IEventsMergerService eventsMergerService,
         IEventsConverterService eventsConverterService,
-        IMongoDBService mongoDBService)
+        IMongoDBService mongoDBService,
+        IMappingSource mappingSource)
     {
         _logger = logger;
         _connectorFactory = connectorFactory;
@@ -27,18 +35,81 @@ public class SynchronizeService : ISynchronizeService
         _eventsConverterService = eventsConverterService;
         _mongoDBService = mongoDBService;
         _logger.LogDebug("SynchronizeService initialized");
+        _mappingSource = mappingSource;
     }
 
+    public event OnSynchronizeStatusChanged? OnSynchronizeStatusChanged;
+
+    public SyncHistoryItem? CurrentSync { get => _currentSync; }
+
+    /// <summary>
+    /// Starts a synchronization process that checks if it needs to run based on the last execution time.
+    /// </summary>
+    /// <param name="cancellationToken">Used to signal when the synchronization process should be canceled.</param>
+    /// <returns>Returns a completed task indicating the start of the synchronization process.</returns>
     public Task StartAsync(CancellationToken cancellationToken)
     {
         // Execute the synchronization process at midnight every night or if it has not processed in the last 24 hours
         // then execute it immediately.
         _logger.LogInformation("SynchronizeService started");
+        Task.Run(async () =>
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    _logger.LogInformation("Checking if synchronization process is required");
+                    var lastSync = await _mongoDBService.GetLatestSyncs(top: 1);
+
+                    _logger.LogInformation("Found {Count} previous synchronization records", lastSync.Count);
+
+                    if (lastSync.Count == 0 || lastSync[0].StartTime < DateTime.UtcNow.AddDays(-1))
+                    {
+                        _logger.LogInformation("Starting synchronization process");
+                        await SynchronizeAsync(cancellationToken);
+                        _logger.LogInformation("Synchronization process completed");
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Synchronization process not required, last sync was at {LastSync}", lastSync[0].StartTime);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (_currentSync != null)
+                    {
+                        _currentSync.Status = $"Error: {ex.Message}";
+                    }
+                    _logger.LogError(ex, "Error occurred during synchronization process");
+                }
+                finally
+                {
+                    if (_currentSync != null)
+                    {
+                        _currentSync.EndTime = DateTime.UtcNow;
+                        OnSynchronizeStatusChanged?.Invoke(_currentSync);
+                    }
+                }
+
+#if DEBUG
+                await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+#else
+                await Task.Delay(TimeSpan.FromMinutes(60), cancellationToken);
+#endif
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the asynchronous operation.
+    /// </summary>
+    /// <param name="cancellationToken">Used to signal the cancellation of the operation.</param>
+    /// <returns>Returns a completed task.</returns>
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -46,61 +117,60 @@ public class SynchronizeService : ISynchronizeService
     /// </summary>
     public async Task SynchronizeAsync(CancellationToken cancellationToken)
     {
-        /// TODO: Implement the logic to synchronize the data from the database to the event store.
         _logger.LogInformation("Synchronizing data from the database(s) to the event store.");
         _logger.LogDebug("Starting synchronization process");
 
-        /// Get the mapping files.
-        var mappingPath = Path.Combine(AppContext.BaseDirectory, "Mappings");
-        _logger.LogDebug("Looking for mapping files in: {MappingPath}", mappingPath);
-        var mappingFiles = Directory.GetFiles(mappingPath, "*.json");
-        _logger.LogDebug("Found {Count} mapping files", mappingFiles.Length);
+        // Create the sync history item.
+        _currentSync = new SyncHistoryItem
+        {
+            StartTime = DateTime.UtcNow,
+            Status = "Starting sync..."
+        };
+        OnSynchronizeStatusChanged?.Invoke(_currentSync);
 
         /// Read the mapping files.
-        foreach (var mappingFile in mappingFiles)
+        foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
         {
-            _logger.LogInformation("Processing the mapping file: {MappingFile}", mappingFile);
-            _logger.LogDebug("Beginning to parse mapping file: {MappingFile}", mappingFile);
+            /// Update the sync status.
+            _currentSync.Status = $"Processing mapping file...";
+            OnSynchronizeStatusChanged?.Invoke(_currentSync);
+
             try
             {
-                var jsonContent = File.ReadAllText(mappingFile);
-                _logger.LogDebug("Successfully read mapping file content, length: {Length} characters", jsonContent.Length);
-
-                var mapping = JsonConvert.DeserializeObject<TDMappingConfiguration>(jsonContent)
-                    ?? throw new Exception("Failed to deserialize the mapping file.");
-
-                _logger.LogDebug("Successfully deserialized mapping file with {ConnectionsCount} connections and {MappingsCount} mappings",
-                    mapping.Connections.Count, mapping.Mappings.Count);
-
                 /// Test the connections.
-                _logger.LogDebug("Testing connections for mapping file: {MappingFile}", mappingFile);
-                if (!await TestConnectionsAsync(mappingFile, mapping))
+                _logger.LogDebug("Testing connections for mapping file.");
+                if (!await TestConnectionsAsync(mapping))
                 {
-                    _logger.LogError("Failed to test the connections for the mapping file: {MappingFile}", mappingFile);
+                    _logger.LogError("Failed to test the connections for the mapping file.");
                     continue;
                 }
-                _logger.LogDebug("All connections tested successfully for mapping file: {MappingFile}", mappingFile);
+                _logger.LogDebug("All connections tested successfully for mapping file.");
 
                 /// Verify the mappings are valid.
-                _logger.LogDebug("Verifying mapping configuration: {MappingFile}", mappingFile);
-                if (!VerifyMapping(mappingFile, mapping))
+                _logger.LogDebug("Verifying mapping configuration.");
+                if (!VerifyMapping(mapping))
                 {
-                    _logger.LogError("The mapping file: {MappingFile} is invalid.", mappingFile);
+                    _logger.LogError("The mapping file: {Mapping} is invalid.", mapping);
                     continue;
                 }
-                _logger.LogDebug("Mapping verification successful for: {MappingFile}", mappingFile);
+                _logger.LogDebug("Mapping verification successful for.");
 
                 /// Process the mappings.
-                _logger.LogDebug("Beginning to process mappings for file: {MappingFile}", mappingFile);
-                await ProcessMappingsAsync(mappingFile, mapping, cancellationToken);
+                _logger.LogDebug("Beginning to process mappings for file.");
+                await ProcessMappingsAsync(mapping, cancellationToken);
 
-                _logger.LogInformation("Successfully processed the mapping file: {MappingFile}", mappingFile);
+                _logger.LogInformation("Successfully processed the mapping file.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing the mapping file: {MappingFile}", mappingFile);
+                _logger.LogError(ex, "Error processing the mapping file.");
             }
         }
+
+        // Update the sync history item.
+        _currentSync.EndTime = DateTime.UtcNow;
+        _currentSync.Status = "Completed";
+        OnSynchronizeStatusChanged?.Invoke(_currentSync);
 
         _logger.LogDebug("Synchronization process completed");
     }
@@ -111,9 +181,9 @@ public class SynchronizeService : ISynchronizeService
     /// <param name="mappingFile">Specifies the file containing the mapping configurations to be processed.</param>
     /// <param name="mapping">Contains the configuration details for the mappings, including selectors and connections.</param>
     /// <returns>This method does not return a value.</returns>
-    public async Task ProcessMappingsAsync(string mappingFile, TDMappingConfiguration mapping, CancellationToken cancellationToken)
+    public async Task ProcessMappingsAsync(TDMappingConfiguration mapping, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Processing {Count} mappings from file: {MappingFile}", mapping.Mappings.Count, mappingFile);
+        _logger.LogDebug("Processing {Count} mappings from file.", mapping.Mappings.Count);
 
         foreach (var map in mapping.Mappings)
         {
@@ -196,15 +266,15 @@ public class SynchronizeService : ISynchronizeService
                 await _mongoDBService.StoreMasterDataAsync(epcisDoc.MasterData);
                 _logger.LogDebug("Successfully stored {Count} master data elements in MongoDB", epcisDoc.MasterData.Count);
 
-                _logger.LogInformation("Successfully processed a mapping for the event type '{EventType}' in the mapping file: {MappingFile}", map.EventType, mappingFile);
+                _logger.LogInformation("Successfully processed a mapping for the event type '{EventType}' in the mapping file.", map.EventType);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing a mapping for the event type '{EventType}' in the mapping file: {MappingFile}", map.EventType, mappingFile);
+                _logger.LogError(ex, "Error processing a mapping for the event type '{EventType}' in the mapping file.", map.EventType);
             }
         }
 
-        _logger.LogDebug("Completed processing all mappings from file: {MappingFile}", mappingFile);
+        _logger.LogDebug("Completed processing all mappings from file.");
     }
 
     /// <summary>
@@ -213,9 +283,9 @@ public class SynchronizeService : ISynchronizeService
     /// <param name="mappingFile">The mapping configuration file.</param>
     /// <param name="mapping">The mapping file path.</param>
     /// <returns></returns>
-    public bool VerifyMapping(string mappingFile, TDMappingConfiguration mapping)
+    public bool VerifyMapping(TDMappingConfiguration mapping)
     {
-        _logger.LogDebug("Verifying mapping for file: {MappingFile}", mappingFile);
+        _logger.LogDebug("Verifying mapping for file.");
 
         foreach (var map in mapping.Mappings)
         {
@@ -227,7 +297,7 @@ public class SynchronizeService : ISynchronizeService
 
                 if (!mapping.Connections.ContainsKey(selector.Database))
                 {
-                    _logger.LogError("The database '{Database}' is not defined in the connections: {MappingFile}", selector.Database, mappingFile);
+                    _logger.LogError("The database '{Database}' is not defined in the connections.", selector.Database);
                     return false;
                 }
 
@@ -237,7 +307,7 @@ public class SynchronizeService : ISynchronizeService
             _logger.LogDebug("All selectors for event type '{EventType}' have valid database references", map.EventType);
         }
 
-        _logger.LogDebug("Mapping verification completed successfully for file: {MappingFile}", mappingFile);
+        _logger.LogDebug("Mapping verification completed successfully for file.");
         return true;
     }
 
@@ -247,9 +317,9 @@ public class SynchronizeService : ISynchronizeService
     /// <param name="mappingFile">Specifies the file that contains the mapping configuration for the connections.</param>
     /// <param name="mapping">Contains the configuration details for the connections to be tested.</param>
     /// <returns>Indicates whether all tested connections are valid.</returns>
-    public async Task<bool> TestConnectionsAsync(string mappingFile, TDMappingConfiguration mapping)
+    public async Task<bool> TestConnectionsAsync(TDMappingConfiguration mapping)
     {
-        _logger.LogDebug("Testing {Count} connections for file: {MappingFile}", mapping.Connections.Count, mappingFile);
+        _logger.LogDebug("Testing {Count} connections for file.", mapping.Connections.Count);
 
         // Test each connection.
         bool allConnectionsValid = true;
@@ -270,8 +340,8 @@ public class SynchronizeService : ISynchronizeService
             _logger.LogDebug("Successfully tested connection to database: {ConnectionName}", connection.Key);
         }
 
-        _logger.LogDebug("Connection testing completed for file: {MappingFile}, all connections valid: {AllValid}",
-            mappingFile, allConnectionsValid);
+        _logger.LogDebug("Connection testing completed for mapping, all connections valid: {AllValid}",
+            allConnectionsValid);
 
         return allConnectionsValid;
     }
