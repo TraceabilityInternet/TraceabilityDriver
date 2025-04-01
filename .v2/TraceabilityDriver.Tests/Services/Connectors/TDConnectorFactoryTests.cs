@@ -30,7 +30,8 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             Mock<IOptions<TDConnectorConfiguration>> mockOptions = new Mock<IOptions<TDConnectorConfiguration>>();
             Mock<ILogger<TDSqlServerConnector>> mockLogger = new Mock<ILogger<TDSqlServerConnector>>();
             Mock<IEventsTableMappingService> mockEventsTableMappingService = new Mock<IEventsTableMappingService>();
-            _mockConnector = new TDSqlServerConnector(mockLogger.Object, mockEventsTableMappingService.Object);
+            Mock<ISynchronizationContext> mockSynchronizationContext = new Mock<ISynchronizationContext>();
+            _mockConnector = new TDSqlServerConnector(mockLogger.Object, mockEventsTableMappingService.Object, mockSynchronizationContext.Object);
         }
 
         [Test]

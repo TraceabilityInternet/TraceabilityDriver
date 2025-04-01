@@ -58,7 +58,19 @@ namespace TraceabilityDriver.Services.Mapping
 
                     mappings.Add(mapping);
                 }
-            }            
+            }
+
+#if DEBUG
+            string? filePath = Environment.GetEnvironmentVariable("TD_INTEGRATION_TEST_MAPPING_FILE");
+            if (!string.IsNullOrWhiteSpace(filePath))
+            {
+                var json = System.IO.File.ReadAllText(filePath);
+                var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
+                    ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
+
+                mappings.Add(mapping);
+            }
+#endif
 
             return mappings;
         }

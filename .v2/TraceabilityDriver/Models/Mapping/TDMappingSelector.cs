@@ -21,6 +21,11 @@ public class TDMappingSelector
     public string Count { get; set; } = string.Empty;
 
     /// <summary>
+    /// The configuration for how variables can be remembered from one sync to the next.
+    /// </summary>
+    public Dictionary<string, TDMappingSelectorMemoryVariable> Memory { get; set; } = new();   
+
+    /// <summary>
     /// The event mapping to use for the selector.
     /// </summary>
     [JsonConverter(typeof(TDEventMappingConverter))]

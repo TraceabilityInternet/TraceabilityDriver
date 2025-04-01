@@ -9,10 +9,10 @@ namespace TraceabilityDriver.Services.Mapping.Functions;
 /// </summary>
 public class DictionaryMappingFunction : IMappingFunction
 {
-    private readonly IMappingContext _context;
+    private readonly ISynchronizationContext _context;
     private readonly ILogger<DictionaryMappingFunction> _logger;
 
-    public DictionaryMappingFunction(IMappingContext context, ILogger<DictionaryMappingFunction> logger)
+    public DictionaryMappingFunction(ISynchronizationContext context, ILogger<DictionaryMappingFunction> logger)
     {
         _context = context;
         _logger = logger;

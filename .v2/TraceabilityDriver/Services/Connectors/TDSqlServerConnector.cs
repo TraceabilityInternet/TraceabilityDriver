@@ -10,14 +10,17 @@ namespace TraceabilityDriver.Services.Connectors;
 public class TDSqlServerConnector : ITDConnector
 {
     private readonly ILogger<TDSqlServerConnector> _logger;
+    private readonly ISynchronizationContext _syncContext;
     private readonly IEventsTableMappingService _eventsTableMappingService;
 
     public TDSqlServerConnector(
         ILogger<TDSqlServerConnector> logger,
-        IEventsTableMappingService eventsTableMappingService)
+        IEventsTableMappingService eventsTableMappingService,
+        ISynchronizationContext syncContext)
     {
         _logger = logger;
         _eventsTableMappingService = eventsTableMappingService;
+        _syncContext = syncContext;
     }
 
     /// <summary>
@@ -70,7 +73,7 @@ public class TDSqlServerConnector : ITDConnector
     /// <summary>
     /// Returns one or more events from the database using the selector.
     /// </summary>
-    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken, Func<Action<SyncHistoryItem>, Task>? update)
+    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken)
     {
         try
         {
@@ -81,14 +84,9 @@ public class TDSqlServerConnector : ITDConnector
             int totalRows = await GetTotalRowsAsync(config, selector);
 
             // Update the sync history.
-            if (update != null)
-            {
-                await update(sync =>
-                {
-                    sync.TotalItems = totalRows;
-                    sync.ItemsProcessed = 0;
-                });
-            }
+            _syncContext.CurrentSync.TotalItems = totalRows;
+            _syncContext.CurrentSync.ItemsProcessed = 0;
+            _syncContext.Updated();
 
             using (var connection = new SqlConnection(config.ConnectionString))
             {
@@ -102,6 +100,12 @@ public class TDSqlServerConnector : ITDConnector
                     adapter.SelectCommand = new SqlCommand(selector.Selector, connection);
                     adapter.SelectCommand.Parameters.Add("@offset", SqlDbType.Int).Value = 0;
                     adapter.SelectCommand.Parameters.Add("@limit", SqlDbType.Int).Value = 1000;
+
+                    // Add a memory variable.
+                    foreach (var memory in selector.Memory)
+                    {
+                        AddMemoryVariable(adapter.SelectCommand, memory.Key, memory.Value);
+                    }
 
                     // Check for cancellation.
                     if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
@@ -128,14 +132,15 @@ public class TDSqlServerConnector : ITDConnector
                         List<CommonEvent> results = _eventsTableMappingService.MapEvents(selector.EventMapping, dataTable, cancellationToken);
                         events.AddRange(results);
 
-                        // Update the sync.
-                        if (update != null)
+                        // Handle the memory variables.
+                        foreach (var memory in selector.Memory)
                         {
-                            await update(sync =>
-                            {
-                                sync.ItemsProcessed += results.Count;
-                            });
+                            HandleMemoryVariables(dataTable, memory.Key, memory.Value);
                         }
+
+                        // Update the sync.
+                        _syncContext.CurrentSync.ItemsProcessed += results.Count;
+                        _syncContext.Updated();
                     }
 
                     return events;
@@ -145,6 +150,58 @@ public class TDSqlServerConnector : ITDConnector
         catch (Exception ex)
         {
             throw new Exception($"Error getting events from the database: {config.Database}", ex);
+        }
+    }
+
+    /// <summary>
+    /// This is a method that will help to remember things about the current sync so that we can 
+    /// use them in the next sync.
+    /// </summary>
+    public void HandleMemoryVariables(DataTable dt, string key, TDMappingSelectorMemoryVariable memory)
+    {
+        string column = memory.Field.Substring(1) ?? string.Empty;
+        if (!dt.Columns.Contains(column))
+        {
+            throw new Exception($"The column {column} does not exist in the data table. Failed to process the memory variable {key}.");
+        }
+
+        List<object> values = new List<object>();
+        foreach (DataRow row in dt.Rows)
+        {
+            values.Add(row[column]);
+        }
+
+        _syncContext.CurrentSync.Memory[key] = values.Last().ToString() ?? "";
+    }
+
+    public void AddMemoryVariable(SqlCommand selectCommand, string key, TDMappingSelectorMemoryVariable memory)
+    {
+        try
+        {
+            string value = memory.DefaultValue;
+
+            // If the previous sync has a value for the memory variable, then use that.
+            if (_syncContext.PreviousSync?.Memory.ContainsKey(key) == true)
+            {
+                value = _syncContext.PreviousSync.Memory[key];
+            }
+
+            // Do a switch on the data type and parse the value.
+            switch (memory.DataType.ToLower())
+            {
+                case "string": selectCommand.Parameters.Add($"@{key}", SqlDbType.NVarChar).Value = value; break;
+                case "int32": selectCommand.Parameters.Add($"@{key}", SqlDbType.Int).Value = int.Parse(value); break;
+                case "int64": selectCommand.Parameters.Add($"@{key}", SqlDbType.BigInt).Value = long.Parse(value); break;
+                case "double": selectCommand.Parameters.Add($"@{key}", SqlDbType.Float).Value = double.Parse(value); break;
+                case "datetime": selectCommand.Parameters.Add($"@{key}", SqlDbType.DateTime).Value = DateTime.Parse(value); break;
+                case "bool": selectCommand.Parameters.Add($"@{key}", SqlDbType.Bit).Value = bool.Parse(value); break;
+                default: throw new Exception($"Unknown data type on memory variable: {memory.DataType}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding memory variable: {Key}", key);
+            throw;
         }
     }
 

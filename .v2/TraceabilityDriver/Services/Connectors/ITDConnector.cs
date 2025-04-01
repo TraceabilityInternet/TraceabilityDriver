@@ -11,7 +11,7 @@ public interface ITDConnector
     /// <summary>
     /// Returns one or more events from the database using the selector.
     /// </summary>
-    Task<IEnumerable<CommonEvent>> GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancelToken, Func<Action<SyncHistoryItem>, Task>? update);
+    Task<IEnumerable<CommonEvent>> GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancelToken);
 
     /// <summary>
     /// Asynchronously retrieves the total number of rows based on the provided configuration and mapping selector.

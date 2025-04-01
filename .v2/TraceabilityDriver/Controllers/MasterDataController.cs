@@ -9,12 +9,12 @@ namespace TraceabilityDriver.Controllers
     public class MasterDataController : ControllerBase
     {
         private readonly ILogger<MasterDataController> _logger;
-        private readonly MongoDBService _mongoDBService;
+        private readonly IDatabaseService _dbService;
 
-        public MasterDataController(ILogger<MasterDataController> logger, MongoDBService mongoDBService)
+        public MasterDataController(ILogger<MasterDataController> logger, IDatabaseService dbService)
         {
             _logger = logger;
-            _mongoDBService = mongoDBService;
+            _dbService = dbService;
         }
 
         [HttpGet]
@@ -23,7 +23,7 @@ namespace TraceabilityDriver.Controllers
         {
             try
             {
-                var masterDataItem = await _mongoDBService.QueryMasterData(id);
+                var masterDataItem = await _dbService.QueryMasterData(id);
 
                 if (masterDataItem != null)
                 {

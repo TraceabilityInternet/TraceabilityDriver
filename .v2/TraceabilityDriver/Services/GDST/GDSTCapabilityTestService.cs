@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Azure;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenTraceability.Models.Events;
 using System.Reflection;
@@ -13,12 +15,12 @@ namespace TraceabilityDriver.Services.GDST
     public class GDSTCapabilityTestService : IGDSTCapabilityTestService
     {
         ILogger<GDSTCapabilityTestService> _logger;
-        IMongoDBService _mongoDb;
+        IDatabaseService _mongoDb;
         IHttpClientFactory _httpClientFactory;
         IOptions<GDSTCapabilityTestSettings> _settings;
         IConfiguration _config;
 
-        public GDSTCapabilityTestService(ILogger<GDSTCapabilityTestService> logger, IMongoDBService mongoDb, IHttpClientFactory httpClientFactory, IOptions<GDSTCapabilityTestSettings> settings, IConfiguration config)
+        public GDSTCapabilityTestService(ILogger<GDSTCapabilityTestService> logger, IDatabaseService mongoDb, IHttpClientFactory httpClientFactory, IOptions<GDSTCapabilityTestSettings> settings, IConfiguration config)
         {
             _logger = logger;
             _mongoDb = mongoDb;
@@ -27,47 +29,110 @@ namespace TraceabilityDriver.Services.GDST
             _config = config;
         }
 
-        public async Task<bool> TestFirstMileWildAsync()
+        public async Task<GDSTCapabilityTestResults> TestFirstMileWildAsync()
         {
-            // Verify the capability test settings.
-            if (_settings?.Value == null)
+            try
             {
-                throw new NullReferenceException("GDST capability test settings are not initialized.");
+                // Verify the capability test settings.
+                if (_settings?.Value == null)
+                {
+                    throw new NullReferenceException("GDST capability test settings are not initialized.");
+                }
+
+                // Load the test data into the database
+                await LoadTestDataIntoDatabaseAsync();
+
+                // Perform the test
+                return await ExecuteTestAsync();
             }
-
-            // Load the test data into the database
-            await LoadTestDataIntoDatabaseAsync();
-
-            // Perform the test
-            return await ExecuteTestAsync();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while running the capability test.");
+                return new GDSTCapabilityTestResults()
+                {
+                    Status = GDSTCapabilityTestStatus.Failed,
+                    Errors = new List<GDSTCapabilityTestsError>()
+                    {
+                        new GDSTCapabilityTestsError() { Error = "An unknown error occurred while running the capability test." }
+                    }
+                };
+            }
         }
 
-        public async Task<bool> ExecuteTestAsync()
+        public async Task<GDSTCapabilityTestResults> ExecuteTestAsync()
         {
+            string digitalLinkURL = _config["URL"]?.TrimEnd('/') + "/digitallink/";
+
             JObject json = new JObject();
             json["SolutionName"] = _settings.Value.SolutionName;
             json["Version"] = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
-            json["URL"] = _config["URL"] ?? throw new InvalidOperationException("URL is not set in the configuration.");
+            json["APIKey"] = "123";
+            json["URL"] = digitalLinkURL;
             json["PGLN"] = _settings.Value.PGLN;
             json["GDSTVersion"] = "12";
             json["EPCS"] = new JArray("urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022");
 
-            var client = _httpClientFactory.CreateClient();
+            using var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Add("X-API-Key", _settings.Value.ApiKey);
-            var response = await client.PostAsync(_settings.Value.Url, new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
+            client.BaseAddress = new Uri(_settings.Value.Url);
+            var response = await client.PostAsync("/process/start", new StringContent(json.ToString(), Encoding.UTF8, "application/json"));
 
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation($"Test started successfully: {result}");
+                _logger.LogInformation("Test started successfully: {Result}", result);
+
+                GDSTCapabilityTestModel model = JsonConvert.DeserializeObject<GDSTCapabilityTestModel>(result)
+                    ?? throw new Exception("The response could not be deserialized.");
+
+                return await PollForResultsAsync(model);
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Test failed: {error}");
+                throw new Exception($"The request failed with status code {response.StatusCode}. Error: {error}");
+            }
+        }
+
+        public async Task<GDSTCapabilityTestResults> PollForResultsAsync(GDSTCapabilityTestModel test)
+        {
+            using var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("X-API-Key", _settings.Value.ApiKey);
+            client.DefaultRequestHeaders.Add("X-Capability-Process-UUID", test.ComplianceProcessUUID);
+            client.BaseAddress = new Uri(_settings.Value.Url);
+
+            GDSTCapabilityTestResults results = new GDSTCapabilityTestResults()
+            {
+                Status = GDSTCapabilityTestStatus.Started
+            };
+
+            // Now we need to poll for up to 5 minutes to get the response.
+            for (int i = 0; i < 300; i++)
+            {
+                await Task.Delay(1000);
+
+                var response = await client.GetAsync($"/process/report");
+                if (response.IsSuccessStatusCode)
+                {
+                    var report = await response.Content.ReadAsStringAsync();
+
+                    _logger.LogInformation("Test results: {Report}", report);
+
+                    results = JsonConvert.DeserializeObject<GDSTCapabilityTestResults>(report)
+                        ?? throw new Exception("The response could not be deserialized.");
+
+                    if (results.Status == GDSTCapabilityTestStatus.Started)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
 
-            return false;
+            return results;
         }
 
         public async Task LoadTestDataIntoDatabaseAsync()
@@ -83,8 +148,8 @@ namespace TraceabilityDriver.Services.GDST
             // Store the events
             await _mongoDb.StoreEventsAsync(document.Events);
 
-            // Store master data if needed
-            // await _mongoDb.StoreMasterDataAsync(document.MasterData);
+            // Store master data
+            await _mongoDb.StoreMasterDataAsync(document.MasterData);
         }
 
         public EPCISDocument GenerateTraceabilityData()

@@ -3,16 +3,16 @@
 
 @implements IDisposable
 
-@inject ISynchronizeService SyncService
+@inject ISynchronizationContext SyncContext
 
 <div class="card">
     <div class="card-header">
         <h3>Current Sync</h3>
     </div>
     <div class="card-body">
-        @if (_item == null)
+        @if (_item == null || _item.Status == SyncStatus.Completed)
         {
-            <div class="alert alert-warning" role="alert">
+            <div class="alert alert-info" role="alert">
                 No synchronization is currently in progress.
             </div>
         }
@@ -44,18 +44,22 @@
 
     protected override void OnInitialized()
     {
-        _item = SyncService.CurrentSync;
-        SyncService.OnSynchronizeStatusChanged += OnSyncStatusChanged;
+        _item = SyncContext.CurrentSync;
+        SyncContext.OnSynchronizeStatusChanged += OnSyncStatusChanged;
     }
 
-    void OnSyncStatusChanged(SyncHistoryItem sync)
+    async void OnSyncStatusChanged(SyncHistoryItem sync)
     {
-        _item = sync;
-        StateHasChanged();
+        // Use InvokeAsync to ensure UI updates happen on the UI thread
+        await InvokeAsync(() =>
+        {
+            _item = sync;
+            StateHasChanged();
+        });
     }
 
     public void Dispose()
     {
-        SyncService.OnSynchronizeStatusChanged -= OnSyncStatusChanged;
+        SyncContext.OnSynchronizeStatusChanged -= OnSyncStatusChanged;
     }
 }

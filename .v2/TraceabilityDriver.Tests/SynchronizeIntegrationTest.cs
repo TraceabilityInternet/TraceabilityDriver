@@ -67,7 +67,7 @@ namespace TraceabilityDriver.Tests
             services.AddSingleton<IConfiguration>(configuration);
 
             // SERVICES
-            services.AddSingleton<IMongoDBService, MongoDBService>();
+            services.AddSingleton<IDatabaseService, MongoDBService>();
             services.AddSingleton<ISynchronizeService, SynchronizeService>();
             services.AddHostedService<HostedSyncService>();
 
@@ -76,7 +76,7 @@ namespace TraceabilityDriver.Tests
             services.AddTransient<TDSqlServerConnector>();
 
             // MAPPING
-            services.AddScoped<IMappingContext, MappingContext>();
+            services.AddScoped<ISynchronizationContext, TraceabilityDriver.Services.SynchronizationContext>();
             services.AddSingleton<IMappingSource>(_mockMappingSource.Object);
             services.AddTransient<IEventsTableMappingService, EventsTableMappingService>();
             services.AddTransient<IEventsConverterService, EventsConverterService>();

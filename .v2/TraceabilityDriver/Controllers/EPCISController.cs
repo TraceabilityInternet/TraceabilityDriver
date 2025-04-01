@@ -20,13 +20,15 @@ namespace TraceabilityDriver.Controllers
     [Route("epcis")]
     public class EPCISController : ControllerBase
     {
-        private readonly MongoDBService _mongoService;
+        private readonly IDatabaseService _dbService;
+        private readonly ILogger<EPCISController> _logger;
         private static bool _databaseInitialized = false;
 
-        public EPCISController(MongoDBService mongoService)
+        public EPCISController(IDatabaseService dbService, ILogger<EPCISController> logger)
         {
-            _mongoService = mongoService;
-            
+            _dbService = dbService;
+            _logger = logger;
+
             // Initialize database with sample data if not already done
             if (!_databaseInitialized)
             {
@@ -38,7 +40,7 @@ namespace TraceabilityDriver.Controllers
         private async Task InitializeDatabase()
         {
             // Initialize MongoDB with this data
-            await _mongoService.InitializeDatabase();
+            await _dbService.InitializeDatabase();
         }
 
         [Route("queries/SimpleEventQuery")]
@@ -61,30 +63,41 @@ namespace TraceabilityDriver.Controllers
 
         private async Task<IActionResult> SimpleQuery_internal(EPCISQueryParameters options)
         {
-            if (options == null) throw new ArgumentNullException(nameof(options));
-            if (options.query == null) throw new ArgumentNullException(nameof(options.query));
-            if (!options.IsValid(out string? error)) throw new ArgumentException($"options are not valid. {error}");
-
-            // Query MongoDB for events
-            EPCISQueryDocument epcisDoc = await _mongoService.QueryEvents(options);
-
-            // Determine response format based on headers
-            IEPCISQueryDocumentMapper mapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
-            if (HttpContext.Request.Headers["GS1-EPCIS-Version"].FirstOrDefault() != "1.2")
+            try
             {
-                epcisDoc.EPCISVersion = EPCISVersion.V2;
-                mapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
-            }
+                if (options == null) throw new ArgumentNullException(nameof(options));
+                if (options.query == null) throw new ArgumentNullException(nameof(options.query));
+                if (!options.IsValid(out string? error)) throw new ArgumentException($"options are not valid. {error}");
 
-            // Add response headers
-            foreach (var header in HttpContext.Request.Headers.Where(h => h.Key.StartsWith("GS1-")))
+                // Query MongoDB for events
+                EPCISQueryDocument epcisDoc = await _dbService.QueryEvents(options);
+
+                // Determine response format based on headers
+                IEPCISQueryDocumentMapper mapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
+                if (HttpContext.Request.Headers["GS1-EPCIS-Version"].FirstOrDefault() != "1.2")
+                {
+                    epcisDoc.EPCISVersion = EPCISVersion.V2;
+                    mapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
+                }
+
+                // Add response headers
+                foreach (var header in HttpContext.Request.Headers.Where(h => h.Key.StartsWith("GS1-")))
+                {
+                    HttpContext.Response.Headers.Add(header);
+                }
+
+                HttpContext.Response.StatusCode = 201;
+
+                string str = mapper.Map(epcisDoc);
+
+                await HttpContext.Response.WriteAsync(str);
+                return Empty;
+            }
+            catch (Exception ex)
             {
-                HttpContext.Response.Headers.Add(header);
+                _logger.LogError(ex, "Error occurred during SimpleQuery.");
+                return BadRequest(ex.Message);
             }
-
-            HttpContext.Response.StatusCode = 201;
-            await HttpContext.Response.WriteAsync(mapper.Map(epcisDoc));
-            return Empty;
         }
 
         private IActionResult? ValidateHeader(string name, string expectedValue, string expectedValueText)

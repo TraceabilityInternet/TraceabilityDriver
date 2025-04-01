@@ -4,14 +4,17 @@ using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenTraceability.GDST;
 using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
+using OpenTraceability.Mappers.EPCIS.JSON;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Models.MasterData;
 using OpenTraceability.Queries;
+using OpenTraceability.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +27,7 @@ namespace TraceabilityDriver.Services
     /// <summary>
     /// Service for storing and querying EPCIS events and master data in a MongoDB database.
     /// </summary>
-    public class MongoDBService : IMongoDBService
+    public class MongoDBService : IDatabaseService
     {
         private readonly IMongoCollection<EPCISEventDocument> _eventsCollection;
         private readonly IMongoCollection<MasterDataDocument> _masterDataCollection;
@@ -79,21 +82,22 @@ namespace TraceabilityDriver.Services
             // Store events
             foreach (var evt in events)
             {
-                var eventJson = Newtonsoft.Json.JsonConvert.SerializeObject(evt, new JsonSerializerSettings()
-                {
-                    TypeNameHandling = TypeNameHandling.All
-                });
+                EPCISQueryDocument doc = new EPCISQueryDocument();
+                doc.EPCISVersion = EPCISVersion.V2;
+                doc.Header = OpenTraceability.Models.Common.StandardBusinessDocumentHeader.DummyHeader;
+                doc.Events.Add(evt);
+                string json = OpenTraceability.Mappers.OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(doc);
 
                 var eventDoc = new EPCISEventDocument
                 {
                     EventId = evt.EventID.ToString(),
-                    EventJson = eventJson,
-                    BizStep = evt.BusinessStep.ToString(),
-                    Action = evt.Action.ToString() ?? "",
+                    EventJson = json,
+                    BizStep = evt.BusinessStep.ToString().ToLower(),
+                    Action = evt.Action.ToString()?.ToLower() ?? "",
                     EventTime = evt.EventTime,
-                    EPCs = evt.Products.Select(p => p.EPC.ToString()).ToList(),
-                    ProductGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString()).Where(g => g != null).Select(g => g!).ToList(),
-                    LocationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString() } : new List<string>(),
+                    EPCs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList(),
+                    ProductGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString().ToLower()).Where(g => g != null).Select(g => g!).ToList(),
+                    LocationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>(),
                     PartyPGLNs = new List<string>()
                 };
 
@@ -174,16 +178,11 @@ namespace TraceabilityDriver.Services
             // Store master data
             foreach (var element in masterData)
             {
-                var elementJson = Newtonsoft.Json.JsonConvert.SerializeObject(element, new JsonSerializerSettings()
-                {
-                    TypeNameHandling = TypeNameHandling.All
-                });
-
                 var masterDataDoc = new MasterDataDocument
                 {
                     ElementId = element.ID,
-                    ElementType = element.GetType().Name,
-                    ElementJson = elementJson
+                    ElementType = element.GetType().AssemblyQualifiedName ?? "",
+                    ElementJson = OpenTraceability.Mappers.OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(element)
                 };
 
                 // Check if master data with this ID already exists
@@ -229,21 +228,33 @@ namespace TraceabilityDriver.Services
             var filter = filterBuilder.Empty;
 
             // Apply query filters
+            if (options.query.MATCH_anyEPCClass.Count > 0)
+            {
+                var epcFilters = new List<FilterDefinition<EPCISEventDocument>>();
+
+                foreach (var epc in options.query.MATCH_anyEPCClass)
+                {
+                    if (epc.EndsWith('*'))
+                    {
+                        string prefix = epc.Substring(0, epc.IndexOf('*'));
+                        epcFilters.Add(filterBuilder.Regex(e => e.EPCs, new BsonRegularExpression($"^{prefix.ToLower()}", "i")));
+                    }
+                    else
+                    {
+                        epcFilters.Add(filterBuilder.AnyEq(e => e.EPCs, epc.ToLower()));
+                    }
+                }
+
+                filter = filter & filterBuilder.Or(epcFilters);
+            }
+
             if (options.query.MATCH_anyEPC.Count > 0)
             {
                 var epcFilters = new List<FilterDefinition<EPCISEventDocument>>();
 
                 foreach (var epc in options.query.MATCH_anyEPC)
                 {
-                    if (epc.EndsWith('*'))
-                    {
-                        string prefix = epc.Substring(0, epc.IndexOf('*'));
-                        epcFilters.Add(filterBuilder.Regex(e => e.EPCs, new BsonRegularExpression($"^{prefix}", "i")));
-                    }
-                    else
-                    {
-                        epcFilters.Add(filterBuilder.AnyEq(e => e.EPCs, epc));
-                    }
+                    epcFilters.Add(filterBuilder.AnyEq(e => e.EPCs, epc.ToLower()));
                 }
 
                 filter = filter & filterBuilder.Or(epcFilters);
@@ -275,7 +286,7 @@ namespace TraceabilityDriver.Services
             if (options.query.EQ_bizStep?.Count > 0)
             {
                 var eventTypeFilters = options.query.EQ_bizStep.Select(et =>
-                    filterBuilder.Eq(e => e.BizStep, et.ToString())).ToList();
+                    filterBuilder.Eq(e => e.BizStep, et.ToString().ToLower())).ToList();
                 filter = filter & filterBuilder.Or(eventTypeFilters);
             }
 
@@ -283,7 +294,7 @@ namespace TraceabilityDriver.Services
             if (options.query.EQ_action?.Count > 0)
             {
                 var actionFilters = options.query.EQ_action.Select(a =>
-                    filterBuilder.Eq(e => e.Action, a.ToString())).ToList();
+                    filterBuilder.Eq(e => e.Action, a.ToString().ToLower())).ToList();
                 filter = filter & filterBuilder.Or(actionFilters);
             }
 
@@ -291,27 +302,25 @@ namespace TraceabilityDriver.Services
             if (options.query.EQ_bizLocation.Count > 0)
             {
                 var locationFilters = options.query.EQ_bizLocation.Select(loc =>
-                    filterBuilder.AnyEq(e => e.LocationGLNs, loc.ToString())).ToList();
+                    filterBuilder.AnyEq(e => e.LocationGLNs, loc.ToString().ToLower())).ToList();
                 filter = filter & filterBuilder.Or(locationFilters);
             }
 
             // Execute query
-            var eventDocs = await _eventsCollection.Find(filter).ToListAsync();
+            var events = await _eventsCollection.Find(filter).ToListAsync();
 
             // Convert results back to EPCIS events
-            var result = new EPCISQueryDocument();
-            result.Events = new List<IEvent>();
+            var doc = new EPCISQueryDocument();
+            doc.EPCISVersion = EPCISVersion.V2;
+            doc.Events = new List<IEvent>();
 
-            foreach (var doc in eventDocs)
+            foreach (var evt in events)
             {
-                var evt = Newtonsoft.Json.JsonConvert.DeserializeObject<IEvent>(doc.EventJson, new JsonSerializerSettings
-                {
-                    TypeNameHandling = TypeNameHandling.Auto
-                });
-                result.Events.Add(evt);
+                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(evt.EventJson);
+                doc.Merge(queryDoc);
             }
 
-            return result;
+            return doc;
         }
 
         /// <summary>
@@ -320,15 +329,21 @@ namespace TraceabilityDriver.Services
         /// <param name="identifier">The unique identifier used to locate the specific master data entry.</param>
         /// <returns>An instance of IVocabularyElement representing the deserialized master data.</returns>
         /// <exception cref="Exception">Thrown when the master data cannot be found or fails to deserialize.</exception>
-        public async Task<IVocabularyElement> QueryMasterData(string identifier)
+        public async Task<IVocabularyElement?> QueryMasterData(string identifier)
         {
             var filterBuilder = Builders<MasterDataDocument>.Filter;
             var filter = filterBuilder.Eq(m => m.ElementId, identifier);
             var masterDataDoc = await _masterDataCollection.Find(filter).FirstOrDefaultAsync();
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<IVocabularyElement>(masterDataDoc.ElementJson, new JsonSerializerSettings
+            if (masterDataDoc == null)
             {
-                TypeNameHandling = TypeNameHandling.Auto
-            }) ?? throw new Exception($"Master data for identifier {identifier} not found or failed to deserialize.");
+                return null;
+            }
+            else
+            {
+                Type t = Type.GetType(masterDataDoc.ElementType)
+                        ?? throw new Exception($"Failed to get type: {masterDataDoc.ElementType}");
+                return OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(t, masterDataDoc.ElementJson);
+            }
         }
 
         /// <summary>
@@ -397,6 +412,42 @@ namespace TraceabilityDriver.Services
             await _syncHistoryCollection.Indexes.CreateOneAsync(
                 new CreateIndexModel<SyncHistoryItem>(
                     Builders<SyncHistoryItem>.IndexKeys.Ascending(s => s.EndTime)));
+        }
+
+        internal static Type GetEventTypeFromProfile(JObject jEvent)
+        {
+            Enum.TryParse<EventAction>(jEvent["action"]?.ToString(), out var action);
+            string? bizStep = jEvent["bizStep"]?.ToString();
+            string eventType = jEvent["type"]?.ToString() ?? throw new Exception("type property not set on event " + jEvent.ToString());
+
+            var profiles = OpenTraceability.Setup.Profiles.Where(p => p.EventType.ToString() == eventType && (p.Action == null || p.Action == action) && (p.BusinessStep == null || p.BusinessStep.ToLower() == bizStep?.ToLower())).OrderByDescending(p => p.SpecificityScore).ToList();
+            if (profiles.Count() == 0)
+            {
+                throw new Exception("Failed to create event from profile. Type=" + eventType + " and BizStep=" + bizStep + " and Action=" + action);
+            }
+            else
+            {
+                foreach (var profile in profiles.Where(p => p.KDEProfiles != null).ToList())
+                {
+                    if (profile.KDEProfiles != null)
+                    {
+                        foreach (var kdeProfile in profile.KDEProfiles)
+                        {
+                            if (jEvent.QueryJPath(kdeProfile.JPath) == null)
+                            {
+                                profiles.Remove(profile);
+                            }
+                        }
+                    }
+                }
+
+                if (profiles.Count() == 0)
+                {
+                    throw new Exception("Failed to create event from profile. Type=" + eventType + " and BizStep=" + bizStep + " and Action=" + action);
+                }
+
+                return profiles.First().EventClassType;
+            }
         }
     }
 } 

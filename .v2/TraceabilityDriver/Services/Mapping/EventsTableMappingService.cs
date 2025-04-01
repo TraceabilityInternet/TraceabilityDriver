@@ -15,11 +15,13 @@ public class EventsTableMappingService : IEventsTableMappingService
 {
     private readonly ILogger<EventsTableMappingService> _logger;
     private readonly IMappingFunctionFactory _mappingFunctionFactory;
+    private readonly ISynchronizationContext _syncContext;
 
-    public EventsTableMappingService(ILogger<EventsTableMappingService> logger, IMappingFunctionFactory mappingFunctionFactory)
+    public EventsTableMappingService(ILogger<EventsTableMappingService> logger, IMappingFunctionFactory mappingFunctionFactory, ISynchronizationContext syncContext)
     {
         _logger = logger;
         _mappingFunctionFactory = mappingFunctionFactory;
+        _syncContext = syncContext;
     }
 
     /// <summary>

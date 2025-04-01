@@ -1,4 +1,5 @@
-﻿@using TraceabilityDriver.Services.GDST
+﻿@using TraceabilityDriver.Models.GDST
+@using TraceabilityDriver.Services.GDST
 
 @inject IGDSTCapabilityTestService CapabilityTestService
 @inject ILogger<CapabilityTestComponent> Logger
@@ -32,7 +33,7 @@
             <h4 class="mb-0">Test Results</h4>
         </div>
         <div class="card-body text-center py-4">
-            @if (_testSuccessful)
+            @if (_results?.Status == GDSTCapabilityTestStatus.Passed)
             {
                 <div class="success-container">
                     <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
@@ -46,6 +47,39 @@
                     <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 2rem;"></i>
                     <h4 class="text-danger mt-3">Test Failed</h4>
                     <p>Your system did not pass the GDST capability test.</p>
+                    
+                            <div class="error-container">
+                                <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 2rem;"></i>
+                                <h4 class="text-danger mt-3">Test Failed</h4>
+                                <p>Your system did not pass the GDST capability test.</p>
+                                
+                                @if (_results?.Errors != null && _results.Errors.Any())
+                                {
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Error Type</th>
+                                                    <th>Event Name</th>
+                                                    <th>Event ID</th>
+                                                    <th>Error Message</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var error in _results.Errors)
+                                                {
+                                                    <tr>
+                                                        <td>@error.Type</td>
+                                                        <td>@(error.EventName ?? "-")</td>
+                                                        <td>@(error.EventID ?? "-")</td>
+                                                        <td>@(error.Error ?? "-")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
                 </div>
             }
             <button type="button" class="btn btn-primary mt-3" @onclick="ResetTest">Take Test Again</button>
@@ -62,7 +96,7 @@
     }
 
     private TestState _testState = TestState.NotStarted;
-    private bool _testSuccessful = false;
+    private GDSTCapabilityTestResults? _results = null;
 
     private async Task StartTestAsync(MouseEventArgs args)
     {
@@ -72,14 +106,24 @@
             StateHasChanged();
 
             // Execute the capability test
-            _testSuccessful = await CapabilityTestService.ExecuteTestAsync();
-            
+            _results = await CapabilityTestService.TestFirstMileWildAsync();
+
             _testState = TestState.Completed;
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "An error occurred while running the capability test");
-            _testSuccessful = false;
+            _results = new GDSTCapabilityTestResults()
+            {
+                Status = GDSTCapabilityTestStatus.Failed,
+                Errors = new List<GDSTCapabilityTestsError>()
+                {
+                    new GDSTCapabilityTestsError()
+                    {
+                        Error = $"An error occurred while running the capability test: {ex.Message}"
+                    }
+                }
+            };
             _testState = TestState.Completed;
         }
     }
@@ -87,6 +131,6 @@
     private void ResetTest()
     {
         _testState = TestState.NotStarted;
-        _testSuccessful = false;
+        _results = null;
     }
 }

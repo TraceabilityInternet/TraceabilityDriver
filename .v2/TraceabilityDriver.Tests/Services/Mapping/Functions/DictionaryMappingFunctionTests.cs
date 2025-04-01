@@ -1,17 +1,17 @@
 using Moq;
 using NUnit.Framework;
 using System.Collections.Generic;
-using TraceabilityDriver.Services.Mapping;
 using TraceabilityDriver.Services.Mapping.Functions;
 using Microsoft.Extensions.Logging;
 using TraceabilityDriver.Models.Mapping;
+using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Tests.Services.Mapping.Functions
 {
     [TestFixture]
     public class DictionaryMappingFunctionTests
     {
-        private Mock<IMappingContext> _mockContext;
+        private Mock<ISynchronizationContext> _mockContext;
         private Mock<ILogger<DictionaryMappingFunction>> _mockLogger;
         private DictionaryMappingFunction _function;
         private TDMappingConfiguration _mockConfiguration;
@@ -19,7 +19,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping.Functions
         [SetUp]
         public void Setup()
         {
-            _mockContext = new Mock<IMappingContext>();
+            _mockContext = new Mock<ISynchronizationContext>();
             _mockLogger = new Mock<ILogger<DictionaryMappingFunction>>();
             _function = new DictionaryMappingFunction(_mockContext.Object, _mockLogger.Object);
             

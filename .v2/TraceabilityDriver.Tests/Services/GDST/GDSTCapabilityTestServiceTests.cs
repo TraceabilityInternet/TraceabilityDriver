@@ -24,7 +24,7 @@ namespace TraceabilityDriver.Tests.Services.GDST
     public class GDSTCapabilityTestServiceTests
     {
         private Mock<ILogger<GDSTCapabilityTestService>> _loggerMock;
-        private Mock<IMongoDBService> _mongoDbMock;
+        private Mock<IDatabaseService> _mongoDbMock;
         private Mock<IHttpClientFactory> _httpClientFactoryMock;
         private Mock<IOptions<GDSTCapabilityTestSettings>> _settingsMock;
         private Mock<IConfiguration> _configMock;
@@ -37,7 +37,7 @@ namespace TraceabilityDriver.Tests.Services.GDST
         public void Setup()
         {
             _loggerMock = new Mock<ILogger<GDSTCapabilityTestService>>();
-            _mongoDbMock = new Mock<IMongoDBService>();
+            _mongoDbMock = new Mock<IDatabaseService>();
             
             // Setup HTTP client mock
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>();

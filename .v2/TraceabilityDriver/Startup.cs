@@ -2,11 +2,14 @@ using Hangfire;
 using Hangfire.Mongo;
 using Hangfire.Mongo.Migration.Strategies;
 using Hangfire.Mongo.Migration.Strategies.Backup;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using TraceabilityDriver.Models.GDST;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Pages;
 using TraceabilityDriver.Services;
+using TraceabilityDriver.Services.Authentication;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services.GDST;
 using TraceabilityDriver.Services.Mapping;
@@ -20,6 +23,9 @@ namespace TraceabilityDriver
 
         public Startup(IConfiguration configuration)
         {
+            OpenTraceability.Setup.Initialize();
+            OpenTraceability.GDST.Setup.Initialize();
+
             Configuration = configuration;
         }
 
@@ -36,17 +42,20 @@ namespace TraceabilityDriver
             services.AddHttpClient();
 
             // SERVICES
-            services.AddSingleton<IMongoDBService, MongoDBService>();
+            services.AddSingleton<IDatabaseService, MongoDBService>();
             services.AddSingleton<ISynchronizeService, SynchronizeService>();
             services.AddSingleton<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
             services.AddHostedService<HostedSyncService>();
+
+            // OPTIONS
+            services.Configure<GDSTCapabilityTestSettings>(Configuration.GetSection("GDST:CapabilityTest"));
 
             // CONNECTORS
             services.AddSingleton<ITDConnectorFactory, TDConnectorFactory>();
             services.AddTransient<TDSqlServerConnector>();
 
             // MAPPING
-            services.AddSingleton<IMappingContext, MappingContext>();
+            services.AddSingleton<ISynchronizationContext, Services.SynchronizationContext>();
             services.AddTransient<IMappingSource, LocalMappingSource>();
             services.AddTransient<IEventsTableMappingService, EventsTableMappingService>();
             services.AddTransient<IEventsConverterService, EventsConverterService>();
@@ -64,6 +73,59 @@ namespace TraceabilityDriver
 
             // ADD SWASH BUCKLER
             services.AddSwaggerGen();
+
+            // OAUTH (JWT) AUTHENTICATION
+            var authenticationSchemeBuilder = services.AddAuthentication();
+            List<string> policies = new();
+
+            if (Configuration.GetSection("Authentication:JWT") != null)
+            {
+                policies.Add("Bearer");
+
+                // Configure JWT Bearer authentication
+                services.AddAuthentication()
+                    .AddJwtBearer("Bearer", options =>
+                    {
+                        // Bind settings from appsettings.json
+                        var authConfig = Configuration.GetSection("Authentication:JWT");
+                        options.Authority = authConfig["Authority"];
+                        options.Audience = authConfig["Audience"];
+                        options.MetadataAddress = authConfig["MetadataAddress"] ?? string.Empty;
+                        options.RequireHttpsMetadata = bool.Parse(authConfig["RequireHttpsMetadata"] ?? "true");
+
+                        // Optional: Additional validation rules
+                        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                        {
+                            ValidateIssuer = true,     // Ensure the issuer matches the Authority
+                            ValidateAudience = true,   // Ensure the audience matches your API
+                            ValidateLifetime = true,   // Check token expiration
+                            ValidateIssuerSigningKey = true, // Validate the signature
+                            ClockSkew = TimeSpan.FromMinutes(5) // Allow some clock skew
+                        };
+                    });
+            }
+
+            // API KEY AUTHENTICATION
+            if (Configuration.GetSection("Authentication:APIKey") != null)
+            {
+                services.AddSingleton<IApiKeyStore, InMemoryApiKeyStore>();
+
+                policies.Add("ApiKey");
+
+                authenticationSchemeBuilder.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", options =>
+                {
+                    var authConfig = Configuration.GetSection("Authentication:APIKey");
+                    options.HeaderName = authConfig["HeaderName"] ?? "X-API-Key";
+                });
+            }
+
+            // Set default authentication scheme (optional)
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(policies.ToArray())
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -95,4 +157,4 @@ namespace TraceabilityDriver
             });
         }
     }
-} 
+}

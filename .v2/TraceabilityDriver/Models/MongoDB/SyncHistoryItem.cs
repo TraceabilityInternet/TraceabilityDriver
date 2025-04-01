@@ -1,6 +1,16 @@
 ﻿namespace TraceabilityDriver.Models.MongoDB
 {
     /// <summary>
+    /// Represents the status of a synchronization process. Possible values are InProgress, Completed, and Failed.
+    /// </summary>
+    public enum SyncStatus
+    {
+        InProgress,
+        Completed,
+        Failed
+    }
+
+    /// <summary>
     /// Represents an item in the synchronization history. It likely contains details about synchronization events.
     /// </summary>
     public class SyncHistoryItem
@@ -18,7 +28,17 @@
         /// <summary>
         /// Represents the current status of the sync.
         /// </summary>
-        public string Status { get; set; } = "In Progress";
+        public SyncStatus Status { get; set; } = SyncStatus.InProgress;
+
+        /// <summary>
+        /// A message that can be used to describe the sync.
+        /// </summary>
+        public string Message { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Represents information captured from the previous sync.
+        /// </summary>
+        public Dictionary<string, string> Memory { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// The number of items in the database.
