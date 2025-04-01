@@ -18,6 +18,7 @@ public class SynchronizeService : ISynchronizeService
     private readonly IEventsConverterService _eventsConverterService;
     private readonly IMappingSource _mappingSource;
     private readonly IMongoDBService _mongoDBService;
+    private readonly IMappingContext _mappingContext;
 
     private SyncHistoryItem? _currentSync = null;
 
@@ -27,7 +28,8 @@ public class SynchronizeService : ISynchronizeService
         IEventsMergerService eventsMergerService,
         IEventsConverterService eventsConverterService,
         IMongoDBService mongoDBService,
-        IMappingSource mappingSource)
+        IMappingSource mappingSource,
+        IMappingContext mappingContext)
     {
         _logger = logger;
         _connectorFactory = connectorFactory;
@@ -36,6 +38,7 @@ public class SynchronizeService : ISynchronizeService
         _mongoDBService = mongoDBService;
         _logger.LogDebug("SynchronizeService initialized");
         _mappingSource = mappingSource;
+        _mappingContext = mappingContext;
     }
 
     public event OnSynchronizeStatusChanged? OnSynchronizeStatusChanged;
@@ -58,21 +61,9 @@ public class SynchronizeService : ISynchronizeService
             {
                 try
                 {
-                    _logger.LogInformation("Checking if synchronization process is required");
-                    var lastSync = await _mongoDBService.GetLatestSyncs(top: 1);
-
-                    _logger.LogInformation("Found {Count} previous synchronization records", lastSync.Count);
-
-                    if (lastSync.Count == 0 || lastSync[0].StartTime < DateTime.UtcNow.AddDays(-1))
-                    {
-                        _logger.LogInformation("Starting synchronization process");
-                        await SynchronizeAsync(cancellationToken);
-                        _logger.LogInformation("Synchronization process completed");
-                    }
-                    else
-                    {
-                        _logger.LogInformation("Synchronization process not required, last sync was at {LastSync}", lastSync[0].StartTime);
-                    }
+                    _logger.LogInformation("Starting synchronization process");
+                    await SynchronizeAsync(cancellationToken);
+                    _logger.LogInformation("Synchronization process completed");
                 }
                 catch (Exception ex)
                 {
@@ -121,19 +112,18 @@ public class SynchronizeService : ISynchronizeService
         _logger.LogDebug("Starting synchronization process");
 
         // Create the sync history item.
-        _currentSync = new SyncHistoryItem
-        {
-            StartTime = DateTime.UtcNow,
-            Status = "Starting sync..."
-        };
-        OnSynchronizeStatusChanged?.Invoke(_currentSync);
+        _currentSync = new SyncHistoryItem();
+        
+        await UpdateSyncStatus(sync => sync.Status = "Starting sync...");
 
         /// Read the mapping files.
         foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
         {
+            // Set the current configuration being processed.
+            _mappingContext.Configuration = mapping;
+
             /// Update the sync status.
-            _currentSync.Status = $"Processing mapping file...";
-            OnSynchronizeStatusChanged?.Invoke(_currentSync);
+            await UpdateSyncStatus(sync => sync.Status = "Processing mapping file...");
 
             try
             {
@@ -168,9 +158,11 @@ public class SynchronizeService : ISynchronizeService
         }
 
         // Update the sync history item.
-        _currentSync.EndTime = DateTime.UtcNow;
-        _currentSync.Status = "Completed";
-        OnSynchronizeStatusChanged?.Invoke(_currentSync);
+        await UpdateSyncStatus(sync =>
+        {
+            sync.Status = "Completed";
+            sync.EndTime = DateTime.UtcNow;
+        });
 
         _logger.LogDebug("Synchronization process completed");
     }
@@ -217,9 +209,21 @@ public class SynchronizeService : ISynchronizeService
                     var connector = _connectorFactory.CreateConnector(mapping.Connections[selector.Database]);
                     _logger.LogDebug("Connector created successfully for database: {Database}", selector.Database);
 
+                    /// Get the number of records that will be processed by this selection.
+                    _logger.LogDebug("Retrieving total rows for database: {Database}", selector.Database);
+                    var totalRows = await connector.GetTotalRowsAsync(mapping.Connections[selector.Database], selector);
+                    _logger.LogDebug("Retrieved {Count} total rows from database: {Database}", totalRows, selector.Database);
+
+                    /// Update the sync status.
+                    await UpdateSyncStatus(sync =>
+                    {
+                        sync.TotalItems = totalRows;
+                        sync.ItemsProcessed = 0;
+                    });
+
                     /// Get the events.
                     _logger.LogDebug("Retrieving events using selector for database: {Database}", selector.Database);
-                    var retrievedEvents = await connector.GetEventsAsync(selector, cancellationToken);
+                    var retrievedEvents = await connector.GetEventsAsync(mapping.Connections[selector.Database], selector, cancellationToken, UpdateSyncStatus);
                     _logger.LogDebug("Retrieved {Count} events from database: {Database}", retrievedEvents.Count(), selector.Database);
                     events.AddRange(retrievedEvents);
                 }
@@ -330,7 +334,7 @@ public class SynchronizeService : ISynchronizeService
             var connector = _connectorFactory.CreateConnector(connection.Value);
             _logger.LogDebug("Created connector for database: {ConnectionName}, testing connection...", connection.Key);
 
-            if (!await connector.TestConnectionAsync())
+            if (!await connector.TestConnectionAsync(connection.Value))
             {
                 _logger.LogError("Failed to test the connection to the database: {ConnectionName}", connection.Key);
                 allConnectionsValid = false;
@@ -344,5 +348,21 @@ public class SynchronizeService : ISynchronizeService
             allConnectionsValid);
 
         return allConnectionsValid;
+    }
+
+    /// <summary>
+    /// Updates the synchronization status with the provided action if a current sync is in progress.
+    /// </summary>
+    /// <param name="action">Executes a specified operation on the current synchronization item.</param>
+    /// <returns>Completes the asynchronous operation without returning a value.</returns>
+    public async Task UpdateSyncStatus(Action<SyncHistoryItem> action)
+    {
+        if (_currentSync != null)
+        {
+            action(_currentSync);
+            OnSynchronizeStatusChanged?.Invoke(_currentSync);
+        }
+
+        await Task.CompletedTask;
     }
 }

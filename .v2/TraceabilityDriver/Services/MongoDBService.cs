@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using OpenTraceability.GDST;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services
@@ -27,17 +29,25 @@ namespace TraceabilityDriver.Services
         private readonly IMongoCollection<EPCISEventDocument> _eventsCollection;
         private readonly IMongoCollection<MasterDataDocument> _masterDataCollection;
         private readonly IMongoCollection<SyncHistoryItem> _syncHistoryCollection;
+        private readonly IMongoCollection<LogModel> _logCollection;
         private readonly IEPCISQueryDocumentMapper _jsonMapper;
         private readonly IEPCISQueryDocumentMapper _xmlMapper;
 
         public MongoDBService(IConfiguration configuration)
         {
+            var conventionPack = new ConventionPack
+            {
+                new IgnoreExtraElementsConvention(true)
+            };
+            ConventionRegistry.Register("IgnoreExtraElements", conventionPack, t => true);
+
             var mongoClient = new MongoClient(configuration["MongoDB:ConnectionString"]);
             var database = mongoClient.GetDatabase(configuration["MongoDB:DatabaseName"]);
 
             _eventsCollection = database.GetCollection<EPCISEventDocument>(configuration["MongoDB:EventsCollectionName"]);
             _masterDataCollection = database.GetCollection<MasterDataDocument>(configuration["MongoDB:MasterDataCollectionName"]);
             _syncHistoryCollection = database.GetCollection<SyncHistoryItem>(configuration["MongoDB:SyncHistoryCollectionName"]);
+            _logCollection = database.GetCollection<LogModel>(configuration["MongoDB:LogCollectionName"]);
 
             _jsonMapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
             _xmlMapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
@@ -330,6 +340,18 @@ namespace TraceabilityDriver.Services
         {
             var sort = Builders<SyncHistoryItem>.Sort.Descending(s => s.EndTime);
             return await _syncHistoryCollection.Find(new BsonDocument()).Sort(sort).Limit(top).ToListAsync();
+        }
+
+        /// <summary>
+        /// Returns the last errors in the database.
+        /// </summary>
+        /// <param name="top">The number of errors to return.</param>
+        /// <returns>The errors.</returns>
+        public async Task<List<LogModel>> GetLastErrors(int top = 10)
+        {
+            var filter = Builders<LogModel>.Filter.Eq(l => l.Level, "Error");
+            var sort = Builders<LogModel>.Sort.Descending(s => s.Timestamp);
+            return await _logCollection.Find(filter).Sort(sort).Limit(top).ToListAsync();
         }
 
         /// <summary>

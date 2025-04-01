@@ -76,7 +76,7 @@ public class CommonLocation : CommonBaseModel
             ArgumentNullException.ThrowIfNullOrWhiteSpace(this.OwnerId);
 
             // Generate the GTIN.
-            string gln = $"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:location:loc:{NormalizeString(this.OwnerId)}:{NormalizeString(this.LocationId)}";
+            string gln = $"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:location:loc:{NormalizeString(this.OwnerId)}.{NormalizeString(this.LocationId)}";
             return new GLN(gln);
         }
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System;
@@ -17,15 +18,23 @@ namespace TraceabilityDriver.Tests
     /// <summary>
     /// This will perform a full test using the synchronize service and an official mapping file.
     /// </summary>
-    public class IntegrationTest : IDisposable
+    public class SynchronizeIntegrationTest : IDisposable
     {
-        IServiceProvider _services;
-        Mock<IMappingSource> _mockMappingSource;
+        private IServiceProvider _services;
+        private Mock<IMappingSource> _mockMappingSource;
+        private TestLoggerProvider _loggerProvider;
 
         [SetUp]
         public void Setup()
         {
             _mockMappingSource = new Mock<IMappingSource>();
+            _loggerProvider = new TestLoggerProvider();
+
+            // add default newtonsoft json converter for TDMappingConfiguration
+            Newtonsoft.Json.JsonConvert.DefaultSettings = () => new Newtonsoft.Json.JsonSerializerSettings
+            {
+                Converters = new List<Newtonsoft.Json.JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            };
 
             // mock reading the mapping file from an environment variable. if the environment variable
             // does not exist, it should skip the tests.
@@ -43,9 +52,19 @@ namespace TraceabilityDriver.Tests
                 return new List<TDMappingConfiguration> { mapping };
             });
 
+            // Create IConfiguration from appsettings.Tests.json
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.Tests.json")
+                .Build();
+
             // Setup the services.
             var services = new ServiceCollection();
-            services.AddLogging(builder => builder.AddConsole());
+            services.AddLogging(builder =>
+            {
+                builder.AddConsole();
+                builder.AddProvider(_loggerProvider);
+            });
+            services.AddSingleton<IConfiguration>(configuration);
 
             // SERVICES
             services.AddSingleton<IMongoDBService, MongoDBService>();
@@ -79,26 +98,23 @@ namespace TraceabilityDriver.Tests
         }
 
         [Test]
-        public async Task TestSynchronizeService()
+        public async Task IntegrateTest_SynchronizeService()
         {
             // Arrange
             var synchronizeService = _services.GetRequiredService<ISynchronizeService>();
-            var logger = _services.GetRequiredService<ILogger<ISynchronizeService>>();
 
             // Act
             await synchronizeService.SynchronizeAsync(TestContext.CurrentContext.CancellationToken);
 
             // Assert that no errors were logged.
-            Mock.Get(logger).Verify(x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.IsAny<It.IsAnyType>(),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Never);
+            var errorLogs = _loggerProvider.LogEntries.Where(e => e.Level >= LogLevel.Error).ToList();
+            Assert.That(errorLogs, Is.Empty, $"Found {errorLogs.Count} error logs: {string.Join(", ", errorLogs.Select(l => l.Message))}");
         }
 
         public void Dispose()
         {
+            _loggerProvider?.Dispose();
+
             if (_services is IDisposable disposable)
             {
                 disposable.Dispose();

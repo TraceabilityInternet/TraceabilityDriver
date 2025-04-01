@@ -55,9 +55,34 @@ public class TDEventMapping
             {
                 GenerateFieldsFromJSON((JObject)field.Value, errors, fieldPath);
             }
-            else if (field.Value.Type == JTokenType.Array)
+            else if (field.Value is JArray jarr)
             {
-                errors.Add($"The field '{fieldPath}' is an array and is not supported yet in the event mapping definition.");
+                for (int i = 0; i < jarr.Count; i++)
+                {
+                    string arrayItemPath = $"{fieldPath}[{i}]";
+                    var item = jarr[i];
+
+                    if (item.Type == JTokenType.Object)
+                    {
+                        GenerateFieldsFromJSON((JObject)item, errors, arrayItemPath);
+                    }
+                    else
+                    {
+                        // Get the property info for the field.
+                        PropertyInfo propertyInfo;
+                        try
+                        {
+                            propertyInfo = GetPropertyInfo(arrayItemPath);
+
+                            // Add the field to the fields list.
+                            Fields.Add(new TDEventMappingField(arrayItemPath, item.ToString(), propertyInfo));
+                        }
+                        catch (Exception ex)
+                        {
+                            errors.Add($"The field '{fieldPath}' was not found in the common event model: {ex.Message}");
+                        }
+                    }
+                }
             }
             else
             {
@@ -92,13 +117,30 @@ public class TDEventMapping
         
         foreach (var property in properties)
         {
-            propertyInfo = current.GetProperty(property);
-            if (propertyInfo == null)
-            {
-                throw new Exception($"The property '{path}' was not found in the common event model.");
-            }
+            if (property.Contains("["))
+            { 
+                propertyInfo = current.GetProperty(property.Substring(0, property.IndexOf("[")));
+                if (propertyInfo == null)
+                {
+                    throw new Exception($"The property '{path}' was not found in the common event model.");
+                }
+                current = propertyInfo.PropertyType;
 
-            current = propertyInfo.PropertyType;
+                // get the collection item type
+                current = current.GetGenericArguments()[0];
+
+                continue;
+            }
+            else
+            {
+                propertyInfo = current.GetProperty(property);
+                if (propertyInfo == null)
+                {
+                    throw new Exception($"The property '{path}' was not found in the common event model.");
+                }
+
+                current = propertyInfo.PropertyType;
+            }  
         }
 
         if (propertyInfo == null)

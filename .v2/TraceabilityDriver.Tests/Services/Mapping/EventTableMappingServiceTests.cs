@@ -162,7 +162,28 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Act & Assert
             Assert.That(() => _service.GetTargetObject(commonEvent, "InvalidObj.Name"),
                 Throws.Exception.TypeOf<Exception>()
-                .With.Message.Contains("The path InvalidObj.Name is invalid"));
+                .With.Message.Contains("Property not found: InvalidObj on CommonEvent"));
+        }
+
+        [Test]
+        public void GetTargetObject_WithArrayPath()
+        {
+            // Arrange
+            var commonEvent = new CommonEvent
+            {
+                Products = new List<CommonProduct>
+                {
+                    new CommonProduct { LotNumber = "Product1" },
+                    new CommonProduct { LotNumber = "Product2" }
+                }
+            };
+
+            // Act
+            var result = _service.GetTargetObject(commonEvent, "Products[1].LotNumber");
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.EqualTo(commonEvent.Products[1]));
         }
 
         [Test]

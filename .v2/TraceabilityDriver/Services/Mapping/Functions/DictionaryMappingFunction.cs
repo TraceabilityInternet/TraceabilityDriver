@@ -25,6 +25,8 @@ public class DictionaryMappingFunction : IMappingFunction
     /// <returns>The return value of the function in a string format.</returns>
     public string? Execute(List<string?> parameters)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+
         if (parameters.Count == 2)
         {
             string? value = parameters[0];

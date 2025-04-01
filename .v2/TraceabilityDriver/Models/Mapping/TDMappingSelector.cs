@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using TraceabilityDriver.Services.Connectors;
 
 namespace TraceabilityDriver.Models.Mapping;
@@ -15,12 +16,13 @@ public class TDMappingSelector
     public string Selector { get; set; } = string.Empty;
 
     /// <summary>
-    /// The field to use for the audit timestamp.
+    /// The SQL SELECT statement to return the count that will be returned from the rows.
     /// </summary>
-    public string AuditField { get; set; } = string.Empty;
+    public string Count { get; set; } = string.Empty;
 
     /// <summary>
     /// The event mapping to use for the selector.
     /// </summary>
+    [JsonConverter(typeof(TDEventMappingConverter))]
     public TDEventMapping EventMapping { get; set; } = new ();
 }

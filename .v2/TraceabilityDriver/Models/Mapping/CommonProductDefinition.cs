@@ -73,7 +73,7 @@ public class CommonProductDefinition : CommonBaseModel
             ArgumentNullException.ThrowIfNullOrWhiteSpace(this.OwnerId);
 
             // Generate the GTIN.
-            string gtin = $"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:product:class:{NormalizeString(this.OwnerId)}:{NormalizeString(this.ProductDefinitionId)}";
+            string gtin = $"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:product:class:{NormalizeString(this.OwnerId)}.{NormalizeString(this.ProductDefinitionId)}";
             return new GTIN(gtin);
         }
     }

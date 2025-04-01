@@ -8,6 +8,7 @@ using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Pages;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Connectors;
+using TraceabilityDriver.Services.GDST;
 using TraceabilityDriver.Services.Mapping;
 using TraceabilityDriver.Services.Mapping.Functions;
 
@@ -32,10 +33,12 @@ namespace TraceabilityDriver
 
             // ADD CONTROLLERS
             services.AddControllers();
+            services.AddHttpClient();
 
             // SERVICES
             services.AddSingleton<IMongoDBService, MongoDBService>();
             services.AddSingleton<ISynchronizeService, SynchronizeService>();
+            services.AddSingleton<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
             services.AddHostedService<HostedSyncService>();
 
             // CONNECTORS
@@ -43,7 +46,7 @@ namespace TraceabilityDriver
             services.AddTransient<TDSqlServerConnector>();
 
             // MAPPING
-            services.AddScoped<IMappingContext, MappingContext>();
+            services.AddSingleton<IMappingContext, MappingContext>();
             services.AddTransient<IMappingSource, LocalMappingSource>();
             services.AddTransient<IEventsTableMappingService, EventsTableMappingService>();
             services.AddTransient<IEventsConverterService, EventsConverterService>();

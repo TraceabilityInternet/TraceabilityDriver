@@ -40,13 +40,22 @@ namespace TraceabilityDriver.Tests.Models.Mapping
         }
 
         [Test]
-        public void GenerateFields_WithArrayProperty_ShouldReturnFalseAndAddError()
+        public void GenerateFields_WithArrayProperty_ShouldReturnTrue()
         {
             // Arrange
             var json = new JObject
             {
                 ["EventId"] = "123",
-                ["Tags"] = new JArray("tag1", "tag2")
+                ["Products"] = new JArray(
+                    new JObject
+                    {
+                        ["LotNumber"] = "Product1"
+                    },
+                    new JObject
+                    {
+                        ["LotNumber"] = "Product2"
+                    }
+                )
             };
 
             var mapping = new TDEventMapping
@@ -58,10 +67,15 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             bool result = mapping.GenerateFields(out var errors);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(errors, Has.Count.EqualTo(1));
-            Assert.That(errors[0], Does.Contain("Tags"));
-            Assert.That(errors[0], Does.Contain("array"));
+            Assert.That(result, Is.True, $"Errors: {string.Join(",", errors)}");
+            Assert.That(errors, Is.Empty);
+            Assert.That(mapping.Fields, Has.Count.EqualTo(3));
+            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventId"));
+            Assert.That(mapping.Fields[0].Mapping, Is.EqualTo("123"));
+            Assert.That(mapping.Fields[1].Path, Is.EqualTo("Products[0].LotNumber"));
+            Assert.That(mapping.Fields[1].Mapping, Is.EqualTo("Product1"));
+            Assert.That(mapping.Fields[2].Path, Is.EqualTo("Products[1].LotNumber"));
+            Assert.That(mapping.Fields[2].Mapping, Is.EqualTo("Product2"));
         }
 
         [Test]

@@ -216,6 +216,7 @@ public class EventsConverterService : IEventsConverterService
 
             // Create the master data object.
             GDSTLocation loc = new GDSTLocation();
+            loc.GLN = evt.Location.GLN;
             loc.Name = new List<OpenTraceability.Models.Common.LanguageString>();
             loc.Name.Add(new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = location.Name });
             loc.Address = new OpenTraceability.Models.MasterData.Address();
@@ -230,7 +231,7 @@ public class EventsConverterService : IEventsConverterService
             loc.VesselID = location.LocationId;
 
             // Add it to the master data if it does not exist.
-            if (doc.MasterData.All(x => x.ID != loc.OwningParty.ToString()))
+            if (doc.MasterData.All(x => x.ID != loc.GLN.ToString()))
             {
                 doc.MasterData.Add(loc);
             }
@@ -263,7 +264,7 @@ public class EventsConverterService : IEventsConverterService
             tradeItem.OwningParty = productDef.GeneratePGLN(productDef.OwnerId);
         }
 
-        if (doc.MasterData.All(x => x.ID != tradeItem.OwningParty.ToString()))
+        if (doc.MasterData.All(x => x.ID != tradeItem.GTIN.ToString()))
         {
             doc.MasterData.Add(tradeItem);
         }
@@ -293,6 +294,13 @@ public class EventsConverterService : IEventsConverterService
         if (product.Quantity != null && product.UoM != null)
         {
             eventProduct.Quantity = new OpenTraceability.Utility.Measurement(product.Quantity.Value, product.UoM);
+        }
+
+        evt.AddProduct(eventProduct);
+
+        if (product.ProductDefinition != null)
+        {
+            SetProductMasterData(product.ProductDefinition, doc);
         }
     }
 }

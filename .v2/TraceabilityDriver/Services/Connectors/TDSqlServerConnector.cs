@@ -1,22 +1,21 @@
-using TraceabilityDriver.Models.Mapping;
 using Microsoft.Data.SqlClient;
-using System.Data;
 using Microsoft.Extensions.Options;
+using System.Data;
+using System.Threading;
+using TraceabilityDriver.Models.Mapping;
+using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services.Connectors;
 
 public class TDSqlServerConnector : ITDConnector
 {
-    private readonly TDConnectorConfiguration _configuration;
     private readonly ILogger<TDSqlServerConnector> _logger;
     private readonly IEventsTableMappingService _eventsTableMappingService;
 
     public TDSqlServerConnector(
-        IOptions<TDConnectorConfiguration> configuration,
         ILogger<TDSqlServerConnector> logger,
         IEventsTableMappingService eventsTableMappingService)
     {
-        _configuration = configuration.Value;
         _logger = logger;
         _eventsTableMappingService = eventsTableMappingService;
     }
@@ -24,11 +23,11 @@ public class TDSqlServerConnector : ITDConnector
     /// <summary>
     /// Tests the connection to the database.
     /// </summary>
-    public async Task<bool> TestConnectionAsync()
+    public async Task<bool> TestConnectionAsync(TDConnectorConfiguration config)
     {
         try
         {
-            using (var connection = new SqlConnection(_configuration.ConnectionString))
+            using (var connection = new SqlConnection(config.ConnectionString))
             {
                 await connection.OpenAsync();
             }
@@ -37,41 +36,107 @@ public class TDSqlServerConnector : ITDConnector
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error testing the connection to the database: {_configuration.Database}", ex);
+            throw new Exception($"Error testing the connection to the database: {config.Database}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the total number of rows from a database asynchronously.
+    /// </summary>
+    /// <param name="config">Contains the configuration settings for connecting to the database.</param>
+    /// <param name="selector">Specifies the query to count the rows in the database.</param>
+    /// <returns>Returns the total number of rows as an integer.</returns>
+    /// <exception cref="Exception">Thrown when there is an error while accessing the database.</exception>
+    public async Task<int> GetTotalRowsAsync(TDConnectorConfiguration config, TDMappingSelector selector)
+    {
+        try
+        {
+            using (var connection = new SqlConnection(config.ConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (SqlCommand cmd = new SqlCommand(selector.Count, connection))
+                {
+                    return (int)(await cmd.ExecuteScalarAsync())!;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error getting total rows from the database: {config.Database}", ex);
         }
     }
 
     /// <summary>
     /// Returns one or more events from the database using the selector.
     /// </summary>
-    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDMappingSelector selector, CancellationToken cancellationToken)
+    public async Task<IEnumerable<CommonEvent>> GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken, Func<Action<SyncHistoryItem>, Task>? update)
     {
         try
         {
-            /// Check for cancellation.
+            // Check for cancellation.
             if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
 
-            using (var connection = new SqlConnection(_configuration.ConnectionString))
+            // Get the total number of rows.
+            int totalRows = await GetTotalRowsAsync(config, selector);
+
+            // Update the sync history.
+            if (update != null)
+            {
+                await update(sync =>
+                {
+                    sync.TotalItems = totalRows;
+                    sync.ItemsProcessed = 0;
+                });
+            }
+
+            using (var connection = new SqlConnection(config.ConnectionString))
             {
                 await connection.OpenAsync();
 
-                /// Check for cancellation.
+                // Check for cancellation.
                 if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
 
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
                     adapter.SelectCommand = new SqlCommand(selector.Selector, connection);
+                    adapter.SelectCommand.Parameters.Add("@offset", SqlDbType.Int).Value = 0;
+                    adapter.SelectCommand.Parameters.Add("@limit", SqlDbType.Int).Value = 1000;
 
-                    /// Check for cancellation.
+                    // Check for cancellation.
                     if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
 
-                    DataTable dataTable = new DataTable();
-                    adapter.Fill(dataTable);
+                    // Create a list to store the events.
+                    List<CommonEvent> events = new List<CommonEvent>();
 
-                    /// Check for cancellation.
-                    if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+                    // We are going to page the data in chunks of 1000.
+                    for (int start = 0; start < totalRows; start += 1000)
+                    {
+                        // Check for cancellation.
+                        if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
 
-                    List<CommonEvent> events = _eventsTableMappingService.MapEvents(selector.EventMapping, dataTable, cancellationToken);
+                        // Set the offset.
+                        adapter.SelectCommand.Parameters["@offset"].Value = start;
+
+                        // Get the data table.
+                        DataTable dataTable = await FillWithRetryAsync(adapter, cancellationToken);
+
+                        // Check for cancellation.
+                        if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();
+
+                        // Map the events.
+                        List<CommonEvent> results = _eventsTableMappingService.MapEvents(selector.EventMapping, dataTable, cancellationToken);
+                        events.AddRange(results);
+
+                        // Update the sync.
+                        if (update != null)
+                        {
+                            await update(sync =>
+                            {
+                                sync.ItemsProcessed += results.Count;
+                            });
+                        }
+                    }
 
                     return events;
                 }
@@ -79,8 +144,56 @@ public class TDSqlServerConnector : ITDConnector
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error getting events from the database: {_configuration.Database}", ex);
+            throw new Exception($"Error getting events from the database: {config.Database}", ex);
         }
+    }
+
+    /// <summary>
+    /// Fills a DataTable with data from a database, implementing retry logic for transient errors.
+    /// </summary>
+    /// <param name="adapter">Used to execute the fill operation on the DataTable.</param>
+    /// <param name="cancellationToken">Allows the operation to be cancelled if requested.</param>
+    /// <returns>Returns the filled DataTable after successful retrieval.</returns>
+    private async Task<DataTable> FillWithRetryAsync(SqlDataAdapter adapter, CancellationToken cancellationToken)
+    {
+        DataTable dataTable = new DataTable();
+
+        // Add retry logic for Fill operation with exponential backoff
+        int maxRetries = 3;
+        int retryCount = 0;
+        int delayMilliseconds = 1000; // Start with 1 second delay
+
+        while (true)
+        {
+            try
+            {
+                adapter.Fill(dataTable);
+                break; // Success, exit the retry loop
+            }
+            catch (SqlException ex) when (ex.Number == -2 || ex.Number == 11 || ex.Message.Contains("timeout") && retryCount < maxRetries)
+            {
+                // -2: Timeout, 11: General network error
+                retryCount++;
+
+                if (retryCount >= maxRetries)
+                {
+                    _logger.LogError(ex, "Failed to fill data table after {RetryCount} attempts", retryCount);
+                    throw; // Re-throw after max retries
+                }
+
+                _logger.LogWarning("Database operation timed out, retrying ({RetryCount}/{MaxRetries}) after {Delay}ms. Error: {ErrorMessage}",
+                    retryCount, maxRetries, delayMilliseconds, ex.Message);
+
+                // Check cancellation before waiting
+                if (cancellationToken.IsCancellationRequested) return new DataTable();
+
+                // Wait with exponential backoff
+                await Task.Delay(delayMilliseconds, cancellationToken);
+                delayMilliseconds *= 2; // Exponential backoff
+            }
+        }
+
+        return dataTable;
     }
 }
 

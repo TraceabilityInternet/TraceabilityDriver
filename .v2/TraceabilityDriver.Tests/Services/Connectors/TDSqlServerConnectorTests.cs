@@ -33,7 +33,6 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _mockLogger = new Mock<ILogger<TDSqlServerConnector>>();
             _mockEventsTableMappingService = new Mock<IEventsTableMappingService>();
             _connector = new TDSqlServerConnector(
-                _mockOptions.Object,
                 _mockLogger.Object,
                 _mockEventsTableMappingService.Object);
         }
@@ -107,7 +106,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
 
             // Act
-            var result = await _connector.TestConnectionAsync();
+            var result = await _connector.TestConnectionAsync(_configuration);
 
             // Assert
             Assert.That(result, Is.True);
@@ -120,7 +119,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _configuration.ConnectionString = "InvalidConnectionString";
 
             // Act & Assert
-            Assert.ThrowsAsync<Exception>(() => _connector.TestConnectionAsync());
+            Assert.ThrowsAsync<Exception>(() => _connector.TestConnectionAsync(_configuration));
         }
 
         [Test]
@@ -143,7 +142,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                 .Returns(new List<CommonEvent> { new CommonEvent { EventId = "123", EventType = "Fishing" } });
 
             // Act
-            var events = await _connector.GetEventsAsync(selector, CancellationToken.None);
+            var events = await _connector.GetEventsAsync(_configuration, selector, CancellationToken.None, null);
 
             // Assert
             Assert.That(events, Is.Not.Null);
@@ -165,7 +164,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
 
             // Act & Assert
-            Assert.ThrowsAsync<Exception>(() => _connector.GetEventsAsync(selector, CancellationToken.None));
+            Assert.ThrowsAsync<Exception>(() => _connector.GetEventsAsync(_configuration, selector, CancellationToken.None, null));
         }
     }
 }

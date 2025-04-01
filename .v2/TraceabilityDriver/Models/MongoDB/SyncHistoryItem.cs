@@ -8,7 +8,7 @@
         /// <summary>
         /// The time it started syncing.
         /// </summary>
-        public DateTime StartTime { get; set; }
+        public DateTime? StartTime { get; set; } = null;
 
         /// <summary>
         /// The time it finished syncing.

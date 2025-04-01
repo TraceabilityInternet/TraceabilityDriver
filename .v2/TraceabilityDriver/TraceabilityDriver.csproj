@@ -9,6 +9,11 @@
 
     <ItemGroup>
       <Content Remove="appsettings.json" />
+      <Content Remove="Services\GDST\FullData.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Services\GDST\FullData.json" />
     </ItemGroup>
 
     <ItemGroup>
@@ -38,7 +43,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Pages\Components\" />
       <Folder Include="wwwroot\img\" />
     </ItemGroup>
 

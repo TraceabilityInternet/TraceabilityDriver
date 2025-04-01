@@ -33,28 +33,32 @@ namespace TraceabilityDriver.Services.Mapping
             // Get the folder path of the mappings.
             var mappingsFolder = Path.Combine(assemblyFolder, "Mappings");
 
-            // Look for all .JSON files in the mappings folder.
-            var mappingFiles = Directory.GetFiles(mappingsFolder, "*.json");
-
             // Create a list of mappings.
             List<TDMappingConfiguration> mappings = new();
 
-            // Load the mappings.
-            _logger.LogInformation("Loading mappings from {MappingsFolder}.", mappingsFolder);
-            foreach (var mappingFile in mappingFiles)
+            // Scan the directory.
+            if (Directory.Exists(mappingsFolder))
             {
-                var mappingName = Path.GetFileNameWithoutExtension(mappingFile);
-                _logger.LogInformation("Loading mapping {MappingName} from {MappingFile}.", mappingName, mappingFile);
+                // Look for all .JSON files in the mappings folder.
+                var mappingFiles = Directory.GetFiles(mappingsFolder, "*.json");
 
-                // Load the JSON file.
-                var json = File.ReadAllText(mappingFile);
+                // Load the mappings.
+                _logger.LogInformation("Loading mappings from {MappingsFolder}.", mappingsFolder);
+                foreach (var mappingFile in mappingFiles)
+                {
+                    var mappingName = Path.GetFileNameWithoutExtension(mappingFile);
+                    _logger.LogInformation("Loading mapping {MappingName} from {MappingFile}.", mappingName, mappingFile);
 
-                // Deserialize the JSON file.
-                var mapping = JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
-                    ?? throw new InvalidOperationException($"The mapping file {mappingFile} could not be deserialized.");
+                    // Load the JSON file.
+                    var json = File.ReadAllText(mappingFile);
 
-                mappings.Add(mapping);
-            }
+                    // Deserialize the JSON file.
+                    var mapping = JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
+                        ?? throw new InvalidOperationException($"The mapping file {mappingFile} could not be deserialized.");
+
+                    mappings.Add(mapping);
+                }
+            }            
 
             return mappings;
         }

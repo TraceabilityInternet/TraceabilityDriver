@@ -1,4 +1,6 @@
 ﻿
+using Nito.Disposables.Internals;
+
 namespace TraceabilityDriver.Services.Mapping.Functions
 {
     /// <summary>
@@ -11,7 +13,7 @@ namespace TraceabilityDriver.Services.Mapping.Functions
         {
             if (parameters.Count > 1)
             {
-                return string.Join(parameters[0], parameters.Skip(1));
+                return string.Join(parameters[0], parameters.Skip(1).WhereNotNull());
             }
 
             return null;

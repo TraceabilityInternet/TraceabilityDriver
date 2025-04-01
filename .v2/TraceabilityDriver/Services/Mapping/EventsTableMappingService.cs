@@ -1,3 +1,5 @@
+using OpenTraceability.Utility;
+using System.Collections;
 using System.Data;
 using System.Reflection;
 using TraceabilityDriver.Models.Mapping;
@@ -126,13 +128,73 @@ public class EventsTableMappingService : IEventsTableMappingService
 
             foreach (var pathPart in pathParts)
             {
-                object? v = targetObject.GetType().GetProperty(pathPart)?.GetValue(targetObject);
-                if (v == null)
+                // Check if the path part contains an array indexer
+                if (pathPart.Contains('[') && pathPart.Contains(']'))
                 {
-                    throw new Exception($"The path {path} is invalid and returned a null object for {pathPart} on {targetObject.GetType().Name}.");
-                }
+                    var propertyName = pathPart.Substring(0, pathPart.IndexOf('['));
+                    var indexStr = pathPart.Substring(pathPart.IndexOf('[') + 1, pathPart.IndexOf(']') - pathPart.IndexOf('[') - 1);
 
-                targetObject = v;
+                    if (!int.TryParse(indexStr, out int index))
+                    {
+                        throw new Exception($"Invalid array index in path: {pathPart}");
+                    }
+
+                    // Get the collection property
+                    var collectionProperty = targetObject.GetType().GetProperty(propertyName);
+                    if (collectionProperty == null)
+                    {
+                        throw new Exception($"Property not found: {propertyName} on {targetObject.GetType().Name}");
+                    }
+
+                    // Get the collection instance
+                    var collection = collectionProperty.GetValue(targetObject);
+
+                    // If the collection is null, create a new instance
+                    if (collection == null)
+                    {
+                        var collectionType = collectionProperty.PropertyType;
+                        collection = Activator.CreateInstance(collectionType);
+                        collectionProperty.SetValue(targetObject, collection);
+                    }
+
+                    // Handle different collection types
+                    if (collection is IList list)
+                    {
+                        // Ensure the list has enough items
+                        var elementType = collectionProperty.PropertyType.GetGenericArguments()[0];
+
+                        while (list.Count <= index)
+                        {
+                            var newItem = Activator.CreateInstance(elementType);
+                            list.Add(newItem);
+                        }
+
+                        targetObject = list[index]!;
+                    }
+                    else
+                    {
+                        throw new Exception($"Unsupported collection type: {collection?.GetType().Name}");
+                    }
+                }
+                else
+                {
+                    // Handle regular property access
+                    var property = targetObject.GetType().GetProperty(pathPart);
+                    if (property == null)
+                    {
+                        throw new Exception($"Property not found: {pathPart} on {targetObject.GetType().Name}");
+                    }
+
+                    var value = property.GetValue(targetObject);
+                    if (value == null)
+                    {
+                        // Create a new instance of the property type
+                        value = Activator.CreateInstance(property.PropertyType);
+                        property.SetValue(targetObject, value);
+                    }
+
+                    targetObject = value!;
+                }
             }
         }
 
@@ -154,6 +216,9 @@ public class EventsTableMappingService : IEventsTableMappingService
                 return null;
             }
 
+            // unwrap target type if it is nullable
+            targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
             if (targetType == typeof(string))
             {
                 return value;
@@ -162,6 +227,26 @@ public class EventsTableMappingService : IEventsTableMappingService
             if (targetType == typeof(int))
             {
                 return int.Parse(value);
+            }
+
+            if (targetType == typeof(double))
+            {
+                return double.Parse(value);
+            }
+
+            if (targetType == typeof(DateTimeOffset))
+            {
+                return DateTimeOffset.Parse(value);
+            }
+
+            if (targetType == typeof(bool))
+            {
+                return bool.Parse(value);
+            }
+
+            if (targetType == typeof(Country))
+            {
+                return Countries.Parse(value);
             }
 
             return null;

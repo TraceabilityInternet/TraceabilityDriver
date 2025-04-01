@@ -24,8 +24,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             _mapping = new TDMapping
             {
                 EventType = "TestEvent",
-                Selectors = new List<TDMappingSelector>(),
-                IdentityFields = new List<string>()
+                Selectors = new List<TDMappingSelector>()
             };
         }
 
