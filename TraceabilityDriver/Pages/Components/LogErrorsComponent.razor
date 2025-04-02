@@ -1,0 +1,90 @@
+﻿@using TraceabilityDriver.Models
+@using TraceabilityDriver.Services
+@inject IDatabaseService MongoDBService
+
+<div class="card">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Errors</h5>
+            <button class="btn btn-sm btn-outline-primary" @onclick="LoadErrorsAsync" disabled="@(logErrors == null)">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+        <div class="card-body">
+            @if (logErrors == null)
+            {
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (!logErrors.Any())
+            {
+                <div class="text-center">
+                    <p>No errors found.</p>
+                </div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var error in logErrors)
+                    {
+                        <div class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <span class="badge @GetLogLevelClass(error.Level)">@error.Level</span>
+                                </h6>
+                                <small>@error.Timestamp.ToLocalTime().ToString("g")</small>
+                            </div>
+                            <p class="mb-1">@error.Message</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<LogModel> logErrors = new List<LogModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadErrorsAsync();
+    }
+
+    private async Task LoadErrorsAsync()
+    {
+        try
+        {
+            logErrors = await MongoDBService.GetLastErrors(10);
+        }
+        catch (Exception ex)
+        {
+            // In a real app, you might want to log this error or handle it differently
+            logErrors = new List<LogModel>
+            {
+                new LogModel
+                {
+                    Level = "Error",
+                    Message = $"Failed to load errors: {ex.Message}",
+                    Timestamp = DateTime.UtcNow
+                }
+            };
+        }
+    }
+
+    private string GetLogLevelClass(string level)
+    {
+        return level?.ToLower() switch
+        {
+            "error" => "bg-danger",
+            "warning" => "bg-warning",
+            "information" => "bg-info",
+            "debug" => "bg-secondary",
+            "critical" => "bg-dark",
+            _ => "bg-primary"
+        };
+    }
+}

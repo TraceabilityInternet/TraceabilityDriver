@@ -1,0 +1,249 @@
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Threading;
+using TraceabilityDriver.Models.Mapping;
+using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Services.Connectors;
+using TraceabilityDriver.Services.Mapping;
+
+namespace TraceabilityDriver.Services;
+
+public delegate void OnSynchronizeStatusChanged(SyncHistoryItem syncHistoryItem);
+
+public class SynchronizeService : ISynchronizeService
+{
+    private readonly ILogger<SynchronizeService> _logger;
+    private readonly ITDConnectorFactory _connectorFactory;
+    private readonly IEventsMergerService _eventsMergerService;
+    private readonly IEventsConverterService _eventsConverterService;
+    private readonly IMappingSource _mappingSource;
+    private readonly IDatabaseService _mongoDBService;
+    private readonly ISynchronizationContext _syncContext;
+
+    public SynchronizeService(
+        ILogger<SynchronizeService> logger,
+        ITDConnectorFactory connectorFactory,
+        IEventsMergerService eventsMergerService,
+        IEventsConverterService eventsConverterService,
+        IDatabaseService mongoDBService,
+        IMappingSource mappingSource,
+        ISynchronizationContext syncContext)
+    {
+        _logger = logger;
+        _connectorFactory = connectorFactory;
+        _eventsMergerService = eventsMergerService;
+        _eventsConverterService = eventsConverterService;
+        _mongoDBService = mongoDBService;
+        _logger.LogDebug("SynchronizeService initialized");
+        _mappingSource = mappingSource;
+        _syncContext = syncContext;
+    }
+
+    /// <summary>
+    /// Synchronizes the data from the database to the event store.
+    /// </summary>
+    public async Task SynchronizeAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Synchronizing data from the database(s) to the event store.");
+        _syncContext.Updated();
+
+        /// Read the mapping files.
+        foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
+        {
+            // Set the current configuration being processed.
+            _syncContext.Configuration = mapping;
+
+            try
+            {
+                // Test the connections.
+                if (!await TestConnectionsAsync(mapping))
+                {
+                    _logger.LogError("Failed to test the connections for the mapping file.");
+                    continue;
+                }
+
+                // Verify the mappings are valid.
+                if (!VerifyMapping(mapping))
+                {
+                    _logger.LogError("The mapping file: {Mapping} is invalid.", mapping);
+                    continue;
+                }
+
+                // Process the mappings.
+                await ProcessMappingsAsync(mapping, cancellationToken);
+
+                _logger.LogInformation("Successfully processed the mapping file.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing the mapping file.");
+            }
+        }
+
+        // Update the sync history item.
+        _syncContext.CurrentSync.Status = SyncStatus.Completed;
+        _syncContext.CurrentSync.EndTime = DateTime.UtcNow;
+        _syncContext.Updated();
+
+        _logger.LogDebug("Synchronization process completed");
+    }
+
+    /// <param name="mapping">Contains the configuration details for the mappings, including selectors and connections.</param>
+    /// <returns>This method does not return a value.</returns>
+    public async Task ProcessMappingsAsync(TDMappingConfiguration mapping, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Processing {Count} mappings from file.", mapping.Mappings.Count);
+
+        foreach (var map in mapping.Mappings)
+        {
+            _logger.LogInformation("Processing mapping for event type: {EventType}", map.EventType);
+
+            /// Check for cancellation.
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            try
+            {
+                List<CommonEvent> events = new List<CommonEvent>();
+
+                foreach (var selector in map.Selectors)
+                {
+                    // Check for cancellation.
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    // Create the connector.
+                    var connector = _connectorFactory.CreateConnector(mapping.Connections[selector.Database]);
+
+                    // Get the number of records that will be processed by this selection.
+                    var totalRows = await connector.GetTotalRowsAsync(mapping.Connections[selector.Database], selector);
+
+                    // Update the sync status.
+                    _syncContext.CurrentSync.TotalItems = totalRows;
+                    _syncContext.CurrentSync.ItemsProcessed = 0;
+                    _syncContext.Updated();
+
+                    // Get the events.
+                    var retrievedEvents = await connector.GetEventsAsync(mapping.Connections[selector.Database], selector, cancellationToken);
+                    _logger.LogInformation("Retrieved {Count} events from database: {Database}", retrievedEvents.Count(), selector.Database);
+                    events.AddRange(retrievedEvents);
+                }
+
+                // Check for cancellation.
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                // Merge the events.
+                var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
+                _logger.LogInformation("Merged into {Count} events for event type: {EventType}", mergedEvents.Count, map.EventType);
+
+                /// Check for cancellation.
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                /// Convert the events.
+                var epcisDoc = await _eventsConverterService.ConvertEventsAsync(mergedEvents);
+
+                /// Check for cancellation.
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                /// Save the events.
+                await _mongoDBService.StoreEventsAsync(epcisDoc.Events);
+                _logger.LogInformation("Successfully stored {Count} events in MongoDB", epcisDoc.Events.Count);
+
+                /// Save the master data.
+                await _mongoDBService.StoreMasterDataAsync(epcisDoc.MasterData);
+                _logger.LogInformation("Successfully stored {Count} master data elements in MongoDB", epcisDoc.MasterData.Count);
+
+                _logger.LogInformation("Successfully processed a mapping for the event type '{EventType}' in the mapping file.", map.EventType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing a mapping for the event type '{EventType}' in the mapping file.", map.EventType);
+                throw;
+            }
+        }
+
+        _logger.LogInformation("Completed processing all mappings from file.");
+    }
+
+    /// <summary>
+    /// Verifies that the mapping is valid.
+    /// </summary>
+    /// <param name="mappingFile">The mapping configuration file.</param>
+    /// <param name="mapping">The mapping file path.</param>
+    /// <returns></returns>
+    public bool VerifyMapping(TDMappingConfiguration mapping)
+    {
+        _logger.LogDebug("Verifying mapping for file.");
+
+        foreach (var map in mapping.Mappings)
+        {
+            _logger.LogDebug("Verifying mapping for event type: {EventType}", map.EventType);
+
+            foreach (var selector in map.Selectors)
+            {
+                _logger.LogDebug("Checking if database '{Database}' is defined in connections", selector.Database);
+
+                if (!mapping.Connections.ContainsKey(selector.Database))
+                {
+                    _logger.LogError("The database '{Database}' is not defined in the connections.", selector.Database);
+                    return false;
+                }
+
+                _logger.LogDebug("Database '{Database}' found in connections", selector.Database);
+            }
+
+            _logger.LogDebug("All selectors for event type '{EventType}' have valid database references", map.EventType);
+        }
+
+        _logger.LogDebug("Mapping verification completed successfully for file.");
+        return true;
+    }
+
+    /// <summary>
+    /// Tests the validity of database connections defined in the provided mapping configuration.
+    /// </summary>
+    /// <param name="mappingFile">Specifies the file that contains the mapping configuration for the connections.</param>
+    /// <param name="mapping">Contains the configuration details for the connections to be tested.</param>
+    /// <returns>Indicates whether all tested connections are valid.</returns>
+    public async Task<bool> TestConnectionsAsync(TDMappingConfiguration mapping)
+    {
+        _logger.LogDebug("Testing {Count} connections for file.", mapping.Connections.Count);
+
+        // Test each connection.
+        bool allConnectionsValid = true;
+        foreach (var connection in mapping.Connections)
+        {
+            _logger.LogDebug("Testing connection to database: {ConnectionName}", connection.Key);
+
+            var connector = _connectorFactory.CreateConnector(connection.Value);
+            _logger.LogDebug("Created connector for database: {ConnectionName}, testing connection...", connection.Key);
+
+            if (!await connector.TestConnectionAsync(connection.Value))
+            {
+                _logger.LogError("Failed to test the connection to the database: {ConnectionName}", connection.Key);
+                allConnectionsValid = false;
+                continue;
+            }
+
+            _logger.LogDebug("Successfully tested connection to database: {ConnectionName}", connection.Key);
+        }
+
+        _logger.LogDebug("Connection testing completed for mapping, all connections valid: {AllValid}",
+            allConnectionsValid);
+
+        return allConnectionsValid;
+    }
+}
