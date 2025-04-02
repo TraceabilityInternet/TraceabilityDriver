@@ -1,5 +1,7 @@
+using Extensions;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OpenTraceability.Models.Events;
 using System.Threading;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Models.MongoDB;
@@ -45,11 +47,19 @@ public class SynchronizeService : ISynchronizeService
     public async Task SynchronizeAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Synchronizing data from the database(s) to the event store.");
+
+        _syncContext.Configuration = null;
+        _syncContext.PreviousSync = null;
+        _syncContext.CurrentSync = new SyncHistoryItem();
+        _syncContext.CurrentSync.Message = "Loading mapping files...";
         _syncContext.Updated();
 
         try
         {
-            /// Read the mapping files.
+            // Load the previous sync item.
+            _syncContext.PreviousSync = (await _mongoDBService.GetLatestSyncs(1)).FirstOrDefault();
+
+            // Read the mapping files.
             foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
             {
                 // Set the current configuration being processed.
@@ -138,6 +148,7 @@ public class SynchronizeService : ISynchronizeService
                     // Update the sync status.
                     _syncContext.CurrentSync.TotalItems = totalRows;
                     _syncContext.CurrentSync.ItemsProcessed = 0;
+                    _syncContext.CurrentSync.Message = "Reading events from database...";
                     _syncContext.Updated();
 
                     // Get the events.
@@ -152,6 +163,10 @@ public class SynchronizeService : ISynchronizeService
                     return;
                 }
 
+                _syncContext.CurrentSync.Message = $"Merging events...";
+                _syncContext.CurrentSync.ItemsProcessed = Convert.ToInt32((double)_syncContext.CurrentSync.TotalItems * 0.8);
+                _syncContext.Updated();
+
                 // Merge the events.
                 var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
                 _logger.LogInformation("Merged into {Count} events for event type: {EventType}", mergedEvents.Count, map.EventType);
@@ -163,7 +178,20 @@ public class SynchronizeService : ISynchronizeService
                 }
 
                 // Convert the events.
-                var epcisDoc = await _eventsConverterService.ConvertEventsAsync(mergedEvents);
+                _syncContext.CurrentSync.Message = $"Converting events...";
+                _syncContext.CurrentSync.TotalItems = mergedEvents.Count;
+                _syncContext.CurrentSync.ItemsProcessed = 0;
+                _syncContext.Updated();
+
+                EPCISDocument doc = new EPCISDocument();
+                foreach (var batch in mergedEvents.Batch(100))
+                {
+                    var epcisDoc = await _eventsConverterService.ConvertEventsAsync(batch);
+                    doc.Merge(epcisDoc);
+
+                    _syncContext.CurrentSync.ItemsProcessed += batch.Count();
+                    _syncContext.Updated();
+                }
 
                 // Check for cancellation.
                 if (cancellationToken.IsCancellationRequested)
@@ -172,12 +200,32 @@ public class SynchronizeService : ISynchronizeService
                 }
 
                 // Save the events.
-                await _mongoDBService.StoreEventsAsync(epcisDoc.Events);
-                _logger.LogInformation("Successfully stored {Count} events in MongoDB", epcisDoc.Events.Count);
+                _syncContext.CurrentSync.Message = $"Saving events...";
+                _syncContext.CurrentSync.TotalItems = doc.Events.Count;
+                _syncContext.CurrentSync.ItemsProcessed = 0;
+                _syncContext.Updated();
+
+                foreach (var batch in doc.Events.Batch(100))
+                {
+                    await _mongoDBService.StoreEventsAsync(batch);
+
+                    _syncContext.CurrentSync.ItemsProcessed += batch.Count();
+                    _syncContext.Updated();
+                }
 
                 // Save the master data.
-                await _mongoDBService.StoreMasterDataAsync(epcisDoc.MasterData);
-                _logger.LogInformation("Successfully stored {Count} master data elements in MongoDB", epcisDoc.MasterData.Count);
+                _syncContext.CurrentSync.Message = $"Saving master data...";
+                _syncContext.CurrentSync.TotalItems = doc.MasterData.Count;
+                _syncContext.CurrentSync.ItemsProcessed = 0;
+                _syncContext.Updated();
+
+                foreach (var batch in doc.MasterData.Batch(100))
+                {
+                    await _mongoDBService.StoreMasterDataAsync(batch);
+
+                    _syncContext.CurrentSync.ItemsProcessed += batch.Count();
+                    _syncContext.Updated();
+                }
 
                 _logger.LogInformation("Successfully processed a mapping for the event type '{EventType}' in the mapping file.", map.EventType);
             }

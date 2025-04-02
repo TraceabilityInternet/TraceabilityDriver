@@ -82,6 +82,7 @@ public class TDSqlServerConnector : ITDConnector
 
             // Get the total number of rows.
             int totalRows = await GetTotalRowsAsync(config, selector);
+            totalRows = Math.Min(totalRows, 10000);
 
             // Update the sync history.
             _syncContext.CurrentSync.TotalItems = totalRows;
@@ -114,7 +115,7 @@ public class TDSqlServerConnector : ITDConnector
                     List<CommonEvent> events = new List<CommonEvent>();
 
                     // We are going to page the data in chunks of 1000.
-                    for (int start = 0; start < totalRows; start += 1000)
+                    for (int start = 0; start < totalRows && start < 10000; start += 1000)
                     {
                         // Check for cancellation.
                         if (cancellationToken.IsCancellationRequested) return new List<CommonEvent>();

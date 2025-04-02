@@ -16,9 +16,15 @@
                 No synchronization is currently in progress.
             </div>
         }
+        else if (_item.Status == SyncStatus.Failed)
+        {
+            <div class="alert alert-danger" role="alert">
+                There was an error that occurred during the last sync process.
+            </div>
+        }
         else
         {
-            <p>@_item.Status</p>
+            <p>@_item.Message</p>
             <div class="progress mb-3" style="height: 20px;">
                 @{
                     var progressPercentage = _item.TotalItems > 0 ? (_item.ItemsProcessed * 100 / _item.TotalItems) : 0;
@@ -28,13 +34,6 @@
                     @_item.ItemsProcessed / @_item.TotalItems (@progressPercentage%)
                 </div>
             </div>
-            <p><strong>Started:</strong> @_item.StartTime?.ToString("g")</p>
-            @if (_item.EndTime.HasValue)
-            {
-                <p><strong>Completed:</strong> @_item.EndTime.Value.ToString("g")</p>
-                <p><strong>Duration:</strong> @((_item.EndTime.Value - _item.StartTime)?.ToString(@"hh\:mm\:ss"))</p>
-            }
-            <p><strong>Events Created:</strong> @_item.EventsCreated</p>
         }
     </div>
 </div>

@@ -5,6 +5,8 @@ The Traceability Driver is a free open-source software tool that can be used to 
 # How does it work?
 The Traceability Driver works by mapping data in an existing database into GDST events and master data, then it stores that data in a MongoDB and allows that data to be queried using the GDST Communication Protocol.
 
+![](./img/screenshot_diagram01.png)
+
 ## GDST Data Cache
 The **GDST Data Cache** is where the traceability is stored and where the API queries are made. The default implementation uses MongoDB as the database for the GDST Data Cache.
 
@@ -17,7 +19,31 @@ Synchronizing the data between the existing software system and the Traceability
 - The synchronization will load all mappings found in the local `Mappings` folder of the executing directory.
 - The synchronization will execute each mapping in the order that they are found in the `Mappings` folder.
 - The traceability data is stored into the `GDST Data Cache`.
-- The Traceability Driver will wait 1 hour before attempting to synchronize again.
+- The Traceability Driver will wait 1 minute before attempting to synchronize again.
+
+![](./img/screenshot_diagram02.png)
+
+> Important to know that currently it will only read up to 10,000 records from each selector statement. You must use the memory variables to remember where it last left off and then continue from there.
+
+# Dashboard
+There is a dashboard landing page that can be viewed that gives some visual insight to the current state, stats, errors, and allows executing the GDST capability test.
+
+![](./img/screenshot_dashboard01.png)
+
+## Current Sync
+Here the user is able to see the status of anything currently syncing.
+
+![](./img/screenshot_currentsync01.png)
+
+## Database Report
+Here you can see some basic stats such as the number of events, master data, and syncs.
+
+![](./img/screenshot_currentsync01.png)
+
+## Errors
+Here you can see the last 10 errors that have occurred during the sync process.
+
+![](./img/screenshot_currenterrors01.png)
 
 # Installation
 Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
@@ -158,7 +184,7 @@ When using multiple selectors, values are kept in order of priority, such that i
 #### Selector Memory
 The `Memory` field is used to capture information from the database and store it to be accessed by the next sync cycle. This can be used to store information that is needed to be accessed by the next selector in the mapping such as where we last left off when syncing.
 
-- `@LastID` - This is the name of the memory variable that is stored.
+- `LastID` - This is the name of the memory variable that is stored.
     - `DefaultValue` - The default value for the memory variable.
     - `Field` - The field that is stored in the memory variable from the selector results.
     - `Type` - The data type of the memory variable which can be `Int32`, `Int64`, `String`, `DateTime`, or `Boolean`.
@@ -167,7 +193,7 @@ The field value stored is always the value from the field from the last row proc
 
 ```json
 "Memory": {
-    "@LastID": {
+    "LastID": {
         "DefaultValue": "0",
         "Field": "$idEventRecord",
         "Type": "Int64"
@@ -175,7 +201,7 @@ The field value stored is always the value from the field from the last row proc
 },
 ```
 
-For example, the `@MaxID` memory variable is used to store the maximum `idEventRecord` value from the selector results. This value is then used in the next selector to determine where to start the next synchronization cycle.
+For example, the `LastID` memory variable is used to store the maximum `idEventRecord` value from the selector results. This value is then used in the next selector to determine where to start the next synchronization cycle.
 
 ### Event Mapping
 The event mapping is a JSON object that uses a Common Event Model with mapping fields that are used to map the data from the database into the Common Event Model.
@@ -239,64 +265,68 @@ It is important that the `EventId` is unique for each event such that events are
 
 #### Example Mapping
 ```
-"Mappings": [
-        {
-            "Id": "SAMPLE",
-            "Selectors": [
-                {
-                    "Id": "SAMPLE_EventSelector",
-                    "Database": "SAMPLE_DB",
-                    "Count": "SELECT COUNT(*) FROM [sample].[dbo].[EventRecords] WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE'",
-                    "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
-                    "EventMapping": {
-                        "EventId": "$idEventRecord",
-                        "EventType": "!GenericEvent",
-                        "EventTime": "$eventStart",
-                        "InformationProvider": {
-                            "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
-                            "Name": "Join( ,$operatorFirstName,$operatorLastName)"
-                        },
-                        "ProductOwner": {
-                            "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
-                            "Name": "Join( ,$operatorFirstName,$operatorLastName)"
-                        },
-                        "Location": {
-                            "LocationId": "GenerateIdentifier(!VLOC, $operatorId)",
-                            "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
-                            "RegistrationNumber": "$vehicleId",
-                            "Name": "$vehicleName",
-                            "Country": "$vehicleCountry"
-                        },
-                        "Products": [
-                            {
-                                "ProductId": "GenerateIdentifier(!ITEMPROD, $operatorId, $eventStart, $itemScientificName)",
-                                "LotNumber": "GenerateIdentifier(!ITEMLOT, $operatorId, $eventStart)",
-                                "Quantity": "$itemWeight",
-                                "UoM": "!KGM",
-                                "ProductDefinition": {
-                                    "ProductDefinitionId": "GenerateIdentifier(!ITEMDEF, $operatorId, $itemScientificName)",
-                                    "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
-                                    "ShortDescription": "$itemName",
-                                    "ProductForm": "!RAW",
-                                    "ScientificName": "$itemScientificName"
+{
+    "Mappings": [
+            {
+                "Id": "SAMPLE",
+                "Selectors": [
+                    {
+                        "Id": "SAMPLE_EventSelector",
+                        "Database": "SAMPLE_DB",
+                        "Count": "SELECT COUNT(*) FROM [sample].[dbo].[EventRecords] WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE'",
+                        "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+                        "EventMapping": {
+                            "EventId": "$idEventRecord",
+                            "EventType": "!GenericEvent",
+                            "EventTime": "$eventStart",
+                            "InformationProvider": {
+                                "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                                "Name": "Join( ,$operatorFirstName,$operatorLastName)"
+                            },
+                            "ProductOwner": {
+                                "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                                "Name": "Join( ,$operatorFirstName,$operatorLastName)"
+                            },
+                            "Location": {
+                                "LocationId": "GenerateIdentifier(!VLOC, $operatorId)",
+                                "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                                "RegistrationNumber": "$vehicleId",
+                                "Name": "$vehicleName",
+                                "Country": "$vehicleCountry"
+                            },
+                            "Products": [
+                                {
+                                    "ProductId": "GenerateIdentifier(!ITEMPROD, $operatorId, $eventStart, $itemScientificName)",
+                                    "LotNumber": "GenerateIdentifier(!ITEMLOT, $operatorId, $eventStart)",
+                                    "Quantity": "$itemWeight",
+                                    "UoM": "!KGM",
+                                    "ProductDefinition": {
+                                        "ProductDefinitionId": "GenerateIdentifier(!ITEMDEF, $operatorId, $itemScientificName)",
+                                        "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                                        "ShortDescription": "$itemName",
+                                        "ProductForm": "!RAW",
+                                        "ScientificName": "$itemScientificName"
+                                    }
                                 }
-                            }
-                        ],
-                        "CatchInformation": {
-                            "CatchArea": "!urn:example:area:01",
-                            "GearType": "Dictionary($equipmentType, EquipmentType)",
-                            "GPSAvailable": "!true"
-                        },
-                        "Certificates": {
-                            "FishingAuthorization": {
-                                "Identifier": "$authCode"
+                            ],
+                            "CatchInformation": {
+                                "CatchArea": "!urn:example:area:01",
+                                "GearType": "Dictionary($equipmentType, EquipmentType)",
+                                "GPSAvailable": "!true"
+                            },
+                            "Certificates": {
+                                "FishingAuthorization": {
+                                    "Identifier": "$authCode"
+                                }
                             }
                         }
                     }
-                }
-            ]
-        }
-    ]
+                ]
+            }
+        ],
+    "Dictionaries": { ... }",
+    "Connections": { ... }"
+}
 ```
 
 ### Event Mapping Functions

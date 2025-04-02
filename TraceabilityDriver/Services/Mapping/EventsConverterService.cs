@@ -115,6 +115,7 @@ public class EventsConverterService : IEventsConverterService
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
 
         // Information Provider
         epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);

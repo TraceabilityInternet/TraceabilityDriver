@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Remove="appsettings.json" />
+      <Content Remove="Services\appsettings.Development.json" />
       <Content Remove="Services\GDST\FullData.json" />
     </ItemGroup>
 
@@ -16,7 +16,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="appsettings.json" />
+      <None Include="appsettings.Development.json" />
+      <None Include="appsettings.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>

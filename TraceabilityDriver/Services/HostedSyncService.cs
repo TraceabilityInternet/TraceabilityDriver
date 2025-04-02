@@ -36,8 +36,11 @@
                     {
                         _logger.LogError(ex, "Error occurred during synchronization process.");
                     }
-
+#if DEBUG
+                    await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+#else
                     await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+#endif
                 }
             });
 
