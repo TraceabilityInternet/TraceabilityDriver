@@ -8,6 +8,7 @@ namespace TraceabilityDriver.Services
 {
     public interface IDatabaseService
     {
+        Task<DatabaseReport> GetDatabaseReport();
         Task<List<LogModel>> GetLastErrors(int top = 10);
         Task<List<SyncHistoryItem>> GetLatestSyncs(int top = 10);
         Task InitializeDatabase();

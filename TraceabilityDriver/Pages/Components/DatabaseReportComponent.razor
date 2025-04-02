@@ -1,0 +1,163 @@
+﻿@using TraceabilityDriver.Services
+@using TraceabilityDriver.Models.MongoDB
+
+@inject IDatabaseService DatabaseService
+
+<div class="my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Database Report</h3>
+        <button class="btn btn-outline-primary" @onclick="RefreshReport" disabled="@_loading">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            @if (_loading)
+            {
+                <span>Refreshing...</span>
+            }
+            else
+            {
+                <span>Refresh</span>
+            }
+        </button>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (_report == null)
+    {
+        <div class="alert alert-warning" role="alert">
+            No report data available.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <!-- Events Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Events</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (_report.EventCounts.Count == 0)
+                        {
+                            <p class="text-muted">No event data available</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var eventCount in _report.EventCounts)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        @eventCount.Key
+                                        <span class="badge bg-primary rounded-pill">@eventCount.Value</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Total Events: @_report.EventCounts.Values.Sum()</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Master Data Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">Master Data</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (_report.MasterDataCounts.Count == 0)
+                        {
+                            <p class="text-muted">No master data available</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var dataCount in _report.MasterDataCounts)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        @dataCount.Key
+                                        <span class="badge bg-success rounded-pill">@dataCount.Value</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Total Master Data: @_report.MasterDataCounts.Values.Sum()</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sync Status Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Sync Status</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (_report.SyncCounts.Count == 0)
+                        {
+                            <p class="text-muted">No sync data available</p>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var syncCount in _report.SyncCounts)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        @syncCount.Key
+                                        <span class="badge bg-info rounded-pill">@syncCount.Value</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Total Syncs: @_report.SyncCounts.Values.Sum()</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DatabaseReport? _report;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task RefreshReport()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        try
+        {
+            _loading = true;
+            _report = await DatabaseService.GetDatabaseReport();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading database report: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -370,6 +370,68 @@ namespace TraceabilityDriver.Services
         }
 
         /// <summary>
+        /// Generates a comprehensive database report containing statistics about events, master data, and sync operations.
+        /// </summary>
+        /// <returns>A DatabaseReport object containing counts of various data types in the system.</returns>
+        public async Task<DatabaseReport> GetDatabaseReport()
+        {
+            var report = new DatabaseReport();
+
+            // Get event counts by bizStep
+            var eventsBizStepGroups = await _eventsCollection.Aggregate()
+                .Group(e => e.BizStep, g => new { BizStep = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            foreach (var group in eventsBizStepGroups)
+            {
+                if (!string.IsNullOrEmpty(group.BizStep))
+                {
+                    report.EventCounts[group.BizStep] = group.Count;
+                }
+            }
+
+            // Get master data counts by type
+            var masterDataTypeGroups = await _masterDataCollection.Aggregate()
+                .Group(m => m.ElementType, g => new { Type = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            foreach (var group in masterDataTypeGroups)
+            {
+                if (!string.IsNullOrEmpty(group.Type))
+                {
+                    // Get the type name from the assembly qualified name
+                    Type t = Type.GetType(group.Type) ?? throw new Exception($"Failed to get type: {group.Type}");
+                    report.MasterDataCounts[t.Name] = group.Count;
+                }
+            }
+
+            // Get sync counts by status
+            var syncStatusGroups = await _syncHistoryCollection.Aggregate()
+                .Group(s => s.Status, g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            foreach (var group in syncStatusGroups)
+            {
+                report.SyncCounts[group.Status] = group.Count;
+            }
+
+            return report;
+        }
+
+        /// <summary>
+        /// Clears all data from the database by dropping all collections.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation of clearing the database.</returns>
+        public async Task ClearDatabaseAsync()
+        {
+            // Clear all collections
+            await _eventsCollection.DeleteManyAsync(new BsonDocument());
+            await _masterDataCollection.DeleteManyAsync(new BsonDocument());
+            await _syncHistoryCollection.DeleteManyAsync(new BsonDocument());
+            await _logCollection.DeleteManyAsync(new BsonDocument());
+        }
+
+        /// <summary>
         /// Creates indexes for the events and master data collections to optimize query performance and ensure
         /// uniqueness.
         /// </summary>
@@ -412,42 +474,6 @@ namespace TraceabilityDriver.Services
             await _syncHistoryCollection.Indexes.CreateOneAsync(
                 new CreateIndexModel<SyncHistoryItem>(
                     Builders<SyncHistoryItem>.IndexKeys.Ascending(s => s.EndTime)));
-        }
-
-        internal static Type GetEventTypeFromProfile(JObject jEvent)
-        {
-            Enum.TryParse<EventAction>(jEvent["action"]?.ToString(), out var action);
-            string? bizStep = jEvent["bizStep"]?.ToString();
-            string eventType = jEvent["type"]?.ToString() ?? throw new Exception("type property not set on event " + jEvent.ToString());
-
-            var profiles = OpenTraceability.Setup.Profiles.Where(p => p.EventType.ToString() == eventType && (p.Action == null || p.Action == action) && (p.BusinessStep == null || p.BusinessStep.ToLower() == bizStep?.ToLower())).OrderByDescending(p => p.SpecificityScore).ToList();
-            if (profiles.Count() == 0)
-            {
-                throw new Exception("Failed to create event from profile. Type=" + eventType + " and BizStep=" + bizStep + " and Action=" + action);
-            }
-            else
-            {
-                foreach (var profile in profiles.Where(p => p.KDEProfiles != null).ToList())
-                {
-                    if (profile.KDEProfiles != null)
-                    {
-                        foreach (var kdeProfile in profile.KDEProfiles)
-                        {
-                            if (jEvent.QueryJPath(kdeProfile.JPath) == null)
-                            {
-                                profiles.Remove(profile);
-                            }
-                        }
-                    }
-                }
-
-                if (profiles.Count() == 0)
-                {
-                    throw new Exception("Failed to create event from profile. Type=" + eventType + " and BizStep=" + bizStep + " and Action=" + action);
-                }
-
-                return profiles.First().EventClassType;
-            }
         }
     }
 } 

@@ -57,6 +57,9 @@ namespace TraceabilityDriver.Tests.Services
             // Create service with test configuration
             _mongoDBService = new MongoDBService(testConfig);
 
+            // Clear out the data.
+            await _mongoDBService.ClearDatabaseAsync();
+
             // Load test data
             await LoadTestDataAsync();
         }
@@ -218,6 +221,64 @@ namespace TraceabilityDriver.Tests.Services
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.ID, Is.EqualTo(testElementId));
+        }
+
+        [Test]
+        public async Task GetDatabaseReport_ShouldReturnAccurateReport()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            // Data should be already loaded via the LoadTestDataAsync method
+
+            // Act
+            var report = await _mongoDBService.GetDatabaseReport();
+
+            // Assert
+            Assert.That(report, Is.Not.Null);
+
+            // Event counts should not be empty if test data was loaded
+            Assert.That(report.EventCounts, Is.Not.Empty, "Database report should contain event counts");
+
+            // Master data counts should not be empty if test data was loaded
+            Assert.That(report.MasterDataCounts, Is.Not.Empty, "Database report should contain master data counts");
+
+            // Verify the actual counts match with our test data
+            var expectedEventTypeCount = _testEPCISDocument.Events
+                .GroupBy(e => e.BusinessStep.ToString().ToLower())
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            foreach (var eventType in expectedEventTypeCount.Keys)
+            {
+                Assert.That(report.EventCounts, Contains.Key(eventType),
+                    $"Database report should contain count for event type {eventType}");
+                Assert.That(report.EventCounts[eventType], Is.EqualTo(expectedEventTypeCount[eventType]),
+                    $"Event count for {eventType} should match expected value");
+            }
+
+            // Master data types would require similar verification
+            var expectedMasterDataTypeCount = _testEPCISDocument.MasterData
+                .GroupBy(m =>
+                {
+                    var typeName = m.GetType().ToString();
+                    int lastDot = typeName.LastIndexOf('.');
+                    return lastDot > 0 && lastDot < typeName.Length - 1
+                        ? typeName.Substring(lastDot + 1)
+                        : typeName;
+                })
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            foreach (var dataType in expectedMasterDataTypeCount.Keys)
+            {
+                Assert.That(report.MasterDataCounts, Contains.Key(dataType),
+                    $"Database report should contain count for master data type {dataType}");
+                Assert.That(report.MasterDataCounts[dataType], Is.EqualTo(expectedMasterDataTypeCount[dataType]),
+                    $"Master data count for {dataType} should match expected value");
+            }
         }
     }
 } 
