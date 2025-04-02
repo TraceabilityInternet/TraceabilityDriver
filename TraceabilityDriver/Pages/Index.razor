@@ -1,0 +1,57 @@
+﻿@page "/"
+@using TraceabilityDriver.Models.MongoDB
+@using TraceabilityDriver.Services
+
+<div class="container" style="width: 1000px">
+    <div class="row py-4">
+        <div class="col-12">
+            <TraceabilityDriver.Pages.Components.CurrentSyncComponent />
+        </div>
+    </div>
+    <div class="row py-4">
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Events</h3>
+                </div>
+                <div class="card-body">
+                    <p>33,000</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Master Data</h3>
+                </div>
+                <div class="card-body">
+                    <p>33,000</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Syncs</h3>
+                </div>
+                <div class="card-body">
+                    <p>10</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row py-4">
+        <div class="col-12">
+            <TraceabilityDriver.Pages.Components.CapabilityTestComponent />
+        </div>
+    </div>
+    <div class="row py-4">
+        <div class="col-12">
+            <TraceabilityDriver.Pages.Components.LogErrorsComponent />
+        </div>
+    </div>
+</div>
+
+@code {
+
+}

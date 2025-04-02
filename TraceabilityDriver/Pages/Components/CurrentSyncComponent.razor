@@ -1,0 +1,65 @@
+﻿@using TraceabilityDriver.Models.MongoDB
+@using TraceabilityDriver.Services
+
+@implements IDisposable
+
+@inject ISynchronizationContext SyncContext
+
+<div class="card">
+    <div class="card-header">
+        <h3>Current Sync</h3>
+    </div>
+    <div class="card-body">
+        @if (_item == null || _item.Status == SyncStatus.Completed)
+        {
+            <div class="alert alert-info" role="alert">
+                No synchronization is currently in progress.
+            </div>
+        }
+        else
+        {
+            <p>@_item.Status</p>
+            <div class="progress mb-3" style="height: 20px;">
+                @{
+                    var progressPercentage = _item.TotalItems > 0 ? (_item.ItemsProcessed * 100 / _item.TotalItems) : 0;
+                }
+                <div class="progress-bar" role="progressbar" style="width: @progressPercentage%;"
+                     aria-valuenow="@_item.ItemsProcessed" aria-valuemin="0" aria-valuemax="@_item.TotalItems">
+                    @_item.ItemsProcessed / @_item.TotalItems (@progressPercentage%)
+                </div>
+            </div>
+            <p><strong>Started:</strong> @_item.StartTime?.ToString("g")</p>
+            @if (_item.EndTime.HasValue)
+            {
+                <p><strong>Completed:</strong> @_item.EndTime.Value.ToString("g")</p>
+                <p><strong>Duration:</strong> @((_item.EndTime.Value - _item.StartTime)?.ToString(@"hh\:mm\:ss"))</p>
+            }
+            <p><strong>Events Created:</strong> @_item.EventsCreated</p>
+        }
+    </div>
+</div>
+
+@code {
+    SyncHistoryItem? _item = null;
+
+    protected override void OnInitialized()
+    {
+        _item = SyncContext.CurrentSync;
+        SyncContext.OnSynchronizeStatusChanged += OnSyncStatusChanged;
+    }
+
+    async void OnSyncStatusChanged(SyncHistoryItem sync)
+    {
+        // Use InvokeAsync to ensure UI updates happen on the UI thread
+        await InvokeAsync(() =>
+        {
+            _item = sync;
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        SyncContext.OnSynchronizeStatusChanged -= OnSyncStatusChanged;
+    }
+}

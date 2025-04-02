@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Codes>
-  <Code Key="gs1:NonbinaryLogicCode-TRUE" Name="True" />
-  <Code Key="gs1:NonbinaryLogicCode-FALSE" Name="False"/>
-  <Code Key="gs1:NonbinaryLogicCode-NOT_APPLICABLE" Name="Not Applicable" />
-  <Code Key="gs1:NonbinaryLogicCode-UNSPECIFIED" Name="Unspecified" />
-</Codes>

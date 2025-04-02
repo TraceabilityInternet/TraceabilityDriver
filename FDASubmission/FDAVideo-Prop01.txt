@@ -1,1 +1,0 @@
-The main purpose of this tool is to reduce the development costs of interoperability for solution providers, while also increasing the consistency in which the standards are implemented. This aims to increase interoperability across the traceability industry as a whole.

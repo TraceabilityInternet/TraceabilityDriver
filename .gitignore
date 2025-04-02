@@ -4,8 +4,4 @@
 
 **/obj
 **/bin
-.vs
-TraceabilityDriverService/Properties/PublishProfiles/FolderProfile.pubxml.user
-TraceabilityDriverService/Properties/PublishProfiles/FolderProfile.pubxml
-TraceabilityDriverService/.config/dotnet-tools.json
-TraceabilityDriverService/TraceabilityDriverService.csproj.user
+.sernapesca/**

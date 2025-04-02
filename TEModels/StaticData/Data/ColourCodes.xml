@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ColourCodes>
-  <ColourCode Key="gs1:ColourCodeListCode-R" Name="Assigned by Buyer" />
-  <ColourCode Key="gs1:ColourCodeListCode-ER" Name="Assigned by Seller" />
-  <ColourCode Key="gs1:ColourCodeListCode-ONE_HEXACHROME" Name="Pantone Hexachrome" />
-  <ColourCode Key="gs1:ColourCodeListCode-ONE_MATCHING" Name="Pantone Matching System" />
-  <ColourCode Key="gs1:ColourCodeListCode-ONE_PROCESS_COLOUR" Name="Pantone Process Colour System" />
-  <ColourCode Key="gs1:ColourCodeListCode-ONE_TEXTILE" Name="Pantone Textile" />
-</ColourCodes>

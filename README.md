@@ -1,177 +1,400 @@
 ![](https://github.com/TraceabilityInternet/TraceabilityDriver/raw/main/Images/Traceability%20Internet%20Organization-B1-thin.jpg)
 
-# Need Help?
-The Traceability Internet Organization will try it's best to assist everyone the best they can. Below we have documentation that we are constantly updating to try and assist the implementation of the Traceability Driver. If the documentation is not enough, please feel free to email us at help@traceabilityinternet.org and we can help you further.
+The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. It is a standalone module that can be installed into an existing software system to expose traceability data using the GDST module.
 
-## Submitting Issues
-If you find any issues in the code, or have ideas on how the software can be improved, please submit issues through our GitHub. We are dedicated to ensuring the quality of the software and making sure it provides as much benefit as possible to those implementing it. Thank you!
+# How does it work?
+The Traceability Driver works by mapping data in an existing database into GDST events and master data, then it stores that data in a MongoDB and allows that data to be queried using the GDST Communication Protocol.
 
-# Documentation
-Below is documentation about the Traceability Driver.
+## GDST Data Cache
+The **GDST Data Cache** is where the traceability is stored and where the API queries are made. The default implementation uses MongoDB as the database for the GDST Data Cache.
 
-## What is this thing?
-The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. It is a cross-platform webservice that can be installed into any existing traceability solution, who can then use the traceability driver to exchange traceability data with anyone else who implements the Traceability Driver.
+> The Traceability Drvier is designed to be able to be extended to use other databases as the GDST Data Cache by re-implementing the `IDatabaseService` interface.
 
-![](https://github.com/TraceabilityInternet/TraceabilityDriver/raw/main/Images/diagram01.png)
+## Synchronization
+Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection and is executed every hour. The synchronization process is done by using the following steps:
 
-## Build on GS1 Standards
-The Traceability Driver uses data models and communication protocols from GS1 to exchange traceability data.
+- Upon start up, the synchronization will execute automatically.
+- The synchronization will load all mappings found in the local `Mappings` folder of the executing directory.
+- The synchronization will execute each mapping in the order that they are found in the `Mappings` folder.
+- The traceability data is stored into the `GDST Data Cache`.
+- The Traceability Driver will wait 1 hour before attempting to synchronize again.
 
-### White Paper
-For starters, you can review the [Traceability Driver White Paper](https://github.com/TraceabilityInternet/TraceabilityDriver/blob/main/Traceability%20Driver%20White%20Paper.docx?raw=true) and the [Traceability Driver Security White Paper](https://github.com/TraceabilityInternet/TraceabilityDriver/blob/main/Traceability%20Driver%20Security%20White%20Paper.docx?raw=true). These were the original documents written around the Traceability Driver.
+# Installation
+Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
 
-## Cross-Platform
-The Traceability Driver is written in .NET 5 and will be upgraded to .NET 6 upon it's release in November 2021. The driver is meant to be able to be installed on either a Windows, Linux, or Mac machine.
+1. Download the latest release of the Traceability Driver.
+1. Install the Traceability Driver on a Windows or Linux server.
+1. Configure the Traceability Driver by editing the `appsettings.json` file.
+1. Create the mappings for the events that are being extracted from the database and place those in the `Mappings` folder.
+1. Start the Traceability Driver and let it synchronize the data.
+1. Navigate to the root URL of the Traceability Driver to see information about the current sync, previous syncs, and data that has been stored in the `GDST Data Cache`.
 
-## Registering your Traceability Driver (optional)
-In order to use the Directory Service, you will need to register your traceability solution with the Traceability Internet Organization by contacting help@traceabilityinternet.org . This is not required to utilize the Traceability Driver.
+# Configuration
+The Traceability Driver targets individual events from the database and maps them into the Common Event Model which is a normalized into a common data model.
 
-## Installation
-The `TraceabilityDriverService` is what needs to be installed. You will need to build the project yourself and publish the `TraceabilityDriverService` project. Once published, it will produce a package that can either be hosted in IIS, self-hosted on any machine, or hosted on Azure. You can even publish it directly to Azure using Visual Studio. 
+## URL
+The first thing to configure is to tell the Traceability Driver where to host the API. This is done by configuring the `URL` in the `appsettings.json` file.
 
-### Building it yourself...
-Building the source-code yourself is easy and can be done for free using Visual Studio Community 2019 which is available for both Windows and Mac. If you are using a Linux based system like Ubuntu, you can use Visual Code which is available for Linux to build the source-code.
-
-### What if I can't build the code?
-We recommned you review and build the code yourself so that you can feel condifent about using it. If this is not an option, please feel free to use the pre-built package in the `Published` folder in the root directory.
-
-## Hosting
-The software can be hosted either via IIS, Self-Hosting, or Azure Web Services. 
-
-*Coming soon will be detailed step-by-step guides on each hosting method.*
-
-## Configuration
-There are several important fields that need to be configured in the `appsettings.json` file before you can use the Traceability Driver.
-
-* `URL` - This is the URL you want to host the Traceability Driver under.
-* `MapperDLLPath` - This is the physical filepath to the compiled DLL that contains the mapper for your Traceability Driver. 
-* `MapperClassName` - This is the full namespace to the class the mapper DLL that will be used for mapping to/from your local data format into the common data model.
-* `APIKey` - This is the configured API Key that will be required to talk to your Traceability Driver through the Internal API. More about the Internal API is documented below.
-* `RequiresTradingPartnerAuthorization` - This is a flag that can be used to require Trading Parties to be authorized before they can access traceability data from your accounts. By default, this flag is set to `TRUE`, but can be set to `FALSE` to allow traceability data to be accessed publicly by anyone.
-* `ConnectionString` - This is a connection string to a MongoDB. MongoDB is free to use, can be installed locally, or a free database can be setup in the cloud at https://www.mongodb.com/cloud
-* `DirectoryURL` (Optional) - If you want to utilize the Directory Service, then you need to configure this to `https://directory.traceabilityinternet.org`. Before you can use the Directory Service you must contact help@traceabilityinternet.org and register your traceability solution. They will provide you with a registered Service Provider DID and PGLN that needs to be configured on your end.
-* `ServiceProviderDID` (Optional) - If you are using the Directory Service, you will set this configuration value to the provided DID when you registered your traceability solution.
-* `ServiceProviderPGLN` (Optional) - If you are using the Directory Service, you will set this configuration value to the provided PGLN when you registered your traceability solution.
-* `DatabaseName` (Optional) - By default, the service will use the database name "TraceabilityDriver" when connecting to your MongoDB. However, you can use this configuration value to override that and use a different name.
-* `EventURLTemplate` - This is used to tell the Traceability Driver where to forward requests for events to. This should be a URL to a local API for your traceability solution. There are three potential arguments that can be used in the URL Template. Those are `{account_id}`, `{tradingpartner_id}`, and `{epc}`. The `{account_id}` will be replaced with the Account ID that the data is be requested from. The `{tradingpartner_id}` will be replaced with the ID of the Trading Partner that is making the request. The `{epc}` will be replaced with the EPC that they are requesting event data for. Example URL templates are provided below.
-* `TradeItemURLTemplate` - This is used to tell the Traceability Driver where to forward requests for trade items / product definitions to. This should be a URL to a local API for your traceability solution. There are three potential arguments that can be used in the URL Template. Those are `{account_id}`, `{tradingpartner_id}`, and `{gtin}`. The `{account_id}` will be replaced with the Account ID that the data is be requested from. The `{tradingpartner_id}` will be replaced with the ID of the Trading Partner that is making the request. The `{gtin}` will be replaced with the GTIN that they are requesting trade item / production definition data for. Example URL templates are provided below.
-* `LocationURLTemplate` - This is used to tell the Traceability Driver where to forward requests for locations to. This should be a URL to a local API for your traceability solution. There are three potential arguments that can be used in the URL Template. Those are `{account_id}`, `{tradingpartner_id}`, and `{gln}`. The `{account_id}` will be replaced with the Account ID that the data is be requested from. The `{tradingpartner_id}` will be replaced with the ID of the Trading Partner that is making the request. The `{gln}` will be replaced with the GLN that they are requesting location data for. Example URL templates are provided below.
-* `TradingPartnerURLTemplate` - This is used to tell the Traceability Driver where to forward requests for trading parties to. This should be a URL to a local API for your traceability solution. There are three potential arguments that can be used in the URL Template. Those are `{account_id}`, `{tradingpartner_id}`, and `{pgln}`. The `{account_id}` will be replaced with the Account ID that the data is be requested from. The `{tradingpartner_id}` will be replaced with the ID of the Trading Partner that is making the request. The `{pgln}` will be replaced with the PGLN that they are requesting trading party data for. Example URL templates are provided below.
-
-*More about Accounts, Trading Partners, and Trading Parties can be found below. There is also information about Trading Partner ID and Account ID below.*
-
-### Example Configuration
-`appsettings.json`
+**Example URL Configuration**
+```json
+"URL": "http://localhost:5000"
 ```
+
+## GDST Capability Test
+It is possible to execute the capability test from the Traceability Driver portal. In order to do this, you must configure the `GDST Capability Test` in the `appsettings.json` file. With the following fields:
+
+- **Url** - The URL of the GDST Capability Test.
+- **ApiKey** - The API key that is used to authenticate the API.
+- **SolutionName** - The name of the solution that is being tested.
+- **PGLN** - The PGLN of the solution that is being tested.
+
+**Example GDST Capability Test Configuration**
+```json
+"GDST": {
+    "CapabilityTest": {
+        "Url": "https://capabilitytool-beta-app.azurewebsites.net/",
+        "ApiKey": "************************************",
+        "SolutionName": "TraceabilityDriver",
+        "PGLN": "urn:gdst:example.org:party:TraceabilityDriver.001"
+    }
+},
+```
+
+After configuring this, it is possible to execute the capability test from inside the Traceability Driver portal:
+
+```<INSERT SCREEN SHOT>```
+
+```<INSERT SCREEN SHOT>```
+
+```<INSERT SCREEN SHOT>```
+
+## Identifiers
+The Traceability Driver is capable of automatically generating traceability identifiers such as the EPC, GTIN, PGLN, and/or GLN. A critical part of generating these identifiers has to do with the domain that is generating them as is outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).
+
+In order to configure this, you need to define the `Traceability:IdentifierDomain` in the `appsettings.json` file. The `Traceability:IdentifierDomain` are used to generate the identifiers for the traceability data.
+
+```json
+"Traceability": {
+    "IdentifierDomain": "example.org"
+}
+```
+
+The domain should be the domain site of the organization that is generating the traceability data. This domain is used to generate the URN for the traceability data.
+
+## Authorization
+The Traceability Driver allows for two modes of authentication:
+- **OAuth (JWT) Authentication** - Allows for configuring OAuth authentication to the API using self-signed tokens.
+- **API Key Authentication** - Allows for configuring API key authentication to the API which is required by GDST 1.2 communication protocol.
+
+### OAuth (JWT) Authentication
+The OAuth (JWT) authentication is used to authenticate the API using self-signed tokens. The authentication is configured in the `appsettings.json` file of the installation.
+
+- **Token Issuer** - The token issuer is the OAuth provider that is used to authenticate the API.
+- **Audience** - The audience is the intended audience of the token.
+- **Metadata Address** - The metadata address is the JWKS discovery endpoint that is used to validate the token.
+- **Require HTTPS Metadata** - This is used to require HTTPS for the metadata address.
+
+**Example OAuth (JWT) Configuration**
+```json
+"Authentication": {
+    "JWT": {
+        "Authority": "https://your-oauth-provider.com",    
+        "Audience": "your-api-identifier",                 
+        "MetadataAddress": "https://your-oauth-provider.com/.well-known/openid-configuration", 
+        "RequireHttpsMetadata": true       
+     }
+  },
+```
+
+### API Key Authentication
+API Key authentication is used to grant access to the controllers and the API keys are defined in the `appsettings.json` file.
+
+**Example API Key Configuration**
+```json
+"Authentication": {
+    "APIKey": {
+        "HeaderName": "X-API-Key",
+        "ValidKeys": [                     
+          "key1-abc123",
+          "key2-xyz789"
+        ]
+    }
+}
+```
+
+## Mappings
+A mapping is created for each event type that is being extracted, transformed, and loaded into the GDST module. The mapping is defined by using the following fields:
+
+- `Id` - A unique identifier for the mapping.
+- `Selectors` - An array of selectors that are used to select the data from the database.
+- `EventMapping` - The mapping of the data from the database into the Common Event Model.
+
+### Mapping Selectors
+The mapping selectors are used to select the data from the database. The selectors are defined by using the following fields:
+
+- `Id` - A unique identifier for the selector.
+- `Database` - The database that the selector is used to select the data from.
+- `Count` - The SQL statement that is used to count the number of records that will be returned by the selector.
+- `Selector` - The SQL statement that is used to select the data from the database.
+- `Memory` - This can be used to capture information from the database and store it to be accessed by the next sync cycle.
+
+One or more selectors can be defined for each event mapping such that the event's information is pieced together from multiple tables in the database or even multiple tables from multiple databases.
+
+When using multiple selectors, values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be priororized for the event over the value found in future selectors for the same event.
+
+**Example Selector**
+```json
 {
-    "Logging": {
-        "LogLevel": {
-            "Default": "Information",
-            "Microsoft": "Warning",
-            "Microsoft.Hosting.Lifetime": "Information"
+    "Id": "SAMPLE_EventSelector",
+    "Database": "SAMPLE_DB",
+    "Count": "SELECT COUNT(*) FROM [sample].[dbo].[EventRecords] WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE'",
+    "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' AND evt.idEventRecord > @LastID ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+    "Memory": { ... }
+}
+```
+
+#### Selector Memory
+The `Memory` field is used to capture information from the database and store it to be accessed by the next sync cycle. This can be used to store information that is needed to be accessed by the next selector in the mapping such as where we last left off when syncing.
+
+- `@LastID` - This is the name of the memory variable that is stored.
+    - `DefaultValue` - The default value for the memory variable.
+    - `Field` - The field that is stored in the memory variable from the selector results.
+    - `Type` - The data type of the memory variable which can be `Int32`, `Int64`, `String`, `DateTime`, or `Boolean`.
+
+The field value stored is always the value from the field from the last row processed in the previoused sync.
+
+```json
+"Memory": {
+    "@LastID": {
+        "DefaultValue": "0",
+        "Field": "$idEventRecord",
+        "Type": "Int64"
+    }
+},
+```
+
+For example, the `@MaxID` memory variable is used to store the maximum `idEventRecord` value from the selector results. This value is then used in the next selector to determine where to start the next synchronization cycle.
+
+### Event Mapping
+The event mapping is a JSON object that uses a Common Event Model with mapping fields that are used to map the data from the database into the Common Event Model.
+
+The field values are defined in a way such that they can be used to extract values from the database and map them into the Common Event Model.
+
+#### Mapping Field Values
+The mapping field values are defined by using the following syntax:
+
+- **Static Values** - Static values are defined by using the `!` character followed by the value.
+- **Field Values** - Field values are defined by using the `$` character followed by the field name.
+- **Functions** - Functions are defined by using the function name and the parameters. The function name is followed by the parameters in parentheses.
+
+#### Common Event Model
+The common event model is a simplified data model that the data from the database is mapped into. The Traceability Driver then builds up the traceability data using the Common Event Model after which it is then transformed into EPCIS data and stored in the `GDST Data Cache`.
+
+The common event model is defined by using the following fields:
+- `EventId` - The unique identifier for the event.
+- `EventType` - The type of event.
+- `EventTime` - The time of the event.
+- `InformationProvider` - The information provider of the event.
+    - `OwnerId` - The unique identifier for the information provider.
+    - `Name` - The name of the information provider.
+- `ProductOwner` - The product owner of the event.
+    - `OwnerId` - The unique identifier for the product owner.
+    - `Name` - The name of the product owner.
+- `Location` - The location of the event.
+    - `LocationId` - The unique identifier for the location.
+    - `OwnerId` - The unique identifier for the location owner.
+    - `RegistrationNumber` - The registration number of the location.
+    - `Name` - The name of the location.
+    - `Country` - The country of the location.
+- `Products` - The products of the event.
+    - `ProductId` - The unique identifier for the product.
+    - `ProductType` - This indicates the type of the reference to the product and can be either `Reference`, `Input`, `Output`, `Child`, or `Parent`.
+    - `LotNumber` - The lot number of the product.
+    - `Quantity` - The quantity of the product.
+    - `UoM` - The unit of measure of the product.
+    - `ProductDefinition` - The product definition of the product.
+        - `ProductDefinitionId` - The unique identifier for the product definition. This should either be the GTIN in the required URN format from EPCIS, or it should be a unique identifier for the product definition. If the value is not a GTIN, then a valid GTIN will be generated for the product definition using the `ProductDefinitionId` and the `OwnerId`.
+        - `OwnerId` - The unique identifier for the product definition owner.
+        - `ShortDescription` - The short description of the product definition.
+        - `ProductForm` - The product form of the product definition.
+        - `ScientificName` - The scientific name of the product definition.
+- `CatchInformation` - The catch information of the event.
+    - `CatchArea` - The catch area of the event.
+    - `GearType` - The gear type of the event.
+    - `GPSAvailable` - The GPS availability of the event.
+- `Certificates` - The certificates of the event.
+    - `FishingAuthorization` - The fishing authorization certificate of the event.
+        - `Identifier` - The identifier of the authorization certificate.
+
+#### Event ID
+The `EventId` field is used as a unique identifier for the event such that events are merged together on common `EventId` values. When saving to the database, the `EventId` is used as the primary key for the event.
+
+For instance:
+- If an existing event is found with the same `EventId`, the event is updated with the new values when saving into the `GDST Data Cache`.
+- If the same or multiple selector(s) returns two rows with the same `EventId`, the event is merged together into a single event with the same `EventId`. Values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be priororized for the event over the value found in future selectors for the same event.
+
+It is important that the `EventId` is unique for each event such that events are not duplicated in the `GDST Data Cache`.
+
+#### Example Mapping
+```
+"Mappings": [
+        {
+            "Id": "SAMPLE",
+            "Selectors": [
+                {
+                    "Id": "SAMPLE_EventSelector",
+                    "Database": "SAMPLE_DB",
+                    "Count": "SELECT COUNT(*) FROM [sample].[dbo].[EventRecords] WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE'",
+                    "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+                    "EventMapping": {
+                        "EventId": "$idEventRecord",
+                        "EventType": "!GenericEvent",
+                        "EventTime": "$eventStart",
+                        "InformationProvider": {
+                            "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                            "Name": "Join( ,$operatorFirstName,$operatorLastName)"
+                        },
+                        "ProductOwner": {
+                            "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                            "Name": "Join( ,$operatorFirstName,$operatorLastName)"
+                        },
+                        "Location": {
+                            "LocationId": "GenerateIdentifier(!VLOC, $operatorId)",
+                            "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                            "RegistrationNumber": "$vehicleId",
+                            "Name": "$vehicleName",
+                            "Country": "$vehicleCountry"
+                        },
+                        "Products": [
+                            {
+                                "ProductId": "GenerateIdentifier(!ITEMPROD, $operatorId, $eventStart, $itemScientificName)",
+                                "LotNumber": "GenerateIdentifier(!ITEMLOT, $operatorId, $eventStart)",
+                                "Quantity": "$itemWeight",
+                                "UoM": "!KGM",
+                                "ProductDefinition": {
+                                    "ProductDefinitionId": "GenerateIdentifier(!ITEMDEF, $operatorId, $itemScientificName)",
+                                    "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                                    "ShortDescription": "$itemName",
+                                    "ProductForm": "!RAW",
+                                    "ScientificName": "$itemScientificName"
+                                }
+                            }
+                        ],
+                        "CatchInformation": {
+                            "CatchArea": "!urn:example:area:01",
+                            "GearType": "Dictionary($equipmentType, EquipmentType)",
+                            "GPSAvailable": "!true"
+                        },
+                        "Certificates": {
+                            "FishingAuthorization": {
+                                "Identifier": "$authCode"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+```
+
+### Event Mapping Functions
+The event mapping functions are used to transform the data from the database into the Common Event Model. The functions are defined by using the following syntax:
+
+- **GenerateIdentifier** - Generates a unique identifier for the field.
+- **Join** - Joins the values of the fields together.
+- **Dictionary** - Transforms the value of the field using a dictionary.
+
+#### Generate Identifier
+The `GenerateIdentifier` function is used to create unique identifiers for various elements in the traceability system. It takes multiple parameters and creates a standardized identifier by:
+
+1. Stripping all non-alphanumeric characters from each parameter value
+2. Concatenating the values together with hyphens
+
+**Syntax:**
+```
+GenerateIdentifier(prefix, value1, value2, ...)
+```
+
+- **prefix** - A static value that indicates the type of identifier being created (e.g., `!IDOP` for operators, `!VLOC` for vessel locations)
+- **value1, value2, ...** - One or more values from the database that will be combined to create a unique identifier
+
+**Example:**
+```json
+"OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+"LocationId": "GenerateIdentifier(!VLOC, $vehicleId)",
+"ProductId": "GenerateIdentifier(!ITEMPROD, $operatorId, $eventStart, $itemScientificName)"
+```
+
+In these examples:
+- An operator ID might be generated as `IDOP-12345` where 12345 is the operatorId
+- A location ID might be generated as `VLOC-V789` where V789 is the vehicleId
+- A product ID might combine an operator ID, event time, and scientific name to create a unique identifier
+
+The function ensures that all identifiers follow a consistent format by removing special characters that might cause issues in data processing or storage.
+
+#### Join
+The `Join` function concatenates multiple field values together using a specified separator. This is particularly useful for combining multiple database fields into a single value, such as creating a full name from first name and last name fields.
+
+**Syntax:**
+```
+Join(separator, value1, value2, ...)
+```
+
+- **separator** - The character(s) used to join the values together
+- **value1, value2, ...** - The values to be joined
+
+The function ignores any null values when joining the fields.
+
+**Example:**
+```json
+"Name": "Join( ,$operatorFirstName,$operatorLastName)"
+```
+
+In this example:
+- If `$operatorFirstName` is "John" and `$operatorLastName` is "Doe", the result will be "John Doe"
+- If `$operatorFirstName` is null and `$operatorLastName` is "Doe", the result will be "Doe"
+- If both values are null, the result will be null
+
+The Join function is particularly useful for creating human-readable display names or for combining multiple fields into a standardized format.
+
+#### Dictionaries
+The dictionaries are used to transform the values of the fields using a dictionary. The dictionary is defined in the configuration file and then referenced in the mapping file.
+
+##### Dictionary Configuration
+Dictionaries are configured in the `Dictionaries` section in the mapping configuration file. Each dictionary is a key-value pair collection where the key is the value from the database and the value is what it should be transformed into.
+
+**Example Dictionary Configuration**
+```json
+{
+    "Mappings": [ ... ],
+    "Dictionaries": {
+        "FishingGearType": {
+            "GEAR1": "urn:gdst:gear:1.1",
+            "GEAR9_9": "urn:gdst:gear:9.9",
+            "GEAR8_9": "urn:gdst:gear:8.9"
         }
     },
-    "AllowedHosts": "*",
-    "URL" : "https://localhost:8001/",
-    "APIKey": "<insert_api_key_here>",
-    "SolutionProviderAPIKey", "<insert_api_key_here>",
-    "MapperDLLPath": "c:\\webservices\\traceability_driver\\mapper\\MyMapper.dll",
-    "MapperClassName": "MyMapper.MyMapperClass",
-    "ConnectionString": "mongodb://localhost",
-    "DirectoryURL": "https://directory.traceabilityinternet.org",
-    "ServiceProviderDID": "did:traceabilityengine_v1:972e6c79-b169-4ce2-b815-47a0db2c785e.ew0KICAiUHVibGljS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQakIyVkhBM1FYRlNhVGw1YzFsamEwaDNaMUUwVDI1SFVHc3lTVEkwVVRVNU1XSlFhM0pWTVhkVWEyaENTREJHYkZGamR6UnVkVFpHYm14TFFVbERkM0paVUVKdlNHMUVNMXBvU1RWU1drbERPRkV5TWpCV2RWbEhZbmh1WjNwSVJFNUtkakI2Y2pkWlEyODRabHBNTVRCUlEwdENkbWM0Yld0c1dEUm9RVzFOUVVOaVNYbGFNa2xtTjFCTlZ6WlhRMEpWY0RkQ1ZtTnFlU3RJZDIxdVJscFpiMmcwTXpGUFpVZE5WVDA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQand2VWxOQlMyVjVWbUZzZFdVKyIsDQogICJQcml2YXRlS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQakIyVkhBM1FYRlNhVGw1YzFsamEwaDNaMUUwVDI1SFVHc3lTVEkwVVRVNU1XSlFhM0pWTVhkVWEyaENTREJHYkZGamR6UnVkVFpHYm14TFFVbERkM0paVUVKdlNHMUVNMXBvU1RWU1drbERPRkV5TWpCV2RWbEhZbmh1WjNwSVJFNUtkakI2Y2pkWlEyODRabHBNTVRCUlEwdENkbWM0Yld0c1dEUm9RVzFOUVVOaVNYbGFNa2xtTjFCTlZ6WlhRMEpWY0RkQ1ZtTnFlU3RJZDIxdVJscFpiMmcwTXpGUFpVZE5WVDA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQanhRUGpOcE0yWldURGxPVUV0Rk1HRmhWVGh3WWt0cGIweGtkVnBwYm14Q1pGVTNOVXhOY2tGM1dWTlNkM2g1VFhVd1VsRnFZM1JxTjNnNVdXcHFhM1kwVVRCUU1VSjJVbEp1Tm5sV1YwVkpZakowTlZjdlF6WjNQVDA4TDFBK1BGRStPSGhITVRZelFXODNMMVEyUWk5M1prTTBORkpJWkdReWMyWnhhSFpZYUdaRk5EUlNZMFpOUlVaMk5UaGxVQ3M1VDNOdVkyZDNNblkxWkVoMk9HNVJaelZCT0Znd1pHTkJhMmx2TTBwQk1VSm1NbVpJUkhjOVBUd3ZVVDQ4UkZBK2IxTlhTV0pKUm5OV1pVNWxhbkJ0YjJsVk5IUnZiMEZ2T1V4VVExSm9OMHBIUkVoVWNYQm1SM1ptTWtzdmRVUjJkV0ZWYm5sTE9HZERhRkJXTldkeVVHdHVVMWR1TDI5a05tUlhObmh1V1RkSlRWTldSRkU5UFR3dlJGQStQRVJSUGxoMGNsQmxiVkpZY0ZkVFpGZG9XbUZoZVVSNWNuZHRVbE5XTURoV2RuTjBXbmt3ZFhkMk1ubG1LMHR3Tkc1SmVXWXdiV1JKZDNSd1ZrTTRPRU4zY1d0a2VuTnZiVmgyYTNacFZqVlNWR3hxUlZCM1NHOTNQVDA4TDBSUlBqeEpiblpsY25ObFVUNU1jVTFsZW1admVISkRTblI1UzBGM1ZFaDVMMlZXVFRJNFpEQlJVbEJFVlVsSVQyVlJZVFo0ZEZWV2NrMXhTbWRwTTFSUllWaFJTelJGV25aTVYzbG1MMEpCWlU5cEwzRmhja2hpYVRRNE1WaE1XVEpzZHowOVBDOUpiblpsY25ObFVUNDhSRDVZYkVKSk1VNU1WWGd5WW1SWGMzQTFkMWhCU21jelpVbzNVMkZZZVc0MmEwYzBjbFo2WmxVeFNrbHhRazExZDFaNlVtb3djRE50VlVjemFHVXJRVTVJVlZsMWNIZFJjM2hGUmpGT1dtRkZiREUwWkN0R09FOVBWalF3UW5OcVEwTk9TMDUyY3pWNE56aE5Ra2RIWjNSaFdGWkpTRU5VYTFCU2VIRlBiRWxXT0hGelpqSXlXWFIwYUVaV04yMURZMHBTY0hsdmMxRlplakZXTWpoamRUbGtORGN5V0Rkb1JXVnFTRVU5UEM5RVBqd3ZVbE5CUzJWNVZtRnNkV1UrIg0KfQ==",
-    "ServiceProviderPGLN": "urn:traceabilityinternet:party:ServiceProvider.7a8aa860-279a-4c49-9b21-32bbbad57f63",
-    "DatabaseName": "TraceabilityDriver",
-    "EventURLTemplate": "http://localhost:1360/xml/{account_id}/{tradingpartner_id}/events/{epc}",
-    "TradeItemURLTemplate": "http://localhost:1360/xml/{account_id}/{tradingpartner_id}/tradeitem/{gtin}",
-    "LocationURLTemplate": "http://localhost:1360/xml/{account_id}/{tradingpartner_id}/location/{gln}",
-    "TradingPartyURLTemplate": "http://localhost:1360/xml/{account_id}/{tradingpartner_id}/tradingpartner/{pgln}"
+    "Connections": { ... }
 }
 ```
 
-## Mapper
-At the core of the Traceability Driver is your mapper. Your mapper is what takes your local data format and converts it into the common C# models provided. Your mapper should be written in C# and implements the `ITETraceabilityMapper` interface provided in the `TEInterfaces.dll` provided in installation package. The mapper provides 4 pairs of methods, for mapping **Events**, **Trade Items / Product Definitions**, **Locations**, and **Trading Parties**.
+##### Using the Dictionary Function
+The dictionary function is used in the mapping file to transform values from the database using the configured dictionaries. The function takes two parameters:
+1. The value to look up in the dictionary
+2. The name of the dictionary to use for the lookup
 
-## Accounts, Trading Parties, Trading Partners, what's all this about?
-There are three terms that are thrown around throughout this documentation, and other places in the technical realm of traceability that merit a bit of an explination because they can be confusing.
-* **Trading Party** is any company/business that can take ownership of a product, product definition, and/or location. They are the most generic term.
-* **Account** is a Trading Party that is hosted by a solution provider. This would be a way for a solution provider to refer to a Trading Party that they are hosting on their traceabililty solution
-* **Trading Partner** is a Trading Party that an Account sells and/or buys products to/from. This would generally be a Trading Party that an Account exchanges traceability directly with. 
+If the value is found in the specified dictionary, the function returns the corresponding transformed value. If the value is not found, the function returns null.
 
-All Accounts and Trading Partners are Trading Parties. A Trading Partner, is simple another Account on the same solution provider or another solution provider. If anyone thinks this is still confusing or has a better way to explain this, please post an issue and we will promptly review it.
-
-## Adding an Account
-Once you have installed the Traceability Driver, you will need to add each account to the Traceability Driver. This can be done by using the Internal API for the Traceability Driver. Only the host of the Traceability Driver can access the Internal API, and authorization is required using the configured API Key in the `appsettings.json`. More about this is discussed above.
-
-The easiest way to add an account is using the C# Traceability Driver Client provided in the `TEClients` project. 
-
-```
-using (ITEInternalClient client = TEClientFactory.InternalClient(url, configuration.APIKey))
-{
-     // create the account
-     ITEDriverAccount account = new TEDriverAccount();
-     account.ID = 1;
-     account.Name = "Test Account #1";
-
-     // add the account
-     account = await client.SaveAccountAsync(account);
-}
-```
-*We are planning to provide clients for other programming languages in the future.*
-
-
-Otherwise you can make an HTTP Request to your Traceability Driver like so:
-```
-POST 
-
-URL: https://localhost:8001/api/account
-
-HEADERS
-Authorization: Basic <api_key>
-
-BODY
-{
-  "ID": 1,
-  "Name": "Test Account #1"
+**Example Usage**
+```json
+"CatchInformation": {
+  "CatchArea": "!urn:example:area:01",
+  "GearType": "Dictionary($equipmentType, EquipmentType)",
+  "GPSAvailable": "!true"
 }
 ```
 
-After the account is created, the HTTP Request will return an account object that looks like:
-```
-{
-     "DigitalLinkURL" : "https://localhost:8001/1/digital_link",
-     "PublicDID":"did:traceabilityengine_v1:c63481c6-8a42-4723-af6b-b2cd30f0d4e1.ew0KICAiUHVibGljS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQblpyUjA4dk1VeHFZV3hGTlhsQ1NESmFSM0J5UVhnck5FaEZUbEUyYm5RemNWUmhibXh3WTBSUVRGTXpjMDlYVUhVdllrOTVhekZJTmpOMFVrZE9iM1pMVldoSFRqRmtVakJIVFhreGRITlBjMVZSWnpST1VVbzBNbXROYWxkVFZFaHdTMVprUTA5SFpVdFFOMHRXTjJGWWJWSmxhWFowT0hVMWFsYzRhMm9yUlVoTU1uZHdkbWR4ZDFscE9WaGpZbUowV2toUlNrTTVlR2hGYlZoRmVEaEdaalZpWkVwa1JrZGtNRDA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQand2VWxOQlMyVjVWbUZzZFdVKyIsDQogICJQcml2YXRlS2V5IjogIiINCn0=",
-     "DID":"did:traceabilityengine_v1:6c6f252a-a574-47dd-a809-72f4aa5d722f.ew0KICAiUHVibGljS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQbTR5YkZnMlkyTk9WVnB0Ymt4TFJEUTVPVTVrUlVoblJrbHhWMjVuZGs1cU5uUTBZbGcwYW5aTmJWVlJVa1kyYVdSVE1XRlhaVUl5Ym5wNU1WVmhZVnBRYlZBd1JrOVVWVEF2TlhCU1lYTm1kalF6YmpCSlYzWndNR05LWlhwVk5tRnBRWGRDWmpOS2REZGtZbUpRY1VSbFRYcEpjWFJzZUZwRWR6RkZUa1ZsWkdsdVdITlBXSHBWVldZMGJqTTBlVWROV0dwSFNsaFBURFpXYld4WlFrMDJhVWhvVFdKSmFWUXhhejA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQand2VWxOQlMyVjVWbUZzZFdVKyIsDQogICJQcml2YXRlS2V5IjogIlBGSlRRVXRsZVZaaGJIVmxQanhOYjJSMWJIVnpQbTR5YkZnMlkyTk9WVnB0Ymt4TFJEUTVPVTVrUlVoblJrbHhWMjVuZGs1cU5uUTBZbGcwYW5aTmJWVlJVa1kyYVdSVE1XRlhaVUl5Ym5wNU1WVmhZVnBRYlZBd1JrOVVWVEF2TlhCU1lYTm1kalF6YmpCSlYzWndNR05LWlhwVk5tRnBRWGRDWmpOS2REZGtZbUpRY1VSbFRYcEpjWFJzZUZwRWR6RkZUa1ZsWkdsdVdITlBXSHBWVldZMGJqTTBlVWROV0dwSFNsaFBURFpXYld4WlFrMDJhVWhvVFdKSmFWUXhhejA4TDAxdlpIVnNkWE0rUEVWNGNHOXVaVzUwUGtGUlFVSThMMFY0Y0c5dVpXNTBQanhRUGpBNFNta3lVV3BhVm5ONldVNUVOMkV5TDJsMGIwVkxOblEwYWs1dmFrVkdlazFwZG5KR1drcEdUVmgwVFRoM0wzQlZNRWhIVWtWSk9FZDJibEFyZG01cGJIWlpMMkZpZERoaWQwdFhVVUpKTmpCNGQxZDNQVDA4TDFBK1BGRStkMHhqTTFwUmIxWmxlRWhzVVRGVGNTOUVMM2hRYmxsbFpteHdNV3RJYmpVM1VrcGpVRlJPVDFkcmIyeFBNalprUlRSVlZtdFFjR2hNUVdSSGFsQlpVVEJWTDJ0YVRXRjZORUZWUVdwUlZGRTJTRVpPVjNjOVBUd3ZVVDQ4UkZBK2RFcFZRVlp5VlVaSmRFSjBWRFpEUzFsNWQyVmFTbmxFVUdsRFluVTRVM2xtV1VKdGVqQkRSamhuUlZneGVWSkhORzFDWkhaVVMxcDJUekZJZERKemJHVlJaalpqT1ZReU9WUTJNbFpGS3pVek1qZEJTVkU5UFR3dlJGQStQRVJSUG5OdFdIQkNZMDgzT1hReWRVZG9TVFkxY1VKaGRISlBjSEowV1Zkc2RGRlVjRWcyYlc1S1JIVkxNamhRTkVkRFdsVkJVMWN6YTNGd2QxcFNTMjU0Y2padWIydFRjVXRsTkhjNWVHUnJhVEoyU21vMFkyMVJQVDA4TDBSUlBqeEpiblpsY25ObFVUNXJhVnBCSzNWSVUwWTFORzgyWnpBemN6RlpTVXhsZWxSVFUyMXZRbE5CVUhvdlJtczJRWFpLUjI1T1VVdHpVVm80WkhRNGQyVmxSMWxMYTFwTWVHWktTWFJ5Tkc5SFozWkRRV0p3YUU5NFluQjVjVVIwVVQwOVBDOUpiblpsY25ObFVUNDhSRDVHWjBsa1QxSkdZVXhYU0doVGNrRlBjakpvYlN0T1kxcEliV1IzWTFGMldsSTFkbE5sTmxsVlNVRnJSRGRsZVVNd1ZuRndiSEUzSzNOWk1WbEhlVmM1Ulc1blMxRnlaekZEWlN0a05sSm9ka1ZoYzNSNlkzaFFaMmN3ZVhaTU9HRTRVVTR5VmpseVdEVlhOVVJST1U1d2NYWjZWVU00VVZsd1lXdEZUVFJZZFVweFlXczRSVmx4ZURORWJWSjJRblozTVVWT1luSXlXRGc1TlRkTlIyeDNkR2xyTVdkaVdXRm1SMFU5UEM5RVBqd3ZVbE5CUzJWNVZtRnNkV1UrIg0KfQ==",
-     "Name" : "Test Account #1",
-     "ID" : 1, 
-     "PGLN" :"urn:gdst:foodontology.com:party:1.0"
-}
-```
+In this example:
+- If `$equipmentType` has a value of "TR", the `GearType` will be set to "urn:gdst:fishing-gear:trolling-lines"
 
-### Account ID
-The Account ID is an internal identifier for accounts and is optional when creating an account. This is useful for linking accounts on the Traceability Driver to the account in the traceability solution. If an ID is not provided when you create an account, then one will be generated for you.
-
-### Account PGLN
-The Account PGLN is a globally unique identifier for identifying the the Account. This would typically be provided when generating the account, however, if it is not provided, then it will be generated for you.
-
-### Account Digital Link URL
-The Account Digital Link URL is the URL to the Digital Link Resolver for the account. When creating an account, **you should rarely set this yourself**. The Traceability Driver will generate this itself.
-
-### Account DID
-The Account DID is a Decentralized Identifier (DID) that also contains a public / private key for the Account. **You should never share this with anyone**. Inside of it is a baked a Public / Private key. The Traceability Driver knows how to share this without including the Private Key, which is critical in ensuring the security of the system.
-
-### Account Public DID
-The `PublicDID` property contains the DID without the private key. This can be shared with others who want to add the account as a trading partner.
-
-## Adding a Trading Partner
-Once you have added all the accounts to the Traceability Driver, you will want to add Trading Partners to each account. Adding a Trading Party as a Trading Partner to an account indicates, that this Account is allowed to exchange traceability data with this Trading Party.
-
-This can be done in two ways:
-1. You can add a Trading Partner using the Directory Service by providing the PGLN.
-2. You can manually add a Trading Partner by providing the PGLN, PublicDID, and Digital Link Resolver URL.
-
-### Adding a Trading Partner with the Directory Service
-*Coming soon..*
-
-### Adding a Trading Partner Manually
-*Coming soon..*
+If the value from the database doesn't exist in the dictionary, the field will be set to null in the resulting event.

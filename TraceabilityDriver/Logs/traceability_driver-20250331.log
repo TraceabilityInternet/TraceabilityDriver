@@ -1,0 +1,1116 @@
+2025-03-31 19:19:51.293 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:19:51.501 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:21:20.688 -05:00 [FTL] Application terminated unexpectedly
+System.AggregateException: One or more errors occurred. (A timeout occurred after 30000ms selecting a server using CompositeServerSelector{ Selectors = WritableServerSelector, LatencyLimitingServerSelector{ AllowedLatencyRange = 00:00:00.0150000 }, OperationsCountServerSelector }. Client view of cluster state is { ClusterId : "1", Type : "Unknown", State : "Disconnected", Servers : [{ ServerId: "{ ClusterId : 1, EndPoint : "Unspecified/localhost:27017" }", EndPoint: "Unspecified/localhost:27017", ReasonChanged: "ServerInitialDescription", State: "Disconnected", ServerVersion: , TopologyVersion: , Type: "Unknown", LastHeartbeatTimestamp: null, LastUpdateTimestamp: "2025-04-01T00:19:51.5266954Z" }] }.)
+ ---> System.TimeoutException: A timeout occurred after 30000ms selecting a server using CompositeServerSelector{ Selectors = WritableServerSelector, LatencyLimitingServerSelector{ AllowedLatencyRange = 00:00:00.0150000 }, OperationsCountServerSelector }. Client view of cluster state is { ClusterId : "1", Type : "Unknown", State : "Disconnected", Servers : [{ ServerId: "{ ClusterId : 1, EndPoint : "Unspecified/localhost:27017" }", EndPoint: "Unspecified/localhost:27017", ReasonChanged: "ServerInitialDescription", State: "Disconnected", ServerVersion: , TopologyVersion: , Type: "Unknown", LastHeartbeatTimestamp: null, LastUpdateTimestamp: "2025-04-01T00:19:51.5266954Z" }] }.
+   at MongoDB.Driver.Core.Clusters.Cluster.ThrowTimeoutException(IServerSelector selector, ClusterDescription description)
+   at MongoDB.Driver.Core.Clusters.Cluster.WaitForDescriptionChangedHelper.HandleCompletedTask(Task completedTask)
+   at MongoDB.Driver.Core.Clusters.Cluster.WaitForDescriptionChangedAsync(IServerSelector selector, ClusterDescription description, Task descriptionChangedTask, TimeSpan timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.Core.Clusters.Cluster.SelectServerAsync(IServerSelector selector, CancellationToken cancellationToken)
+   at MongoDB.Driver.Core.Clusters.IClusterExtensions.SelectServerAndPinIfNeededAsync(IClusterInternal cluster, ICoreSessionHandle session, IServerSelector selector, IReadOnlyCollection`1 deprioritizedServers, CancellationToken cancellationToken)
+   at MongoDB.Driver.Core.Bindings.WritableServerBinding.GetWriteChannelSourceAsync(IReadOnlyCollection`1 deprioritizedServers, CancellationToken cancellationToken)
+   at MongoDB.Driver.Core.Operations.CreateIndexesOperation.ExecuteAsync(IWriteBinding binding, CancellationToken cancellationToken)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](IWriteBinding binding, IWriteOperation`1 operation, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.MongoIndexManager.CreateManyAsync(IClientSessionHandle session, IEnumerable`1 models, CreateManyIndexesOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.UsingImplicitSessionAsync[TResult](Func`2 funcAsync, CancellationToken cancellationToken)
+   at TraceabilityDriver.Services.MongoDBService.CreateIndexes() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\MongoDBService.cs:line 366
+   --- End of inner exception stack trace ---
+   at System.Threading.Tasks.Task.ThrowIfExceptional(Boolean includeTaskCanceledExceptions)
+   at System.Threading.Tasks.Task.Wait(Int32 millisecondsTimeout, CancellationToken cancellationToken)
+   at System.Threading.Tasks.Task.Wait()
+   at TraceabilityDriver.Services.MongoDBService..ctor(IConfiguration configuration) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\MongoDBService.cs:line 45
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+   at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at System.Reflection.RuntimeConstructorInfo.Invoke(BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitConstructor(ConstructorCallSite constructorCallSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitConstructor(ConstructorCallSite constructorCallSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitConstructor(ConstructorCallSite constructorCallSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitIEnumerable(IEnumerableCallSite enumerableCallSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.Resolve(ServiceCallSite callSite, ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.CreateServiceAccessor(ServiceIdentifier serviceIdentifier)
+   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.Extensions.Hosting.Internal.Host.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.Run(IHost host)
+   at Program.<Main>$(String[] args) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Program.cs:line 41
+2025-03-31 19:21:25.158 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:21:25.522 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:21:37.328 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:21:37.619 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:21:43.355 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:21:43.358 -05:00 [INF] SynchronizeService started
+2025-03-31 19:21:43.359 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:21:43.400 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:21:43.402 -05:00 [INF] Starting synchronization process
+2025-03-31 19:21:43.404 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:21:43.513 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:21:43.696 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:21:43.697 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:21:43.843 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:21:43.846 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:21:43.847 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:21:44.630 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:21:44.767 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:21:45.082 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:21:45.148 -05:00 [ERR] HTTP GET / responded 500 in 392.9209 ms
+System.InvalidOperationException: Cannot provide a value for property 'CapabilityTestService' on type 'TraceabilityDriver.Pages.Components.CapabilityTestComponent'. There is no registered service of type 'TraceabilityDriver.Services.GDST.IGDSTCapabilityTestService'.
+   at Microsoft.AspNetCore.Components.ComponentFactory.<>c__DisplayClass9_0.<CreatePropertyInjector>g__Initialize|1(IServiceProvider serviceProvider, IComponent component)
+   at Microsoft.AspNetCore.Components.ComponentFactory.InstantiateComponent(IServiceProvider serviceProvider, Type componentType, IComponentRenderMode callerSpecifiedRenderMode, Nullable`1 parentComponentId)
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.InstantiateChildComponentOnFrame(RenderTreeFrame[] frames, Int32 frameIndex, Int32 parentComponentId)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewComponentFrame(DiffContext& diffContext, Int32 frameIndex)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewSubtree(DiffContext& diffContext, Int32 frameIndex)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InsertNewFrame(DiffContext& diffContext, Int32 newFrameIndex)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.AppendDiffEntriesForRange(DiffContext& diffContext, Int32 oldStartIndex, Int32 oldEndIndexExcl, Int32 newStartIndex, Int32 newEndIndexExcl)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.ComputeDiff(Renderer renderer, RenderBatchBuilder batchBuilder, Int32 componentId, ArrayRange`1 oldTree, ArrayRange`1 newTree)
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.RenderIntoBatch(RenderBatchBuilder batchBuilder, RenderFragment renderFragment, Exception& renderFragmentException)
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()
+   at Microsoft.AspNetCore.Components.ComponentBase.CallOnParametersSetAsync()
+   at Microsoft.AspNetCore.Components.ComponentBase.RunInitAndSetParametersAsync()
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.SetDirectParameters(ParameterView parameters)
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.RenderRootComponentAsync(Int32 componentId, ParameterView initialParameters)
+   at Microsoft.AspNetCore.Components.HtmlRendering.Infrastructure.StaticHtmlRenderer.BeginRenderingComponent(IComponent component, ParameterView initialParameters)
+   at Microsoft.AspNetCore.Components.Endpoints.EndpointHtmlRenderer.RenderEndpointComponent(HttpContext httpContext, Type rootComponentType, ParameterView parameters, Boolean waitForQuiescence)
+   at Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.RenderComponentCore(HttpContext context)
+   at Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.RenderComponentCore(HttpContext context)
+   at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContext.<>c.<<InvokeAsync>b__10_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Serilog.AspNetCore.RequestLoggingMiddleware.Invoke(HttpContext httpContext)
+2025-03-31 19:21:45.235 -05:00 [ERR] An unhandled exception has occurred while executing the request.
+System.InvalidOperationException: Cannot provide a value for property 'CapabilityTestService' on type 'TraceabilityDriver.Pages.Components.CapabilityTestComponent'. There is no registered service of type 'TraceabilityDriver.Services.GDST.IGDSTCapabilityTestService'.
+   at Microsoft.AspNetCore.Components.ComponentFactory.<>c__DisplayClass9_0.<CreatePropertyInjector>g__Initialize|1(IServiceProvider serviceProvider, IComponent component)
+   at Microsoft.AspNetCore.Components.ComponentFactory.InstantiateComponent(IServiceProvider serviceProvider, Type componentType, IComponentRenderMode callerSpecifiedRenderMode, Nullable`1 parentComponentId)
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.InstantiateChildComponentOnFrame(RenderTreeFrame[] frames, Int32 frameIndex, Int32 parentComponentId)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewComponentFrame(DiffContext& diffContext, Int32 frameIndex)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewSubtree(DiffContext& diffContext, Int32 frameIndex)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InsertNewFrame(DiffContext& diffContext, Int32 newFrameIndex)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.AppendDiffEntriesForRange(DiffContext& diffContext, Int32 oldStartIndex, Int32 oldEndIndexExcl, Int32 newStartIndex, Int32 newEndIndexExcl)
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.ComputeDiff(Renderer renderer, RenderBatchBuilder batchBuilder, Int32 componentId, ArrayRange`1 oldTree, ArrayRange`1 newTree)
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.RenderIntoBatch(RenderBatchBuilder batchBuilder, RenderFragment renderFragment, Exception& renderFragmentException)
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()
+   at Microsoft.AspNetCore.Components.ComponentBase.CallOnParametersSetAsync()
+   at Microsoft.AspNetCore.Components.ComponentBase.RunInitAndSetParametersAsync()
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.SetDirectParameters(ParameterView parameters)
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.RenderRootComponentAsync(Int32 componentId, ParameterView initialParameters)
+   at Microsoft.AspNetCore.Components.HtmlRendering.Infrastructure.StaticHtmlRenderer.BeginRenderingComponent(IComponent component, ParameterView initialParameters)
+   at Microsoft.AspNetCore.Components.Endpoints.EndpointHtmlRenderer.RenderEndpointComponent(HttpContext httpContext, Type rootComponentType, ParameterView parameters, Boolean waitForQuiescence)
+   at Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.RenderComponentCore(HttpContext context)
+   at Microsoft.AspNetCore.Components.Endpoints.RazorComponentEndpointInvoker.RenderComponentCore(HttpContext context)
+   at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContext.<>c.<<InvokeAsync>b__10_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|7_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Serilog.AspNetCore.RequestLoggingMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+2025-03-31 19:21:45.281 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 500 null text/html; charset=utf-8 652.8161ms
+2025-03-31 19:21:45.299 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:21:45.300 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:21:45.320 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 19.3861ms
+2025-03-31 19:21:45.464 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 164.9589ms
+2025-03-31 19:21:45.510 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/favicon.ico - null null
+2025-03-31 19:21:45.516 -05:00 [INF] HTTP GET /favicon.ico responded 404 in 2.4804 ms
+2025-03-31 19:21:45.520 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/favicon.ico - 404 0 null 10.73ms
+2025-03-31 19:21:45.525 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/favicon.ico, Response status code: 404
+2025-03-31 19:23:03.285 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:23:03.594 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:23:03.979 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:23:03.982 -05:00 [INF] SynchronizeService started
+2025-03-31 19:23:03.983 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:23:04.036 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:23:04.041 -05:00 [INF] Starting synchronization process
+2025-03-31 19:23:04.043 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:23:04.164 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:23:04.372 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:23:04.375 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:23:04.438 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:23:04.440 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:23:04.441 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:23:05.080 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:23:05.189 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:23:05.274 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:23:05.278 -05:00 [INF] HTTP GET / responded 200 in 102.7458 ms
+2025-03-31 19:23:05.287 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 208.7416ms
+2025-03-31 19:23:05.295 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:23:05.295 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/img/logo.jpg - null null
+2025-03-31 19:23:05.293 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/bootstrap/bootstrap.min.css - null null
+2025-03-31 19:23:05.295 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:23:05.335 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.9651 ms
+2025-03-31 19:23:05.295 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/css/app.css - null null
+2025-03-31 19:23:05.352 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 57.2706ms
+2025-03-31 19:23:05.351 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:23:05.303 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:23:05.394 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:23:05.400 -05:00 [INF] Sending file. Request path: '/img/logo.jpg'. Physical path: 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\wwwroot\img\logo.jpg'
+2025-03-31 19:23:05.314 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:23:05.400 -05:00 [INF] Sending file. Request path: '/bootstrap/bootstrap.min.css'. Physical path: 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\wwwroot\bootstrap\bootstrap.min.css'
+2025-03-31 19:23:05.400 -05:00 [INF] Sending file. Request path: '/css/app.css'. Physical path: 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\wwwroot\css\app.css'
+2025-03-31 19:23:05.405 -05:00 [INF] Sending file. Request path: '/_framework/blazor.web.js'. Physical path: 'N/A'
+2025-03-31 19:23:05.408 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 104.3107ms
+2025-03-31 19:23:05.410 -05:00 [INF] HTTP GET /img/logo.jpg responded 200 in 75.5995 ms
+2025-03-31 19:23:05.412 -05:00 [INF] HTTP GET /bootstrap/bootstrap.min.css responded 200 in 75.5603 ms
+2025-03-31 19:23:05.414 -05:00 [INF] HTTP GET /css/app.css responded 200 in 47.2225 ms
+2025-03-31 19:23:05.415 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:23:05.431 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/img/logo.jpg - 200 129893 image/jpeg 135.153ms
+2025-03-31 19:23:05.432 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/bootstrap/bootstrap.min.css - 200 162720 text/css 139.4195ms
+2025-03-31 19:23:05.435 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/css/app.css - 200 14 text/css 140.6385ms
+2025-03-31 19:23:05.437 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 200 in 87.4014 ms
+2025-03-31 19:23:05.454 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 140.0934ms
+2025-03-31 19:23:05.458 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 200 187162 text/javascript 162.9758ms
+2025-03-31 19:23:05.525 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/favicon.png - null null
+2025-03-31 19:23:05.532 -05:00 [INF] Sending file. Request path: '/favicon.png'. Physical path: 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\wwwroot\favicon.png'
+2025-03-31 19:23:05.535 -05:00 [INF] HTTP GET /favicon.png responded 200 in 4.5829 ms
+2025-03-31 19:23:05.537 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/favicon.png - 200 1148 image/png 12.1153ms
+2025-03-31 19:24:04.194 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:24:04.202 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:24:04.203 -05:00 [INF] Starting synchronization process
+2025-03-31 19:24:04.204 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:24:04.284 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:25:04.306 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:25:04.312 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:25:04.312 -05:00 [INF] Starting synchronization process
+2025-03-31 19:25:04.313 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:25:04.393 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:25:38.458 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:25:38.663 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:25:39.010 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:25:39.012 -05:00 [INF] SynchronizeService started
+2025-03-31 19:25:39.014 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:25:39.058 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:25:39.062 -05:00 [INF] Starting synchronization process
+2025-03-31 19:25:39.063 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:25:39.205 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:25:39.387 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:25:39.389 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:25:39.441 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:25:39.443 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:25:39.444 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:25:40.056 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:25:40.143 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:25:40.197 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:25:40.201 -05:00 [INF] HTTP GET / responded 200 in 66.4212 ms
+2025-03-31 19:25:40.207 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 152.3138ms
+2025-03-31 19:25:40.218 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:25:40.218 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:25:40.218 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:25:40.239 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 3.2873 ms
+2025-03-31 19:25:40.249 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:25:40.218 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:25:40.249 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 30.9806ms
+2025-03-31 19:25:40.256 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 37.6854ms
+2025-03-31 19:25:40.260 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:25:40.266 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:25:40.272 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:25:40.274 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 27.9436 ms
+2025-03-31 19:25:40.276 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 58.1456ms
+2025-03-31 19:25:40.293 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 75.3664ms
+2025-03-31 19:26:39.239 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:26:39.248 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:26:39.249 -05:00 [INF] Starting synchronization process
+2025-03-31 19:26:39.250 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:26:39.332 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:27:39.360 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:27:39.367 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:27:39.373 -05:00 [INF] Starting synchronization process
+2025-03-31 19:27:39.374 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:27:39.448 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:28:39.458 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:28:39.465 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:28:39.471 -05:00 [INF] Starting synchronization process
+2025-03-31 19:28:39.472 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:28:39.546 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:29:39.563 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:29:39.569 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:29:39.575 -05:00 [INF] Starting synchronization process
+2025-03-31 19:29:39.577 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:29:39.637 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:30:28.467 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:30:28.765 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:30:29.123 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:30:29.125 -05:00 [INF] SynchronizeService started
+2025-03-31 19:30:29.127 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:30:29.185 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:30:29.209 -05:00 [INF] Starting synchronization process
+2025-03-31 19:30:29.212 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:30:29.309 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:30:29.455 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:30:29.458 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:30:29.504 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:30:29.507 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:30:29.508 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:30:30.281 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:30:30.394 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:30:30.460 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:30:30.464 -05:00 [INF] HTTP GET / responded 200 in 84.3925 ms
+2025-03-31 19:30:30.473 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 193.5672ms
+2025-03-31 19:30:30.483 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:30:30.483 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:30:30.483 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:30:30.483 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:30:30.512 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 29.0477ms
+2025-03-31 19:30:30.490 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:30:30.529 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.1119 ms
+2025-03-31 19:30:30.534 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 50.5656ms
+2025-03-31 19:30:30.534 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:30:30.539 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:30:30.540 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:30:30.542 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 54.3903 ms
+2025-03-31 19:30:30.544 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 61.1911ms
+2025-03-31 19:30:30.551 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 68.2483ms
+2025-03-31 19:31:29.342 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:31:29.348 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:31:29.349 -05:00 [INF] Starting synchronization process
+2025-03-31 19:31:29.350 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:31:29.383 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:32:29.399 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:32:29.407 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:32:29.413 -05:00 [INF] Starting synchronization process
+2025-03-31 19:32:29.416 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:32:29.493 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:33:29.505 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:33:29.513 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:33:29.516 -05:00 [INF] Starting synchronization process
+2025-03-31 19:33:29.517 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:33:29.593 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:34:29.613 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:34:29.620 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:34:29.621 -05:00 [INF] Starting synchronization process
+2025-03-31 19:34:29.622 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:34:29.694 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:35:29.706 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:35:29.712 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:35:29.713 -05:00 [INF] Starting synchronization process
+2025-03-31 19:35:29.715 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:35:29.795 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:36:29.813 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:36:29.822 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:36:29.827 -05:00 [INF] Starting synchronization process
+2025-03-31 19:36:29.830 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:36:29.897 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:37:29.907 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:37:29.912 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:37:29.915 -05:00 [INF] Starting synchronization process
+2025-03-31 19:37:29.921 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:37:29.990 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:38:30.000 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:38:30.011 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:38:30.015 -05:00 [INF] Starting synchronization process
+2025-03-31 19:38:30.017 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:38:30.092 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:39:30.106 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:39:30.112 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:39:30.116 -05:00 [INF] Starting synchronization process
+2025-03-31 19:39:30.118 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:39:30.177 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:40:30.195 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:40:30.201 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:40:30.203 -05:00 [INF] Starting synchronization process
+2025-03-31 19:40:30.203 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:40:30.270 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:41:30.289 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:41:30.296 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:41:30.300 -05:00 [INF] Starting synchronization process
+2025-03-31 19:41:30.304 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:41:30.376 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:42:30.396 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:42:30.403 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:42:30.404 -05:00 [INF] Starting synchronization process
+2025-03-31 19:42:30.404 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:42:30.467 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:46:48.428 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:46:48.687 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:46:49.075 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:46:49.079 -05:00 [INF] SynchronizeService started
+2025-03-31 19:46:49.081 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:46:49.134 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:46:49.139 -05:00 [INF] Starting synchronization process
+2025-03-31 19:46:49.144 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:46:49.311 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:46:49.516 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:46:49.518 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:46:49.722 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:46:49.724 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:46:49.725 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:46:49.908 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:46:50.046 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:46:50.369 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:46:50.375 -05:00 [INF] HTTP GET / responded 200 in 341.0437 ms
+2025-03-31 19:46:50.386 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 480.7068ms
+2025-03-31 19:46:50.391 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:46:50.391 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:46:50.410 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:46:50.391 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:46:50.440 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:46:50.391 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:46:50.448 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:46:50.455 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.6034 ms
+2025-03-31 19:46:50.455 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 47.1914 ms
+2025-03-31 19:46:50.460 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 68.6369ms
+2025-03-31 19:46:50.463 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 72.6335ms
+2025-03-31 19:46:50.449 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 58.2692ms
+2025-03-31 19:46:50.475 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 84.0816ms
+2025-03-31 19:46:50.476 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:47:49.347 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:47:49.355 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:47:49.363 -05:00 [INF] Starting synchronization process
+2025-03-31 19:47:49.365 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:47:49.451 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:48:40.306 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:48:40.605 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:48:40.874 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:48:40.875 -05:00 [INF] SynchronizeService started
+2025-03-31 19:48:40.877 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:48:40.916 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:48:40.918 -05:00 [INF] Starting synchronization process
+2025-03-31 19:48:40.919 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:48:41.013 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:48:41.143 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:48:41.146 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:48:41.192 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:48:41.195 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:48:41.195 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:48:41.984 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:48:42.073 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:48:42.338 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:48:42.344 -05:00 [INF] HTTP GET / responded 200 in 278.0184 ms
+2025-03-31 19:48:42.353 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 369.6977ms
+2025-03-31 19:48:42.354 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:48:42.355 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:48:42.354 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:48:42.354 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:48:42.383 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:48:42.407 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 53.2931ms
+2025-03-31 19:48:42.407 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 10.1811 ms
+2025-03-31 19:48:42.410 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:48:42.414 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 60.0426ms
+2025-03-31 19:48:42.415 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:48:42.418 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:48:42.419 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 37.5124 ms
+2025-03-31 19:48:42.427 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 72.2584ms
+2025-03-31 19:48:42.427 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 72.7895ms
+2025-03-31 19:49:41.034 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:49:41.042 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:49:41.044 -05:00 [INF] Starting synchronization process
+2025-03-31 19:49:41.050 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:49:41.117 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:50:41.131 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:50:41.137 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:50:41.138 -05:00 [INF] Starting synchronization process
+2025-03-31 19:50:41.139 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:50:41.208 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:51:04.249 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:51:04.536 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:51:04.797 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:51:04.800 -05:00 [INF] SynchronizeService started
+2025-03-31 19:51:04.802 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:51:04.839 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:51:04.842 -05:00 [INF] Starting synchronization process
+2025-03-31 19:51:04.844 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:51:04.939 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:51:05.071 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:51:05.073 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:51:05.117 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:51:05.119 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:51:05.119 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:51:05.861 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:51:05.967 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:51:06.268 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:51:06.273 -05:00 [INF] HTTP GET / responded 200 in 319.3160 ms
+2025-03-31 19:51:06.282 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 422.5186ms
+2025-03-31 19:51:06.286 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:51:06.286 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:51:06.286 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:51:06.297 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.9621 ms
+2025-03-31 19:51:06.286 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:51:06.317 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 31.3766ms
+2025-03-31 19:51:06.312 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 26.2424ms
+2025-03-31 19:51:06.323 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:51:06.326 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:51:06.331 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:51:06.337 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:51:06.340 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 19.0628 ms
+2025-03-31 19:51:06.341 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 54.6026ms
+2025-03-31 19:51:06.342 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 55.929ms
+2025-03-31 19:51:06.436 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 19:51:06.449 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:51:06.454 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:51:06.456 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 8.1560 ms
+2025-03-31 19:51:06.458 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 22.2597ms
+2025-03-31 19:51:06.474 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 19:51:06.478 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:51:06.485 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:51:06.486 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 9.0652 ms
+2025-03-31 19:51:06.487 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 12.5938ms
+2025-03-31 19:51:06.489 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=9trLYX5MWcUkw7x-YvNw7A - null null
+2025-03-31 19:51:06.493 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:53:39.815 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:53:40.087 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:53:40.519 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:53:40.521 -05:00 [INF] SynchronizeService started
+2025-03-31 19:53:40.523 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:53:40.567 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:53:40.569 -05:00 [INF] Starting synchronization process
+2025-03-31 19:53:40.571 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:53:40.675 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:53:40.821 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:53:40.823 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:53:40.868 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:53:40.871 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:53:40.872 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:53:41.247 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:53:41.354 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:55:04.331 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:55:04.683 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:55:05.154 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:55:05.191 -05:00 [INF] SynchronizeService started
+2025-03-31 19:55:05.210 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:55:05.257 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:55:05.267 -05:00 [INF] Starting synchronization process
+2025-03-31 19:55:05.269 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:55:05.402 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:55:05.571 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:55:05.573 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:55:05.624 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:55:05.626 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:55:05.628 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:55:06.331 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:55:06.440 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:55:06.580 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:55:06.585 -05:00 [INF] HTTP GET / responded 200 in 159.3401 ms
+2025-03-31 19:55:06.594 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 263.7437ms
+2025-03-31 19:55:06.600 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:55:06.600 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:55:06.600 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:55:06.600 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:55:06.624 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.8668 ms
+2025-03-31 19:55:06.662 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 61.9616ms
+2025-03-31 19:55:06.666 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 66.2905ms
+2025-03-31 19:55:06.666 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:55:06.680 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:55:06.684 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:55:06.685 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:55:06.686 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 21.5018 ms
+2025-03-31 19:55:06.688 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 88.041ms
+2025-03-31 19:55:06.699 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 99.1266ms
+2025-03-31 19:55:06.799 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 19:55:06.804 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:55:06.809 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:55:06.811 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 7.7506 ms
+2025-03-31 19:55:06.813 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 14.3062ms
+2025-03-31 19:55:06.824 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 19:55:06.829 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:55:06.837 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:55:06.840 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 11.6909 ms
+2025-03-31 19:55:06.842 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 17.8638ms
+2025-03-31 19:55:06.846 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=-lg6yIAY7LZjMytgCQGY6g - null null
+2025-03-31 19:55:06.849 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:56:25.607 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:56:25.790 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:56:26.115 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:56:26.119 -05:00 [INF] SynchronizeService started
+2025-03-31 19:56:26.122 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:56:26.172 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:56:26.177 -05:00 [INF] Starting synchronization process
+2025-03-31 19:56:26.186 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:56:26.301 -05:00 [ERR] Error occurred during synchronization process
+System.IO.DirectoryNotFoundException: Could not find a part of the path 'C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\bin\Debug\net8.0\Mappings'.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateDirectoryHandle(String path, Boolean ignoreNotFound)
+   at System.IO.Enumeration.FileSystemEnumerator`1.Init()
+   at System.IO.Enumeration.FileSystemEnumerable`1..ctor(String directory, FindTransform transform, EnumerationOptions options, Boolean isNormalized)
+   at System.IO.Enumeration.FileSystemEnumerableFactory.UserFiles(String directory, String expression, EnumerationOptions options)
+   at System.IO.Directory.InternalEnumeratePaths(String path, String searchPattern, SearchTarget searchTarget, EnumerationOptions options)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at TraceabilityDriver.Services.Mapping.LocalMappingSource.GetMappings() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\Mapping\LocalMappingSource.cs:line 37
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 131
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:56:26.542 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:56:26.545 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:56:26.599 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:56:26.601 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:56:26.602 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:56:27.267 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:56:27.385 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:56:27.500 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:56:27.503 -05:00 [INF] HTTP GET / responded 200 in 133.6729 ms
+2025-03-31 19:56:27.510 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 244.6044ms
+2025-03-31 19:56:27.518 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:56:27.519 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:56:27.518 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:56:27.534 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:56:27.534 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 3.0387 ms
+2025-03-31 19:56:27.524 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:56:27.584 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 66.0284ms
+2025-03-31 19:56:27.585 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 67.0107ms
+2025-03-31 19:56:27.585 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:56:27.594 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:56:27.595 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:56:27.597 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 63.7474 ms
+2025-03-31 19:56:27.598 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 79.1248ms
+2025-03-31 19:56:27.612 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 87.7962ms
+2025-03-31 19:56:27.684 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 19:56:27.690 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:56:27.693 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:56:27.695 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 7.0601 ms
+2025-03-31 19:56:27.698 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 13.5038ms
+2025-03-31 19:56:27.705 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 19:56:27.707 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:56:27.717 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:56:27.718 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 11.5288 ms
+2025-03-31 19:56:27.720 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 15.1581ms
+2025-03-31 19:56:27.723 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=cTWGjme3AktZI-e-f3wKnA - null null
+2025-03-31 19:56:27.726 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:57:26.361 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:57:26.369 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:57:26.370 -05:00 [INF] Starting synchronization process
+2025-03-31 19:57:26.371 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:57:26.533 -05:00 [ERR] Error occurred during synchronization process
+System.InvalidOperationException: The current thread is not associated with the Dispatcher. Use InvokeAsync() to switch execution to the Dispatcher when triggering rendering or component state.
+   at Microsoft.AspNetCore.Components.Dispatcher.AssertAccess()
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()
+   at TraceabilityDriver.Pages.Components.CurrentSyncComponent.OnSyncStatusChanged(SyncHistoryItem sync) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Pages\Components\CurrentSyncComponent.razor:line 54
+   at TraceabilityDriver.Services.SynchronizeService.UpdateSyncStatus(Action`1 action) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 374
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 128
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 19:57:47.163 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:57:47.479 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:57:47.804 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:57:47.805 -05:00 [INF] SynchronizeService started
+2025-03-31 19:57:47.807 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:57:47.841 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:57:47.848 -05:00 [INF] Starting synchronization process
+2025-03-31 19:57:47.850 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:57:47.851 -05:00 [INF] Synchronization process completed
+2025-03-31 19:58:23.735 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:58:24.037 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:58:24.360 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:58:24.393 -05:00 [INF] SynchronizeService started
+2025-03-31 19:58:24.399 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:58:24.445 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:58:24.448 -05:00 [INF] Starting synchronization process
+2025-03-31 19:58:24.451 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:58:24.459 -05:00 [INF] Synchronization process completed
+2025-03-31 19:58:33.684 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:58:33.688 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:58:33.742 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:58:33.745 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:58:33.746 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:58:34.278 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:58:34.387 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:58:34.517 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:58:34.523 -05:00 [INF] HTTP GET / responded 200 in 149.1615 ms
+2025-03-31 19:58:34.531 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 253.6796ms
+2025-03-31 19:58:34.536 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:58:34.536 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:58:34.536 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:58:34.536 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:58:34.553 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:58:34.570 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 34.7389ms
+2025-03-31 19:58:34.574 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 4.8957 ms
+2025-03-31 19:58:34.576 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 40.5038ms
+2025-03-31 19:58:34.576 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:58:34.579 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:58:34.580 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:58:34.584 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 34.4882 ms
+2025-03-31 19:58:34.588 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 52.9119ms
+2025-03-31 19:58:34.592 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 56.6466ms
+2025-03-31 19:58:34.732 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 19:58:34.736 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:58:34.739 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:58:34.741 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 5.4083 ms
+2025-03-31 19:58:34.743 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 11.1093ms
+2025-03-31 19:58:34.754 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 19:58:34.758 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:58:34.767 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:58:34.770 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 12.6781 ms
+2025-03-31 19:58:34.772 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 17.9873ms
+2025-03-31 19:58:34.775 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=lpkvJgKFRlPxC2r01zngzQ - null null
+2025-03-31 19:58:34.778 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:59:28.082 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 19:59:28.341 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 19:59:28.672 -05:00 [INF] Starting hosted sync service.
+2025-03-31 19:59:28.673 -05:00 [INF] SynchronizeService started
+2025-03-31 19:59:28.675 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 19:59:28.706 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 19:59:28.715 -05:00 [INF] Starting synchronization process
+2025-03-31 19:59:28.717 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 19:59:28.719 -05:00 [INF] Synchronization process completed
+2025-03-31 19:59:34.083 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 19:59:34.087 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 19:59:34.128 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 19:59:34.131 -05:00 [INF] Hosting environment: Development
+2025-03-31 19:59:34.132 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 19:59:34.592 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 19:59:34.700 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 19:59:34.824 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 19:59:34.831 -05:00 [INF] HTTP GET / responded 200 in 143.2650 ms
+2025-03-31 19:59:34.839 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 247.8477ms
+2025-03-31 19:59:34.848 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 19:59:34.848 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 19:59:34.848 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 19:59:34.865 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 17.4618ms
+2025-03-31 19:59:34.848 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 19:59:34.867 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 19:59:34.872 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 1.6228 ms
+2025-03-31 19:59:34.908 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 60.277ms
+2025-03-31 19:59:34.911 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 19:59:34.915 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 19:59:34.917 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 19:59:34.920 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 54.9350 ms
+2025-03-31 19:59:34.924 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 75.7182ms
+2025-03-31 19:59:34.929 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 81.3013ms
+2025-03-31 19:59:35.011 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 19:59:35.018 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:59:35.021 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:59:35.022 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 4.9347 ms
+2025-03-31 19:59:35.023 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 12.6134ms
+2025-03-31 19:59:35.027 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 19:59:35.030 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:59:35.039 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 19:59:35.040 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 10.7112 ms
+2025-03-31 19:59:35.041 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 14.1211ms
+2025-03-31 19:59:35.044 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=3e2TwDC1npx9LiCxSD81GA - null null
+2025-03-31 19:59:35.049 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:00:33.954 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 20:00:33.962 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 20:00:33.964 -05:00 [INF] Starting synchronization process
+2025-03-31 20:00:33.964 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 20:00:34.112 -05:00 [ERR] Error occurred during synchronization process
+System.InvalidOperationException: The current thread is not associated with the Dispatcher. Use InvokeAsync() to switch execution to the Dispatcher when triggering rendering or component state.
+   at Microsoft.AspNetCore.Components.Dispatcher.AssertAccess()
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()
+   at TraceabilityDriver.Pages.Components.CurrentSyncComponent.OnSyncStatusChanged(SyncHistoryItem sync) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Pages\Components\CurrentSyncComponent.razor:line 54
+   at TraceabilityDriver.Services.SynchronizeService.UpdateSyncStatus(Action`1 action) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 374
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 128
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 72
+2025-03-31 20:04:19.977 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 20:04:20.231 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 20:04:20.657 -05:00 [INF] Starting hosted sync service.
+2025-03-31 20:04:20.659 -05:00 [INF] SynchronizeService started
+2025-03-31 20:04:20.663 -05:00 [INF] Checking if synchronization process is required
+2025-03-31 20:04:20.718 -05:00 [INF] Found 0 previous synchronization records
+2025-03-31 20:04:20.723 -05:00 [INF] Starting synchronization process
+2025-03-31 20:04:20.731 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 20:04:20.734 -05:00 [INF] Synchronization process completed
+2025-03-31 20:04:23.287 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 20:04:23.293 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 20:04:23.339 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 20:04:23.341 -05:00 [INF] Hosting environment: Development
+2025-03-31 20:04:23.341 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 20:04:23.995 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 20:04:24.109 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 20:04:24.236 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 20:04:24.240 -05:00 [INF] HTTP GET / responded 200 in 146.7958 ms
+2025-03-31 20:04:24.247 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 253.3868ms
+2025-03-31 20:04:24.252 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 20:04:24.252 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 20:04:24.252 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 20:04:24.252 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 20:04:24.273 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 20:04:24.265 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.7379 ms
+2025-03-31 20:04:24.278 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 26.4681ms
+2025-03-31 20:04:24.283 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 20:04:24.283 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 31.8159ms
+2025-03-31 20:04:24.285 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 20:04:24.288 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 20:04:24.288 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 17.1817 ms
+2025-03-31 20:04:24.293 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 41.1437ms
+2025-03-31 20:04:24.299 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 47.3776ms
+2025-03-31 20:04:24.403 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 20:04:24.410 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:24.417 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:24.420 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 9.9432 ms
+2025-03-31 20:04:24.421 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 17.9569ms
+2025-03-31 20:04:24.445 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 20:04:24.451 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:24.458 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:24.460 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 10.3488 ms
+2025-03-31 20:04:24.462 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 16.4356ms
+2025-03-31 20:04:24.465 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=jTG0fXNu1OtPak6yIobyew - null null
+2025-03-31 20:04:24.469 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:48.126 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-03-31 20:04:48.367 -05:00 [INF] Starting TraceabilityDriver application
+2025-03-31 20:04:48.635 -05:00 [INF] Starting hosted sync service.
+2025-03-31 20:04:48.637 -05:00 [INF] SynchronizeService started
+2025-03-31 20:04:48.638 -05:00 [INF] Starting synchronization process
+2025-03-31 20:04:48.640 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 20:04:48.641 -05:00 [INF] Synchronization process completed
+2025-03-31 20:04:50.106 -05:00 [INF] Now listening on: https://localhost:58950
+2025-03-31 20:04:50.108 -05:00 [INF] Now listening on: http://localhost:58951
+2025-03-31 20:04:50.153 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-03-31 20:04:50.163 -05:00 [INF] Hosting environment: Development
+2025-03-31 20:04:50.164 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver
+2025-03-31 20:04:50.573 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-03-31 20:04:50.667 -05:00 [INF] Executing endpoint '/ (/)'
+2025-03-31 20:04:50.799 -05:00 [INF] Executed endpoint '/ (/)'
+2025-03-31 20:04:50.802 -05:00 [INF] HTTP GET / responded 200 in 146.0694 ms
+2025-03-31 20:04:50.810 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 238.7228ms
+2025-03-31 20:04:50.815 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-03-31 20:04:50.816 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-03-31 20:04:50.815 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-03-31 20:04:50.815 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-03-31 20:04:50.843 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 1.4229 ms
+2025-03-31 20:04:50.828 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-03-31 20:04:50.853 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 37.7708ms
+2025-03-31 20:04:50.855 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 39.8266ms
+2025-03-31 20:04:50.858 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-03-31 20:04:50.858 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-03-31 20:04:50.861 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-03-31 20:04:50.863 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 36.8321 ms
+2025-03-31 20:04:50.867 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 52.0059ms
+2025-03-31 20:04:50.873 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 57.1097ms
+2025-03-31 20:04:50.972 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-03-31 20:04:50.976 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:50.979 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:50.980 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 4.2673 ms
+2025-03-31 20:04:50.983 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 10.4238ms
+2025-03-31 20:04:50.992 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-03-31 20:04:50.994 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:51.001 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:04:51.002 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 8.4149 ms
+2025-03-31 20:04:51.004 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 12.0946ms
+2025-03-31 20:04:51.006 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=NzkQCMT5dDpqmbUzknYqTQ - null null
+2025-03-31 20:04:51.010 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-03-31 20:05:49.933 -05:00 [INF] Starting synchronization process
+2025-03-31 20:05:53.561 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-03-31 20:05:53.692 -05:00 [ERR] Error occurred during synchronization process
+System.InvalidOperationException: The current thread is not associated with the Dispatcher. Use InvokeAsync() to switch execution to the Dispatcher when triggering rendering or component state.
+   at Microsoft.AspNetCore.Components.Dispatcher.AssertAccess()
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()
+   at TraceabilityDriver.Pages.Components.CurrentSyncComponent.OnSyncStatusChanged(SyncHistoryItem sync) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Pages\Components\CurrentSyncComponent.razor:line 54
+   at TraceabilityDriver.Services.SynchronizeService.UpdateSyncStatus(Action`1 action) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 363
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 117
+   at TraceabilityDriver.Services.SynchronizeService.<>c__DisplayClass14_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\.v2\TraceabilityDriver\Services\SynchronizeService.cs:line 65

@@ -1,0 +1,136 @@
+﻿@using TraceabilityDriver.Models.GDST
+@using TraceabilityDriver.Services.GDST
+
+@inject IGDSTCapabilityTestService CapabilityTestService
+@inject ILogger<CapabilityTestComponent> Logger
+
+<div class="card capability-test-container">
+    @if (_testState == TestState.NotStarted)
+    {
+        <div class="card-header">
+            <h4 class="mb-0">GDST Capability Test</h4>
+        </div>
+        <div class="card-body text-center py-4">
+            <p>Click the button below to start the capability test</p>
+            <button type="button" class="btn btn-primary" @onclick="StartTestAsync">Start Test</button>
+        </div>
+    }
+    else if (_testState == TestState.Running)
+    {
+        <div class="card-header">
+            <h4 class="mb-0">Running Test</h4>
+        </div>
+        <div class="card-body text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Running capability test...</p>
+        </div>
+    }
+    else if (_testState == TestState.Completed)
+    {
+        <div class="card-header">
+            <h4 class="mb-0">Test Results</h4>
+        </div>
+        <div class="card-body text-center py-4">
+            @if (_results?.Status == GDSTCapabilityTestStatus.Passed)
+            {
+                <div class="success-container">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                    <h4 class="text-success mt-3">Test Completed Successfully</h4>
+                    <p>Your system has passed the GDST capability test.</p>
+                </div>
+            }
+            else
+            {
+                <div class="error-container">
+                    <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 2rem;"></i>
+                    <h4 class="text-danger mt-3">Test Failed</h4>
+                    <p>Your system did not pass the GDST capability test.</p>
+                    
+                            <div class="error-container">
+                                <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 2rem;"></i>
+                                <h4 class="text-danger mt-3">Test Failed</h4>
+                                <p>Your system did not pass the GDST capability test.</p>
+                                
+                                @if (_results?.Errors != null && _results.Errors.Any())
+                                {
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Error Type</th>
+                                                    <th>Event Name</th>
+                                                    <th>Event ID</th>
+                                                    <th>Error Message</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var error in _results.Errors)
+                                                {
+                                                    <tr>
+                                                        <td>@error.Type</td>
+                                                        <td>@(error.EventName ?? "-")</td>
+                                                        <td>@(error.EventID ?? "-")</td>
+                                                        <td>@(error.Error ?? "-")</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                </div>
+            }
+            <button type="button" class="btn btn-primary mt-3" @onclick="ResetTest">Take Test Again</button>
+        </div>
+    }
+</div>
+
+@code {
+    private enum TestState
+    {
+        NotStarted,
+        Running,
+        Completed
+    }
+
+    private TestState _testState = TestState.NotStarted;
+    private GDSTCapabilityTestResults? _results = null;
+
+    private async Task StartTestAsync(MouseEventArgs args)
+    {
+        try
+        {
+            _testState = TestState.Running;
+            StateHasChanged();
+
+            // Execute the capability test
+            _results = await CapabilityTestService.TestFirstMileWildAsync();
+
+            _testState = TestState.Completed;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "An error occurred while running the capability test");
+            _results = new GDSTCapabilityTestResults()
+            {
+                Status = GDSTCapabilityTestStatus.Failed,
+                Errors = new List<GDSTCapabilityTestsError>()
+                {
+                    new GDSTCapabilityTestsError()
+                    {
+                        Error = $"An error occurred while running the capability test: {ex.Message}"
+                    }
+                }
+            };
+            _testState = TestState.Completed;
+        }
+    }
+
+    private void ResetTest()
+    {
+        _testState = TestState.NotStarted;
+        _results = null;
+    }
+}
