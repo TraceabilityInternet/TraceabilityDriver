@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,9 +16,11 @@ using TraceabilityDriver.Services.Connectors;
 
 namespace TraceabilityDriver.Tests.Services.Connectors
 {
+    [TestFixture]
     public class TDSqlServerConnectorTests
     {
         private string _connectionString = "server=localhost;database=master;Integrated Security=SSPI;TrustServerCertificate=True;";
+        private bool _skipTests;
 
         private readonly Mock<IOptions<TDConnectorConfiguration>> _mockOptions;
         private readonly TDConnectorConfiguration _configuration;
@@ -28,6 +31,8 @@ namespace TraceabilityDriver.Tests.Services.Connectors
 
         public TDSqlServerConnectorTests()
         {
+            _skipTests = Environment.GetEnvironmentVariable("NO_SQL_DB")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
+
             _configuration = new TDConnectorConfiguration();
             _mockOptions = new Mock<IOptions<TDConnectorConfiguration>>();
             _mockOptions.Setup(o => o.Value).Returns(_configuration);
@@ -48,6 +53,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [OneTimeSetUp]
         public void Setup()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // We need to restore our backup of the database.
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -110,6 +121,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public async Task TestConnectionAsync_ShouldReturnTrue_WhenConnectionIsSuccessful()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
 
@@ -123,6 +140,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void TestConnectionAsync_ShouldThrowException_WhenConnectionFails()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             _configuration.ConnectionString = "InvalidConnectionString";
 
@@ -133,6 +156,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public async Task GetEventsAsync_ShouldReturnEvents_WhenQueryIsSuccessful()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var selector = new TDMappingSelector
             {
@@ -173,6 +202,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void GetEventsAsync_ShouldThrowException_WhenQueryFails()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var selector = new TDMappingSelector
             {
@@ -195,6 +230,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void HandleMemoryVariables_ShouldUpdateMemory_WhenColumnExists()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var dataTable = new DataTable();
             dataTable.Columns.Add("TestColumn", typeof(string));
@@ -221,6 +262,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void HandleMemoryVariables_ShouldThrowException_WhenColumnDoesNotExist()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var dataTable = new DataTable();
             dataTable.Columns.Add("ExistingColumn", typeof(string));
@@ -238,18 +285,24 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void AddMemoryVariable_ShouldAddParameter_ForDifferentDataTypes()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var command = new SqlCommand();
 
             var memoryVariables = new Dictionary<string, TDMappingSelectorMemoryVariable>
-    {
-        { "stringVar", new TDMappingSelectorMemoryVariable { DataType = "string", DefaultValue = "test" } },
-        { "int32Var", new TDMappingSelectorMemoryVariable { DataType = "int32", DefaultValue = "123" } },
-        { "int64Var", new TDMappingSelectorMemoryVariable { DataType = "int64", DefaultValue = "9223372036854775807" } },
-        { "doubleVar", new TDMappingSelectorMemoryVariable { DataType = "double", DefaultValue = "123.45" } },
-        { "datetimeVar", new TDMappingSelectorMemoryVariable { DataType = "datetime", DefaultValue = "2023-01-01" } },
-        { "boolVar", new TDMappingSelectorMemoryVariable { DataType = "bool", DefaultValue = "true" } }
-    };
+            {
+                { "stringVar", new TDMappingSelectorMemoryVariable { DataType = "string", DefaultValue = "test" } },
+                { "int32Var", new TDMappingSelectorMemoryVariable { DataType = "int32", DefaultValue = "123" } },
+                { "int64Var", new TDMappingSelectorMemoryVariable { DataType = "int64", DefaultValue = "9223372036854775807" } },
+                { "doubleVar", new TDMappingSelectorMemoryVariable { DataType = "double", DefaultValue = "123.45" } },
+                { "datetimeVar", new TDMappingSelectorMemoryVariable { DataType = "datetime", DefaultValue = "2023-01-01" } },
+                { "boolVar", new TDMappingSelectorMemoryVariable { DataType = "bool", DefaultValue = "true" } }
+            };
 
             // Act
             foreach (var variable in memoryVariables)
@@ -281,6 +334,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void AddMemoryVariable_ShouldUseValueFromPreviousSync_WhenAvailable()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var command = new SqlCommand();
 
@@ -293,9 +352,9 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             var previousSyncHistory = new SyncHistoryItem
             {
                 Memory = new Dictionary<string, string>
-        {
-            { "existingKey", "previousValue" }
-        }
+                {
+                    { "existingKey", "previousValue" }
+                }
             };
 
             _mockSyncContext.Setup(s => s.PreviousSync).Returns(previousSyncHistory);
@@ -310,6 +369,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         [Test]
         public void AddMemoryVariable_ShouldThrowException_ForInvalidDataType()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
             // Arrange
             var command = new SqlCommand();
 

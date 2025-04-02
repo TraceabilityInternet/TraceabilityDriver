@@ -26,10 +26,21 @@ namespace TraceabilityDriver.Tests.Services
         private MongoDBService _mongoDBService = null!;
         private IConfiguration _configuration = null!;
         private EPCISDocument _testEPCISDocument = null!;
+        private bool _skipTests = false;
 
         [OneTimeSetUp]
         public async Task OneTimeSetUp()
         {
+            // Check if tests should be skipped
+            string skipMongoDBTests = Environment.GetEnvironmentVariable("NO_MONGO_DB") ?? string.Empty;
+            _skipTests = skipMongoDBTests.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
+            
+            if (_skipTests)
+            {
+                Assert.Ignore("MongoDB tests skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
             OpenTraceability.GDST.Setup.Initialize();
 
             // Load configuration
@@ -52,6 +63,8 @@ namespace TraceabilityDriver.Tests.Services
 
         private async Task LoadTestDataAsync()
         {
+            if (_skipTests) return;
+
             // Load test data from JSON file
             string testDataPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Data", "testdata001.json");
             if (!File.Exists(testDataPath))
@@ -74,18 +87,32 @@ namespace TraceabilityDriver.Tests.Services
         [Test]
         public void StoreEventsAsync_ShouldStoreEvents()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+            }
             // This should pass via the setup method.
         }
 
         [Test]
         public void StoreMasterDataAsync_ShouldStoreMasterData()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+            }
             // This should pass via the setup method.
         }
 
         [Test]
         public async Task QueryEvents_WithTimeRange_ShouldReturnMatchingEvents()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
             // Determine start and end times via the _testEPCISDocument.
             var startTime = _testEPCISDocument.Events.Min(e => e.EventTime);
             var endTime = _testEPCISDocument.Events.Max(e => e.EventTime);
@@ -111,6 +138,12 @@ namespace TraceabilityDriver.Tests.Services
         [Test]
         public async Task QueryEvents_WithEPC_ShouldReturnMatchingEvents()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
             // Arrange            
             var testEPC = _testEPCISDocument.Events.FirstOrDefault(e => e.Products.Count > 1)?.Products.First().EPC.ToString();
             Assert.That(testEPC, Is.Not.Null, "Test data should contain at least one event with an EPC");
@@ -135,6 +168,12 @@ namespace TraceabilityDriver.Tests.Services
         [Test]
         public async Task QueryEvents_WithBizStep_ShouldReturnMatchingEvents()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
             // Arrange
             await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events);
             
@@ -161,6 +200,12 @@ namespace TraceabilityDriver.Tests.Services
         [Test]
         public async Task QueryMasterData_ShouldReturnMatchingElement()
         {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
             // Arrange
             await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
             
