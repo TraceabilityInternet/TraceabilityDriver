@@ -1,8 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Locations>
-  <Location>
-    <Name>Krogers</Name>
-    <GLN>urn:epc:id:sgln:08600031303.0.0</GLN>
-    <Description>This is a Krogers.</Description>
-  </Location>
-</Locations>

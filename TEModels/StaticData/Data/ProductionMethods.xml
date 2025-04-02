@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ProductionMethods>
-  <ProductionMethod Key="gs1:GrowingMethodCode-WILD"              LegacyID="1"  Name="Wild"/>
-  <ProductionMethod Key="gs1:GrowingMethodCode-FARM_RAISED"       LegacyID="2"  Name="Farmed"/>
-  <ProductionMethod Key="tr1:pm_wild_to_farmed"                   LegacyID="3"  Name="Wild to Farmed"/>
-  <ProductionMethod Key="tr1:processed"                           LegacyID="4"  Name="Processed"/>
-</ProductionMethods>

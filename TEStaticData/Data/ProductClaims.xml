@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ProductClaims>
-  <ProductClaim Key="urn:foodontology:claim:evoo" Name="Extra Virgin Olive Oil"></ProductClaim>
-  <ProductClaim Key="urn:foodontology:claim:regenerative_farming" Name="Regenerative Farming"></ProductClaim>
-  <ProductClaim Key="urn:foodontology:claim:a2_milk" Name="A2 Milk"></ProductClaim>
-</ProductClaims>

@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<RecyclcingProcesses>
-  <RecyclingProcess Key="gs1:PackagingRecyclingProcessTypeCode-COMPOSTABLE" Name="Compostables" />
-  <RecyclingProcess Key="gs1:PackagingRecyclingProcessTypeCode-ENERGY_RECOVERABLE" Name="Energy Recoverable" />
-  <RecyclingProcess Key="gs1:PackagingRecyclingProcessTypeCode-RECYCLABLE" Name="Recyclable" />
-  <RecyclingProcess Key="gs1:PackagingRecyclingProcessTypeCode-REUSABLE" Name="Reusable" />
-</RecyclcingProcesses>

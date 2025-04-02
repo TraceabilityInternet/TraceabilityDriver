@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ProductTypeCodes>
-  <ProductTypeCode Key="gs1:Beverage" Name="Beverage" />
-  <ProductTypeCode Key="gs1:FruitsVegetables" Name="Fruits / Vegetablels" />
-  <ProductTypeCode Key="gs1:MeatPoultry" Name="Meat / Poultry" />
-  <ProductTypeCode Key="gs1:MilkButterCreamYogurtCheeseEggsSubstitutes" Name="Dairy / Egg / Subsitutes" />
-  <ProductTypeCode Key="gs1:Seafood" Name="Seafood" />
-  <ProductTypeCode Key="gs1:FoodBeverageTobaccoProduct" Name="Other Food / Tobacco" />
-</ProductTypeCodes>
