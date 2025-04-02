@@ -30,6 +30,16 @@ There is a dashboard landing page that can be viewed that gives some visual insi
 
 ![](./img/screenshot_dashboard01.png)
 
+The password for the dashboard is configured in the `appsettings.json`. The default password is `changeme`.
+
+```json
+"Authentication": {
+    "Password": "changeme"
+}
+```
+
+> This password only grants access to the dashboard and nothing else.
+
 ## Current Sync
 Here the user is able to see the status of anything currently syncing.
 
