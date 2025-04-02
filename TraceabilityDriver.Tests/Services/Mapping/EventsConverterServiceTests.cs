@@ -368,7 +368,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return new CommonProduct
             {
                 ProductId = "product1",
-                ProductType = EventProductType.Output,
+                ProductType = EventProductType.Reference,
                 LotNumber = "LOT123",
                 Quantity = 100,
                 UoM = "KGM",

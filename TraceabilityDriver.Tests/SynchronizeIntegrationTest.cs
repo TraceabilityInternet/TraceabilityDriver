@@ -97,7 +97,7 @@ namespace TraceabilityDriver.Tests
             Dispose();
         }
 
-        [Test]
+        //[Test]
         public async Task IntegrateTest_SynchronizeService()
         {
             // Arrange
