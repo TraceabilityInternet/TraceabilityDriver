@@ -98,11 +98,17 @@ It is possible to execute the capability test from the Traceability Driver porta
 
 After configuring this, it is possible to execute the capability test from inside the Traceability Driver portal:
 
+**Start Capability Test**
 ![](./img/screenshot_captest_start01.png)
 
+**Running Capability Test**
 ![](./img/screenshot_captest_running01.png)
 
+**Capability Test Failed (with Errors)**
 ![](./img/screenshot_captest_failed01.png)
+
+**Capability Test Success**
+![](./img/screenshot_captest_success01.png)
 
 > The Traceability Driver has the capability to execute the capability test from the portal. This is useful for testing that the Traceability Driver is interoperable with other GDST capable systems. However, this does not indicate that traceability data is being synchronized correctly or that the traceability data is complete with all the GDST CTEs and KDEs.
 
