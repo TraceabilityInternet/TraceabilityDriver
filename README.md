@@ -40,6 +40,9 @@ The password for the dashboard is configured in the `appsettings.json`. The defa
 
 > This password only grants access to the dashboard and nothing else.
 
+**Login Page**
+![](./img/screenshot_login01.png)
+
 ## Current Sync
 Here the user is able to see the status of anything currently syncing.
 
