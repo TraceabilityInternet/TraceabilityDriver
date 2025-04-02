@@ -47,14 +47,14 @@ public class SynchronizeService : ISynchronizeService
         _logger.LogInformation("Synchronizing data from the database(s) to the event store.");
         _syncContext.Updated();
 
-        /// Read the mapping files.
-        foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
+        try
         {
-            // Set the current configuration being processed.
-            _syncContext.Configuration = mapping;
-
-            try
+            /// Read the mapping files.
+            foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
             {
+                // Set the current configuration being processed.
+                _syncContext.Configuration = mapping;
+
                 // Test the connections.
                 if (!await TestConnectionsAsync(mapping))
                 {
@@ -74,18 +74,31 @@ public class SynchronizeService : ISynchronizeService
 
                 _logger.LogInformation("Successfully processed the mapping file.");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing the mapping file.");
-            }
+
+            // Update the sync history item for success
+            _syncContext.CurrentSync.Status = SyncStatus.Completed;
+            _syncContext.CurrentSync.EndTime = DateTime.UtcNow;
+            _syncContext.Updated();
         }
+        catch (Exception ex)
+        {
+            // Update the sync history item for failure
+            _syncContext.CurrentSync.Status = SyncStatus.Failed;
+            _syncContext.CurrentSync.EndTime = DateTime.UtcNow;
+            _syncContext.CurrentSync.Message = $"Synchronization failed: {ex.Message}";
+            _syncContext.Updated();
 
-        // Update the sync history item.
-        _syncContext.CurrentSync.Status = SyncStatus.Completed;
-        _syncContext.CurrentSync.EndTime = DateTime.UtcNow;
-        _syncContext.Updated();
+            _logger.LogError(ex, "Synchronization process failed");
+            throw;
+        }
+        finally
+        {
+            // Store the sync history item in the database regardless of success or failure
+            await _mongoDBService.StoreSyncHistory(_syncContext.CurrentSync);
+            _logger.LogInformation("Sync history saved to database");
 
-        _logger.LogDebug("Synchronization process completed");
+            _logger.LogDebug("Synchronization process completed");
+        }
     }
 
     /// <param name="mapping">Contains the configuration details for the mappings, including selectors and connections.</param>
@@ -143,26 +156,26 @@ public class SynchronizeService : ISynchronizeService
                 var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
                 _logger.LogInformation("Merged into {Count} events for event type: {EventType}", mergedEvents.Count, map.EventType);
 
-                /// Check for cancellation.
+                // Check for cancellation.
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
 
-                /// Convert the events.
+                // Convert the events.
                 var epcisDoc = await _eventsConverterService.ConvertEventsAsync(mergedEvents);
 
-                /// Check for cancellation.
+                // Check for cancellation.
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
 
-                /// Save the events.
+                // Save the events.
                 await _mongoDBService.StoreEventsAsync(epcisDoc.Events);
                 _logger.LogInformation("Successfully stored {Count} events in MongoDB", epcisDoc.Events.Count);
 
-                /// Save the master data.
+                // Save the master data.
                 await _mongoDBService.StoreMasterDataAsync(epcisDoc.MasterData);
                 _logger.LogInformation("Successfully stored {Count} master data elements in MongoDB", epcisDoc.MasterData.Count);
 

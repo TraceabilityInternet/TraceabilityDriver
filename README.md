@@ -1,4 +1,4 @@
-![](https://github.com/TraceabilityInternet/TraceabilityDriver/raw/main/Images/Traceability%20Internet%20Organization-B1-thin.jpg)
+![](./img/logo.jpg)
 
 The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. It is a standalone module that can be installed into an existing software system to expose traceability data using the GDST module.
 
@@ -62,11 +62,13 @@ It is possible to execute the capability test from the Traceability Driver porta
 
 After configuring this, it is possible to execute the capability test from inside the Traceability Driver portal:
 
-```<INSERT SCREEN SHOT>```
+![](./img/screenshot_captest_start01.png)
 
-```<INSERT SCREEN SHOT>```
+![](./img/screenshot_captest_running01.png)
 
-```<INSERT SCREEN SHOT>```
+![](./img/screenshot_captest_failed01.png)
+
+> The Traceability Driver has the capability to execute the capability test from the portal. This is useful for testing that the Traceability Driver is interoperable with other GDST capable systems. However, this does not indicate that traceability data is being synchronized correctly or that the traceability data is complete with all the GDST CTEs and KDEs.
 
 ## Identifiers
 The Traceability Driver is capable of automatically generating traceability identifiers such as the EPC, GTIN, PGLN, and/or GLN. A critical part of generating these identifiers has to do with the domain that is generating them as is outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).

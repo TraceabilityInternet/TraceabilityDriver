@@ -714,3 +714,305 @@ Error Number:64,State:0,Class:20
    at TraceabilityDriver.Services.SynchronizeService.TestConnectionsAsync(TDMappingConfiguration mapping) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 234
    at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 59
 2025-04-02 09:30:12.078 -05:00 [INF] Synchronization process completed.
+2025-04-02 09:36:56.501 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-04-02 09:36:56.669 -05:00 [INF] Starting TraceabilityDriver application
+2025-04-02 09:36:56.678 -05:00 [INF] Starting hosted synchronize service...
+2025-04-02 09:36:56.917 -05:00 [INF] Starting synchronization process...
+2025-04-02 09:36:56.922 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-04-02 09:36:56.974 -05:00 [INF] Now listening on: https://localhost:58950
+2025-04-02 09:36:56.984 -05:00 [INF] Now listening on: http://localhost:58951
+2025-04-02 09:36:57.046 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-04-02 09:36:57.053 -05:00 [INF] Hosting environment: Development
+2025-04-02 09:36:57.053 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver
+2025-04-02 09:36:57.592 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-04-02 09:36:57.731 -05:00 [INF] Executing endpoint '/ (/)'
+2025-04-02 09:36:57.940 -05:00 [INF] Executed endpoint '/ (/)'
+2025-04-02 09:36:57.944 -05:00 [INF] HTTP GET / responded 200 in 223.9288 ms
+2025-04-02 09:36:57.951 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 365.6593ms
+2025-04-02 09:36:57.957 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-04-02 09:36:57.957 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-04-02 09:36:57.957 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-04-02 09:36:57.958 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-04-02 09:36:57.998 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 40.3999ms
+2025-04-02 09:36:58.005 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-04-02 09:36:58.016 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 2.7117 ms
+2025-04-02 09:36:58.022 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 64.3614ms
+2025-04-02 09:36:58.022 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-04-02 09:36:58.026 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-04-02 09:36:58.029 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-04-02 09:36:58.033 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 30.9917 ms
+2025-04-02 09:36:58.036 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 78.4328ms
+2025-04-02 09:36:58.036 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 78.9793ms
+2025-04-02 09:36:58.119 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-04-02 09:36:58.124 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:36:58.129 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:36:58.130 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 7.9868 ms
+2025-04-02 09:36:58.132 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 14.6674ms
+2025-04-02 09:36:58.138 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-04-02 09:36:58.143 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:36:58.150 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:36:58.151 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 9.9152 ms
+2025-04-02 09:36:58.153 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 15.3942ms
+2025-04-02 09:36:58.156 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=f7qpfdgAreZR-KhqYgkIDw - null null
+2025-04-02 09:36:58.160 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:37:33.302 -05:00 [ERR] Error processing the mapping file.
+System.Exception: Error testing the connection to the database: BEP
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+ ---> System.ComponentModel.Win32Exception (64): The specified network name is no longer available.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.Connect(ServerInfo serverInfo, SqlInternalConnectionTds connHandler, TimeoutTimer timeout, SqlConnectionString connectionOptions, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool, Func`3 accessTokenCallback)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 35
+ClientConnectionId:00000000-0000-0000-0000-000000000000
+Error Number:64,State:0,Class:20
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 42
+   at TraceabilityDriver.Services.SynchronizeService.TestConnectionsAsync(TDMappingConfiguration mapping) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 254
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 61
+2025-04-02 09:37:33.341 -05:00 [INF] Sync history saved to database
+2025-04-02 09:37:33.341 -05:00 [INF] Synchronization process completed.
+2025-04-02 09:38:32.064 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-04-02 09:38:32.096 -05:00 [INF] Executing endpoint '/ (/)'
+2025-04-02 09:38:32.118 -05:00 [INF] Executed endpoint '/ (/)'
+2025-04-02 09:38:32.119 -05:00 [INF] HTTP GET / responded 200 in 23.0174 ms
+2025-04-02 09:38:32.121 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 56.437ms
+2025-04-02 09:38:33.350 -05:00 [INF] Starting synchronization process...
+2025-04-02 09:38:33.353 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-04-02 09:39:38.513 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-04-02 09:39:38.682 -05:00 [INF] Starting TraceabilityDriver application
+2025-04-02 09:39:38.691 -05:00 [INF] Starting hosted synchronize service...
+2025-04-02 09:39:38.945 -05:00 [INF] Starting synchronization process...
+2025-04-02 09:39:38.948 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-04-02 09:39:39.012 -05:00 [INF] Now listening on: https://localhost:58950
+2025-04-02 09:39:39.014 -05:00 [INF] Now listening on: http://localhost:58951
+2025-04-02 09:39:39.094 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-04-02 09:39:39.095 -05:00 [INF] Hosting environment: Development
+2025-04-02 09:39:39.096 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver
+2025-04-02 09:39:39.397 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-04-02 09:39:39.520 -05:00 [INF] Executing endpoint '/ (/)'
+2025-04-02 09:39:39.744 -05:00 [INF] Executed endpoint '/ (/)'
+2025-04-02 09:39:39.748 -05:00 [INF] HTTP GET / responded 200 in 236.2127 ms
+2025-04-02 09:39:39.754 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 362.4517ms
+2025-04-02 09:39:39.758 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-04-02 09:39:39.758 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-04-02 09:39:39.758 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-04-02 09:39:39.758 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-04-02 09:39:39.765 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 6.8411ms
+2025-04-02 09:39:39.775 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 8.4291 ms
+2025-04-02 09:39:39.777 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-04-02 09:39:39.785 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 27.7469ms
+2025-04-02 09:39:39.789 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-04-02 09:39:39.790 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-04-02 09:39:39.791 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-04-02 09:39:39.794 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 18.4603 ms
+2025-04-02 09:39:39.796 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 38.0847ms
+2025-04-02 09:39:39.803 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 44.9259ms
+2025-04-02 09:39:39.900 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-04-02 09:39:39.903 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:39:39.905 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:39:39.907 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 4.7612 ms
+2025-04-02 09:39:39.911 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 11.1152ms
+2025-04-02 09:39:39.918 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-04-02 09:39:39.921 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:39:39.928 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:39:39.929 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 8.8734 ms
+2025-04-02 09:39:39.930 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 12.6769ms
+2025-04-02 09:39:39.933 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=hDNDGArYTiNFEaZQpIy7EA - null null
+2025-04-02 09:39:39.936 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:40:15.297 -05:00 [ERR] Synchronization process failed
+System.Exception: Error testing the connection to the database: BEP
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+ ---> System.ComponentModel.Win32Exception (64): The specified network name is no longer available.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.Connect(ServerInfo serverInfo, SqlInternalConnectionTds connHandler, TimeoutTimer timeout, SqlConnectionString connectionOptions, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool, Func`3 accessTokenCallback)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 35
+ClientConnectionId:00000000-0000-0000-0000-000000000000
+Error Number:64,State:0,Class:20
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 42
+   at TraceabilityDriver.Services.SynchronizeService.TestConnectionsAsync(TDMappingConfiguration mapping) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 247
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 59
+2025-04-02 09:40:15.336 -05:00 [INF] Sync history saved to database
+2025-04-02 09:40:15.360 -05:00 [ERR] Error occurred during synchronization process.
+System.Exception: Error testing the connection to the database: BEP
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+ ---> System.ComponentModel.Win32Exception (64): The specified network name is no longer available.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.Connect(ServerInfo serverInfo, SqlInternalConnectionTds connHandler, TimeoutTimer timeout, SqlConnectionString connectionOptions, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool, Func`3 accessTokenCallback)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 35
+ClientConnectionId:00000000-0000-0000-0000-000000000000
+Error Number:64,State:0,Class:20
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 42
+   at TraceabilityDriver.Services.SynchronizeService.TestConnectionsAsync(TDMappingConfiguration mapping) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 247
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 59
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 101
+   at TraceabilityDriver.Services.HostedSyncService.<>c__DisplayClass3_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\HostedSyncService.cs:line 31
+2025-04-02 09:40:27.634 -05:00 [INF] User profile is available. Using 'C:\Users\philip\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-04-02 09:40:27.824 -05:00 [INF] Starting TraceabilityDriver application
+2025-04-02 09:40:27.836 -05:00 [INF] Starting hosted synchronize service...
+2025-04-02 09:40:28.059 -05:00 [INF] Starting synchronization process...
+2025-04-02 09:40:28.063 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-04-02 09:40:30.762 -05:00 [INF] Now listening on: https://localhost:58950
+2025-04-02 09:40:30.770 -05:00 [INF] Now listening on: http://localhost:58951
+2025-04-02 09:40:37.988 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/ - null null
+2025-04-02 09:40:38.009 -05:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-04-02 09:40:38.010 -05:00 [INF] Hosting environment: Development
+2025-04-02 09:40:38.011 -05:00 [INF] Content root path: C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver
+2025-04-02 09:40:38.113 -05:00 [INF] Executing endpoint '/ (/)'
+2025-04-02 09:40:38.322 -05:00 [INF] Executed endpoint '/ (/)'
+2025-04-02 09:40:38.327 -05:00 [INF] HTTP GET / responded 200 in 221.7377 ms
+2025-04-02 09:40:38.333 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/ - 200 null text/html; charset=utf-8 354.3169ms
+2025-04-02 09:40:38.344 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - null null
+2025-04-02 09:40:38.344 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - null null
+2025-04-02 09:40:38.347 -05:00 [INF] Executing endpoint 'Blazor web static files'
+2025-04-02 09:40:38.349 -05:00 [INF] HTTP GET /TraceabilityDriver.styles.css responded 404 in 1.0268 ms
+2025-04-02 09:40:38.351 -05:00 [INF] The file /_framework/blazor.web.js was not modified
+2025-04-02 09:40:38.352 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/TraceabilityDriver.styles.css - 404 0 null 7.9838ms
+2025-04-02 09:40:38.353 -05:00 [INF] Executed endpoint 'Blazor web static files'
+2025-04-02 09:40:38.355 -05:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:58950/TraceabilityDriver.styles.css, Response status code: 404
+2025-04-02 09:40:38.356 -05:00 [INF] HTTP GET /_framework/blazor.web.js responded 304 in 10.1368 ms
+2025-04-02 09:40:38.359 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/blazor.web.js - 304 null text/javascript 15.5513ms
+2025-04-02 09:40:38.360 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - null null
+2025-04-02 09:40:38.361 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_vs/browserLink - null null
+2025-04-02 09:40:38.370 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_framework/aspnetcore-browser-refresh.js - 200 13772 application/javascript; charset=utf-8 9.6549ms
+2025-04-02 09:40:38.396 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_vs/browserLink - 200 null text/javascript; charset=UTF-8 35.0606ms
+2025-04-02 09:40:38.632 -05:00 [INF] Request starting HTTP/2 GET https://localhost:58950/_blazor/initializers - null null
+2025-04-02 09:40:38.635 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:40:38.637 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:40:38.638 -05:00 [INF] HTTP GET /_blazor/initializers responded 200 in 3.9552 ms
+2025-04-02 09:40:38.640 -05:00 [INF] Request finished HTTP/2 GET https://localhost:58950/_blazor/initializers - 200 null application/json; charset=utf-8 9.2767ms
+2025-04-02 09:40:38.747 -05:00 [INF] Request starting HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - null 0
+2025-04-02 09:40:38.756 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:40:38.763 -05:00 [INF] Executed endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:40:38.764 -05:00 [INF] HTTP POST /_blazor/negotiate responded 200 in 9.8003 ms
+2025-04-02 09:40:38.766 -05:00 [INF] Request finished HTTP/2 POST https://localhost:58950/_blazor/negotiate?negotiateVersion=1 - 200 316 application/json 18.5941ms
+2025-04-02 09:40:38.771 -05:00 [INF] Request starting HTTP/2 CONNECT https://localhost:58950/_blazor?id=UxoJj3zcrw-0MaPxgRZttw - null null
+2025-04-02 09:40:38.773 -05:00 [INF] Executing endpoint 'Microsoft.AspNetCore.Routing.RouteEndpoint'
+2025-04-02 09:41:18.709 -05:00 [ERR] Synchronization process failed
+System.Exception: Error testing the connection to the database: BEP
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+ ---> System.ComponentModel.Win32Exception (64): The specified network name is no longer available.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.Connect(ServerInfo serverInfo, SqlInternalConnectionTds connHandler, TimeoutTimer timeout, SqlConnectionString connectionOptions, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool, Func`3 accessTokenCallback)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 35
+ClientConnectionId:00000000-0000-0000-0000-000000000000
+Error Number:64,State:0,Class:20
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 42
+   at TraceabilityDriver.Services.SynchronizeService.TestConnectionsAsync(TDMappingConfiguration mapping) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 247
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 59
+2025-04-02 09:41:18.751 -05:00 [INF] Sync history saved to database
+2025-04-02 09:41:18.776 -05:00 [ERR] Error occurred during synchronization process.
+System.Exception: Error testing the connection to the database: BEP
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+ ---> System.ComponentModel.Win32Exception (64): The specified network name is no longer available.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.Connect(ServerInfo serverInfo, SqlInternalConnectionTds connHandler, TimeoutTimer timeout, SqlConnectionString connectionOptions, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool, Func`3 accessTokenCallback)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 35
+ClientConnectionId:00000000-0000-0000-0000-000000000000
+Error Number:64,State:0,Class:20
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.TestConnectionAsync(TDConnectorConfiguration config) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 42
+   at TraceabilityDriver.Services.SynchronizeService.TestConnectionsAsync(TDMappingConfiguration mapping) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 247
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 59
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 101
+   at TraceabilityDriver.Services.HostedSyncService.<>c__DisplayClass3_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\HostedSyncService.cs:line 31
+2025-04-02 09:42:18.793 -05:00 [INF] Starting synchronization process...
+2025-04-02 09:42:18.797 -05:00 [INF] Synchronizing data from the database(s) to the event store.
+2025-04-02 09:42:38.264 -05:00 [INF] Processing 1 mappings from file.
+2025-04-02 09:42:38.270 -05:00 [INF] Processing mapping for event type: 
+2025-04-02 09:49:09.228 -05:00 [ERR] Error processing a mapping for the event type '' in the mapping file.
+System.Exception: Error getting events from the database: BEP
+ ---> System.InvalidOperationException: Sequence contains no elements
+   at System.Linq.ThrowHelper.ThrowNoElementsException()
+   at System.Linq.Enumerable.Last[TSource](IEnumerable`1 source)
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.HandleMemoryVariables(DataTable dt, String key, TDMappingSelectorMemoryVariable memory) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 174
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 138
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 152
+   at TraceabilityDriver.Services.SynchronizeService.ProcessMappingsAsync(TDMappingConfiguration mapping, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 144
+2025-04-02 09:49:09.261 -05:00 [ERR] Synchronization process failed
+System.Exception: Error getting events from the database: BEP
+ ---> System.InvalidOperationException: Sequence contains no elements
+   at System.Linq.ThrowHelper.ThrowNoElementsException()
+   at System.Linq.Enumerable.Last[TSource](IEnumerable`1 source)
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.HandleMemoryVariables(DataTable dt, String key, TDMappingSelectorMemoryVariable memory) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 174
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 138
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 152
+   at TraceabilityDriver.Services.SynchronizeService.ProcessMappingsAsync(TDMappingConfiguration mapping, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 144
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 73
+2025-04-02 09:49:09.282 -05:00 [INF] Sync history saved to database
+2025-04-02 09:49:09.340 -05:00 [ERR] Error occurred during synchronization process.
+System.Exception: Error getting events from the database: BEP
+ ---> System.InvalidOperationException: Sequence contains no elements
+   at System.Linq.ThrowHelper.ThrowNoElementsException()
+   at System.Linq.Enumerable.Last[TSource](IEnumerable`1 source)
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.HandleMemoryVariables(DataTable dt, String key, TDMappingSelectorMemoryVariable memory) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 174
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 138
+   --- End of inner exception stack trace ---
+   at TraceabilityDriver.Services.Connectors.TDSqlServerConnector.GetEventsAsync(TDConnectorConfiguration config, TDMappingSelector selector, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\Connectors\TDSqlServerConnector.cs:line 152
+   at TraceabilityDriver.Services.SynchronizeService.ProcessMappingsAsync(TDMappingConfiguration mapping, CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 144
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 73
+   at TraceabilityDriver.Services.SynchronizeService.SynchronizeAsync(CancellationToken cancellationToken) in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\SynchronizeService.cs:line 101
+   at TraceabilityDriver.Services.HostedSyncService.<>c__DisplayClass3_0.<<StartAsync>b__0>d.MoveNext() in C:\Users\philip\Documents\GitHub\TraceabilityDriver\TraceabilityDriver\Services\HostedSyncService.cs:line 31

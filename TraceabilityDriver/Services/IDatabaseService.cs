@@ -16,5 +16,6 @@ namespace TraceabilityDriver.Services
         Task<IVocabularyElement?> QueryMasterData(string identifier);
         Task StoreEventsAsync(List<IEvent> events);
         Task StoreMasterDataAsync(List<IVocabularyElement> masterData);
+        Task StoreSyncHistory(SyncHistoryItem syncHistory);
     }
 }
