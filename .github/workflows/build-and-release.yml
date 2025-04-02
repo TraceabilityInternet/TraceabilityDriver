@@ -3,7 +3,7 @@ name: Build, Test and Release
 on:
   push:
     tags:
-      - 'main'
+      - 'v*.*.*'  # This will match version tags like v1.0.0, v2.3.1, etc.
   workflow_dispatch:
 
 env:
@@ -52,4 +52,4 @@ jobs:
         files: |
           TraceabilityDriver-${{ github.ref_name }}.zip
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
