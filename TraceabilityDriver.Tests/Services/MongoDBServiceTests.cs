@@ -1,21 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
-using NUnit.Framework;
-using OpenTraceability.GDST.Events;
-using OpenTraceability.Interfaces;
 using OpenTraceability.Models.Events;
-using OpenTraceability.Models.Identifiers;
-using OpenTraceability.Models.MasterData;
 using OpenTraceability.Queries;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Services;
-using Newtonsoft.Json;
-using OpenTraceability.GDST;
 using OpenTraceability.Mappers;
 
 namespace TraceabilityDriver.Tests.Services

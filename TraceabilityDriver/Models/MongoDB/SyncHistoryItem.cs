@@ -1,4 +1,7 @@
-﻿namespace TraceabilityDriver.Models.MongoDB
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
+
+namespace TraceabilityDriver.Models.MongoDB
 {
     /// <summary>
     /// Represents the status of a synchronization process. Possible values are InProgress, Completed, and Failed.
@@ -15,6 +18,11 @@
     /// </summary>
     public class SyncHistoryItem
     {
+
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
         /// <summary>
         /// The time it started syncing.
         /// </summary>

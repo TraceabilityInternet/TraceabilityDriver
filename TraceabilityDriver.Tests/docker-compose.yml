@@ -11,5 +11,17 @@ services:
     volumes:
       - mongodb_test_data:/data/db
 
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver_test
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_test_data:/var/opt/mssql
+
 volumes:
   mongodb_test_data:
+  sqlserver_test_data:

@@ -17,5 +17,6 @@ namespace TraceabilityDriver.Services
         Task StoreEventsAsync(List<IEvent> events);
         Task StoreMasterDataAsync(List<IVocabularyElement> masterData);
         Task StoreSyncHistory(SyncHistoryItem syncHistory);
+        Task ClearDatabaseAsync();
     }
 }
