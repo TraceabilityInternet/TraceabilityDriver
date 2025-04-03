@@ -10,7 +10,7 @@ namespace TraceabilityDriver.Models.MongoDB
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = ObjectId.GenerateNewId().ToString();
 
         public string EventId { get; set; } = string.Empty;
 
