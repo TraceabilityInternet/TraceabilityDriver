@@ -1,5 +1,4 @@
-﻿using Castle.Core.Logging;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenTraceability.Mappers;
@@ -20,8 +19,8 @@ namespace TraceabilityDriver.Tests.Services
         public async Task OneTimeSetUp()
         {
             // Check if tests should be skipped
-            string skipMongoDBTests = Environment.GetEnvironmentVariable("NO_SQL_DB") ?? string.Empty;
-            _skipTests = skipMongoDBTests.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
+            string skipSqlTests = Environment.GetEnvironmentVariable("NO_SQL_DB") ?? string.Empty;
+            _skipTests = skipSqlTests.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
 
             if (_skipTests)
             {
@@ -80,7 +79,7 @@ namespace TraceabilityDriver.Tests.Services
             // deserialize the test data into an EPCISDocument
             _testEPCISDocument = OpenTraceabilityMappers.EPCISDocument.JSON.Map(jsonData);
 
-            // save all the events into the mongo db service
+            // save all the events into the sql db service
             await _dbService.StoreEventsAsync(_testEPCISDocument.Events);
 
             // save all the master data into the mongo db service
@@ -102,7 +101,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
             }
             // This should pass via the setup method.
         }
@@ -112,7 +111,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
@@ -143,7 +142,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
@@ -173,7 +172,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
@@ -205,7 +204,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
@@ -228,7 +227,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
