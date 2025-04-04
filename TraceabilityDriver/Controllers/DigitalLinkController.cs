@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpenTraceability.Models.MasterData;
 
 namespace TraceabilityDriver.Controllers
 {
+    [Authorize]
     [Route("digitallink")]
     public class DigitalLinkController : ControllerBase
     {

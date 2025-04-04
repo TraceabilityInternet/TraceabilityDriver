@@ -93,7 +93,7 @@ namespace TraceabilityDriver
             var authenticationSchemeBuilder = services.AddAuthentication();
             List<string> policies = new();
 
-            if (Configuration.GetSection("Authentication:JWT") != null)
+            if (Configuration.GetSection("Authentication:JWT").Exists())
             {
                 policies.Add("Bearer");
 
@@ -121,7 +121,7 @@ namespace TraceabilityDriver
             }
 
             // API KEY AUTHENTICATION
-            if (Configuration.GetSection("Authentication:APIKey") != null)
+            if (Configuration.GetSection("Authentication:APIKey").Exists())
             {
                 services.AddSingleton<IApiKeyStore, InMemoryApiKeyStore>();
 
@@ -130,7 +130,8 @@ namespace TraceabilityDriver
                 authenticationSchemeBuilder.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", options =>
                 {
                     var authConfig = Configuration.GetSection("Authentication:APIKey");
-                    options.HeaderName = authConfig["HeaderName"] ?? "X-API-Key";
+                    string headerName = authConfig["HeaderName"] ?? "X-API-Key";
+                    options.HeaderName = headerName;
                 });
             }
 

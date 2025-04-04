@@ -6,7 +6,7 @@
 
         public InMemoryApiKeyStore(IConfiguration config)
         {
-            _validKeys = config.GetSection("ApiKeyAuthentication:ValidKeys").Get<List<string>>() ?? new List<string>();
+            _validKeys = config.GetSection("Authentication:APIKey:ValidKeys").Get<List<string>>() ?? new List<string>();
         }
 
         public Task<bool> IsValidKeyAsync(string key) => Task.FromResult(_validKeys.Contains(key));
