@@ -82,9 +82,9 @@ namespace TraceabilityDriver.Services
                     // Replace existing master data
                     _context.Entry(existingMasterData).CurrentValues.SetValues(masterDataDoc);
                 }
-
-                await _context.SaveChangesAsync();
             }
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task StoreSyncHistory(SyncHistoryItem syncHistory)
