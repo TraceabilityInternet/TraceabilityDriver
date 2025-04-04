@@ -46,7 +46,7 @@ namespace TraceabilityDriver
             {
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
-                    options.UseSqlServer(Environment.GetEnvironmentVariable("SQL_CONNECTION_STRING"));
+                    options.UseSqlServer(Configuration["SqlServer:ConnectionString"]);
                 });
                 services.AddSingleton<IDatabaseService, SqlServerService>();
             }
