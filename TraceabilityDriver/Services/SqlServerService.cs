@@ -40,10 +40,19 @@ namespace TraceabilityDriver.Services
                 EPCISEventDocument doc = new EPCISEventDocument(evt);
 
                 // double check if the event already exists and preserve the id
-
-                _context.EPCISEvents.Add(doc);
-                await _context.SaveChangesAsync();
+                var existingEvent = await _context.EPCISEvents.FirstOrDefaultAsync(x => x.EventId == doc.EventId);
+                if (existingEvent != null)
+                {
+                    doc.Id = existingEvent.Id;
+                    _context.Entry(existingEvent).CurrentValues.SetValues(doc);
+                }
+                else
+                {
+                    _context.EPCISEvents.Add(doc);
+                }
             }
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task StoreMasterDataAsync(List<IVocabularyElement> masterData)
