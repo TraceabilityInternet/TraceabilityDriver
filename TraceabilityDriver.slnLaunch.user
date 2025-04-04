@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "Docker Compose",
+    "Projects": [
+      {
+        "Path": "docker-compose.dcproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

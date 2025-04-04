@@ -6,3 +6,5 @@
 **/bin
 .vs/**
 **/Logs/**
+.env
+**/mappings/**
