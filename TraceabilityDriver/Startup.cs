@@ -1,9 +1,5 @@
-using Hangfire;
-using Hangfire.Mongo;
-using Hangfire.Mongo.Migration.Strategies;
-using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TraceabilityDriver.Models.GDST;
 using TraceabilityDriver.Models.Mapping;
@@ -41,8 +37,25 @@ namespace TraceabilityDriver
             services.AddControllers();
             services.AddHttpClient();
 
+            // CONFIGURE DB
+            if(Configuration["MongoDB:ConnectionString"] != null)
+            {
+                services.AddSingleton<IDatabaseService, MongoDBService>();
+            }
+            else if(Configuration["SqlServer:ConnectionString"] != null)
+            {
+                services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlServer(Configuration["SqlServer:ConnectionString"]);
+                });
+                services.AddSingleton<IDatabaseService, SqlServerService>();
+            }
+            else
+            {
+                throw new Exception("No database connection string found. Please set either MONGO_CONNECTION_STRING or SQL_CONNECTION_STRING.");
+            }
+
             // SERVICES
-            services.AddSingleton<IDatabaseService, MongoDBService>();
             services.AddSingleton<ISynchronizeService, SynchronizeService>();
             services.AddSingleton<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
             services.AddHostedService<HostedSyncService>();

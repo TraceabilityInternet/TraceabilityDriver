@@ -1,0 +1,6 @@
+services:
+  traceabilitydriver:
+    image: ${DOCKER_REGISTRY-}traceabilitydriver
+    build:
+      context: .
+      dockerfile: TraceabilityDriver/Dockerfile

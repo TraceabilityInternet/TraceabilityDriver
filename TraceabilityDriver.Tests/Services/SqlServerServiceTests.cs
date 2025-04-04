@@ -1,51 +1,63 @@
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using MongoDB.Driver;
+using Microsoft.Extensions.Logging;
+using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using TraceabilityDriver.Services;
-using OpenTraceability.Mappers;
 
 namespace TraceabilityDriver.Tests.Services
 {
     [TestFixture]
-    public class MongoDBServiceTests
+    public class SqlServerServiceTests
     {
-        private MongoDBService _mongoDBService = null!;
-        private IConfiguration _configuration = null!;
-        private EPCISDocument _testEPCISDocument = null!;
+        private IDatabaseService _dbService;
+        private EPCISDocument _testEPCISDocument;
         private bool _skipTests = false;
 
         [OneTimeSetUp]
         public async Task OneTimeSetUp()
         {
             // Check if tests should be skipped
-            string skipMongoDBTests = Environment.GetEnvironmentVariable("NO_MONGO_DB") ?? string.Empty;
-            _skipTests = skipMongoDBTests.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
-            
+            string skipSqlTests = Environment.GetEnvironmentVariable("NO_SQL_DB") ?? string.Empty;
+            _skipTests = skipSqlTests.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
+
             if (_skipTests)
             {
-                Assert.Ignore("MongoDB tests skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("SqlServer tests skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
             OpenTraceability.GDST.Setup.Initialize();
 
             // Load configuration
-            _configuration = new ConfigurationBuilder()
+            IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.Tests.json")
                 .Build();
 
             // Create a configuration with test collection names
-            var testConfig = new ConfigurationBuilder()
+            IConfiguration testConfig = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.Tests.json")
                 .Build();
 
+            // setup context
+            string connectionString = testConfig["SqlServer:ConnectionString"] ?? throw new Exception("SqlServer connection string not configured");
+            
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlServer(connectionString, x => x.EnableRetryOnFailure()).Options;
+            ApplicationDbContext context = new ApplicationDbContext(options);
+            
+            ILogger<SqlServerService> logger = new LoggerFactory().CreateLogger<SqlServerService>();
+
             // Create service with test configuration
-            _mongoDBService = new MongoDBService(testConfig);
+            _dbService = new SqlServerService(logger, context);
 
             // Clear out the data.
-            await _mongoDBService.ClearDatabaseAsync();
+            await _dbService.ClearDatabaseAsync();
+
+            // Initialize the database
+            await _dbService.InitializeDatabase();
 
             // Load test data
             await LoadTestDataAsync();
@@ -67,11 +79,11 @@ namespace TraceabilityDriver.Tests.Services
             // deserialize the test data into an EPCISDocument
             _testEPCISDocument = OpenTraceabilityMappers.EPCISDocument.JSON.Map(jsonData);
 
-            // save all the events into the mongo db service
-            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events);
+            // save all the events into the sql db service
+            await _dbService.StoreEventsAsync(_testEPCISDocument.Events);
 
             // save all the master data into the mongo db service
-            await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
+            await _dbService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
         }
 
         [Test]
@@ -79,7 +91,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
             }
             // This should pass via the setup method.
         }
@@ -89,7 +101,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
             }
             // This should pass via the setup method.
         }
@@ -99,14 +111,14 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
             // Determine start and end times via the _testEPCISDocument.
             var startTime = _testEPCISDocument.Events.Min(e => e.EventTime);
             var endTime = _testEPCISDocument.Events.Max(e => e.EventTime);
-            
+
             var queryParams = new EPCISQueryParameters
             {
                 query = new EPCISQuery
@@ -117,7 +129,7 @@ namespace TraceabilityDriver.Tests.Services
             };
 
             // Act
-            var result = await _mongoDBService.QueryEvents(queryParams);
+            var result = await _dbService.QueryEvents(queryParams);
 
             // Assert
             Assert.That(result.Events, Is.Not.Null);
@@ -130,14 +142,14 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
             // Arrange            
             var testEPC = _testEPCISDocument.Events.FirstOrDefault(e => e.Products.Count > 1)?.Products.First().EPC.ToString();
             Assert.That(testEPC, Is.Not.Null, "Test data should contain at least one event with an EPC");
-            
+
             var queryParams = new EPCISQueryParameters
             {
                 query = new EPCISQuery
@@ -147,7 +159,7 @@ namespace TraceabilityDriver.Tests.Services
             };
 
             // Act
-            var result = await _mongoDBService.QueryEvents(queryParams);
+            var result = await _dbService.QueryEvents(queryParams);
 
             // Assert
             Assert.That(result.Events, Is.Not.Null);
@@ -160,16 +172,16 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
             // Arrange
-            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events);
-            
+            await _dbService.StoreEventsAsync(_testEPCISDocument.Events);
+
             // Get a business step from the test data
             var testBizStep = _testEPCISDocument.Events.First().BusinessStep;
-            
+
             var queryParams = new EPCISQueryParameters
             {
                 query = new EPCISQuery
@@ -179,7 +191,7 @@ namespace TraceabilityDriver.Tests.Services
             };
 
             // Act
-            var result = await _mongoDBService.QueryEvents(queryParams);
+            var result = await _dbService.QueryEvents(queryParams);
 
             // Assert
             Assert.That(result.Events, Is.Not.Null);
@@ -192,18 +204,18 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
             // Arrange
-            await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
-            
+            await _dbService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
+
             // Get an ID from the test data
             var testElementId = _testEPCISDocument.MasterData.First().ID;
 
             // Act
-            var result = await _mongoDBService.QueryMasterData(testElementId);
+            var result = await _dbService.QueryMasterData(testElementId);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -215,7 +227,7 @@ namespace TraceabilityDriver.Tests.Services
         {
             if (_skipTests)
             {
-                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
                 return;
             }
 
@@ -223,7 +235,7 @@ namespace TraceabilityDriver.Tests.Services
             // Data should be already loaded via the LoadTestDataAsync method
 
             // Act
-            var report = await _mongoDBService.GetDatabaseReport();
+            var report = await _dbService.GetDatabaseReport();
 
             // Assert
             Assert.That(report, Is.Not.Null);
@@ -268,4 +280,4 @@ namespace TraceabilityDriver.Tests.Services
             }
         }
     }
-} 
+}

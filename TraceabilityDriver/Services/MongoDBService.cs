@@ -1,24 +1,11 @@
-using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
-using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using OpenTraceability.GDST;
 using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
-using OpenTraceability.Mappers.EPCIS.JSON;
 using OpenTraceability.Models.Events;
-using OpenTraceability.Models.Identifiers;
-using OpenTraceability.Models.MasterData;
 using OpenTraceability.Queries;
-using OpenTraceability.Utility;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 
