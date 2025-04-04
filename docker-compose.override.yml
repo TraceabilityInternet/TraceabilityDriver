@@ -13,9 +13,9 @@ services:
         - GDST__SolutionName=Traceability Driver
         - GDST__PGLN=urn:gdst:example.org:party:TraceabilityDriver.001
         - GDST__URL=https://localhost:7034/
-        - Authentication__APIKey__HeaderName=X-API-KEY
-        - Authentication__APIKey__ValidKeys__0=test
-        - Authentication__APIKey__ValidKeys__1=test_2
+        # - Authentication__APIKey__HeaderName=X-API-KEY
+        # - Authentication__APIKey__ValidKeys__0=test
+        # - Authentication__APIKey__ValidKeys__1=test_2
         - TD_INTEGRATION_TEST_MAPPING_FILE
         ports:
             - "8080"

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -133,6 +134,12 @@ namespace TraceabilityDriver
                     string headerName = authConfig["HeaderName"] ?? "X-API-Key";
                     options.HeaderName = headerName;
                 });
+            }
+
+            if (!policies.Any())
+            {
+                policies.Add("AlwaysAuthenticated");
+                authenticationSchemeBuilder.AddScheme<AuthenticationSchemeOptions, AlwaysAuthenticatedHandler>("AlwaysAuthenticated", null);
             }
 
             // Set default authentication scheme (optional)
