@@ -13,12 +13,14 @@ services:
         - GDST__SolutionName=Traceability Driver
         - GDST__PGLN=urn:gdst:example.org:party:TraceabilityDriver.001
         - GDST__URL=https://localhost:7034/
+        - TD_INTEGRATION_TEST_MAPPING_FILE
         ports:
             - "8080"
             - "8081"
         volumes:
             - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
             - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+            - ${TD_INTEGRATION_TEST_MAPPING_FILE}:/app/mappings/mapping.json
         networks:
             - dev-network
 

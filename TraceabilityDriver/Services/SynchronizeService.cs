@@ -1,8 +1,5 @@
 using Extensions;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using OpenTraceability.Models.Events;
-using System.Threading;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Services.Connectors;

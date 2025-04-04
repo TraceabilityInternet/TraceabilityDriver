@@ -23,7 +23,7 @@ namespace TraceabilityDriver.Services.Mapping
         public List<TDMappingConfiguration> GetMappings()
         {
             // Get the folder path of the assembly.
-            var assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var assemblyFolder = Directory.GetCurrentDirectory(); // we want to reference the root of the container, which is set in the docker file WORKDIR command.
             if (assemblyFolder == null)
             {
                 _logger.LogError("The executing assembly folder could not be found.");
@@ -31,7 +31,7 @@ namespace TraceabilityDriver.Services.Mapping
             }
 
             // Get the folder path of the mappings.
-            var mappingsFolder = Path.Combine(assemblyFolder, "Mappings");
+            var mappingsFolder = Path.Combine(assemblyFolder, "mappings");
 
             // Create a list of mappings.
             List<TDMappingConfiguration> mappings = new();
@@ -62,13 +62,16 @@ namespace TraceabilityDriver.Services.Mapping
 
 #if DEBUG
             string? filePath = Environment.GetEnvironmentVariable("TD_INTEGRATION_TEST_MAPPING_FILE");
-            if (!string.IsNullOrWhiteSpace(filePath))
+            if (!mappings.Any() && !string.IsNullOrEmpty(filePath))
             {
-                var json = System.IO.File.ReadAllText(filePath);
-                var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
-                    ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
+                if (!string.IsNullOrWhiteSpace(filePath))
+                {
+                    var json = System.IO.File.ReadAllText(filePath);
+                    var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
+                        ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
 
-                mappings.Add(mapping);
+                    mappings.Add(mapping);
+                }
             }
 #endif
 
