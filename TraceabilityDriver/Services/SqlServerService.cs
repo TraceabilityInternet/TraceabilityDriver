@@ -12,19 +12,30 @@ namespace TraceabilityDriver.Services
     public class SqlServerService : IDatabaseService
     {
         private readonly ILogger<SqlServerService> _logger;
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public SqlServerService(ILogger<SqlServerService> logger, ApplicationDbContext context)
+        public SqlServerService(ILogger<SqlServerService> logger, IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _logger = logger;
-            _context = context;
+            _contextFactory = contextFactory;
         }
 
         public async Task InitializeDatabase()
         {
             try
             {
-                await _context.Database.EnsureCreatedAsync();
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                // Check if the database exists
+                if (await context.Database.EnsureCreatedAsync())
+                {
+                    _logger.LogInformation("Database created successfully.");
+                }
+                else
+                {
+                    _logger.LogInformation("Database already exists.");
+                }
+
             }
             catch (Exception ex)
             {
@@ -35,28 +46,30 @@ namespace TraceabilityDriver.Services
 
         public async Task StoreEventsAsync(List<IEvent> events)
         {
-            foreach(IEvent evt in events)
+            using var context = await _contextFactory.CreateDbContextAsync();
+            foreach (IEvent evt in events)
             {
                 EPCISEventDocument doc = new EPCISEventDocument(evt);
 
                 // double check if the event already exists and preserve the id
-                var existingEvent = await _context.EPCISEvents.FirstOrDefaultAsync(x => x.EventId == doc.EventId);
+                var existingEvent = await context.EPCISEvents.FirstOrDefaultAsync(x => x.EventId == doc.EventId);
                 if (existingEvent != null)
                 {
                     doc.Id = existingEvent.Id;
-                    _context.Entry(existingEvent).CurrentValues.SetValues(doc);
+                    context.Entry(existingEvent).CurrentValues.SetValues(doc);
                 }
                 else
                 {
-                    _context.EPCISEvents.Add(doc);
+                    context.EPCISEvents.Add(doc);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task StoreMasterDataAsync(List<IVocabularyElement> masterData)
         {
+            using var context = await _contextFactory.CreateDbContextAsync();
             foreach (var element in masterData)
             {
                 var masterDataDoc = new MasterDataDocument
@@ -67,12 +80,12 @@ namespace TraceabilityDriver.Services
                 };
 
                 // Check if master data with this ID already exists
-                var existingMasterData = await _context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == element.ID);
+                var existingMasterData = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == element.ID);
 
                 if (existingMasterData == null)
                 {
                     // Insert new master data
-                    await _context.AddAsync(masterDataDoc);
+                    await context.AddAsync(masterDataDoc);
                 }
                 else
                 {
@@ -80,22 +93,24 @@ namespace TraceabilityDriver.Services
                     masterDataDoc.Id = existingMasterData.Id;
 
                     // Replace existing master data
-                    _context.Entry(existingMasterData).CurrentValues.SetValues(masterDataDoc);
+                    context.Entry(existingMasterData).CurrentValues.SetValues(masterDataDoc);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task StoreSyncHistory(SyncHistoryItem syncHistory)
         {
-            await _context.SyncHistory.AddAsync(syncHistory);
-            await _context.SaveChangesAsync();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            await context.SyncHistory.AddAsync(syncHistory);
+            await context.SaveChangesAsync();
         }
 
         public async Task<EPCISQueryDocument> QueryEvents(EPCISQueryParameters options)
         {
-            var query = _context.EPCISEvents.AsQueryable();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var query = context.EPCISEvents.AsQueryable();
 
             // Apply query filters
             if (options.query.MATCH_anyEPCClass.Count > 0)
@@ -105,7 +120,7 @@ namespace TraceabilityDriver.Services
                     .Select(epc => epc.Substring(0, epc.IndexOf('*')).ToLower())
                     .ToList();
 
-                query = query.Where(e => 
+                query = query.Where(e =>
                     e.EPCs.Any(epc => prefixes.Any(prefix => epc.StartsWith(prefix))) ||
                     e.EPCs.Any(epc => options.query.MATCH_anyEPCClass.Contains(epc)));
             }
@@ -175,7 +190,8 @@ namespace TraceabilityDriver.Services
 
         public async Task<IVocabularyElement?> QueryMasterData(string identifier)
         {
-            var masterDataDoc = await _context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == identifier);
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var masterDataDoc = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == identifier);
             if (masterDataDoc == null)
             {
                 return null;
@@ -190,16 +206,18 @@ namespace TraceabilityDriver.Services
 
         public async Task<List<SyncHistoryItem>> GetLatestSyncs(int top = 10)
         {
-            var sort = Builders<SyncHistoryItem>.Sort.Descending(s => s.EndTime);
-            return await _context.SyncHistory.OrderByDescending(x => x.EndTime).Take(top).ToListAsync();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.SyncHistory.OrderByDescending(x => x.EndTime).Take(top).ToListAsync();
         }
 
         public async Task<DatabaseReport> GetDatabaseReport()
         {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
             var report = new DatabaseReport();
 
             // Get event counts by bizStep
-            var eventsBizStepGroups = await _context.EPCISEvents.GroupBy(x => x.BizStep).Select(x => new { BizStep = x.Key, Count = x.Count() }).ToListAsync();
+            var eventsBizStepGroups = await context.EPCISEvents.GroupBy(x => x.BizStep).Select(x => new { BizStep = x.Key, Count = x.Count() }).ToListAsync();
 
             foreach (var group in eventsBizStepGroups)
             {
@@ -210,7 +228,7 @@ namespace TraceabilityDriver.Services
             }
 
             // Get master data counts by type
-            var masterDataTypeGroups = await _context.MasterDataDocuments.GroupBy(x => x.ElementType).Select(x => new { Type = x.Key, Count = x.Count() }).ToListAsync();
+            var masterDataTypeGroups = await context.MasterDataDocuments.GroupBy(x => x.ElementType).Select(x => new { Type = x.Key, Count = x.Count() }).ToListAsync();
 
             foreach (var group in masterDataTypeGroups)
             {
@@ -223,7 +241,7 @@ namespace TraceabilityDriver.Services
             }
 
             // Get sync counts by status
-            var syncStatusGroups = await _context.SyncHistory.GroupBy(x => x.Status).Select(x => new { Status = x.Key, Count = x.Count() }).ToListAsync();
+            var syncStatusGroups = await context.SyncHistory.GroupBy(x => x.Status).Select(x => new { Status = x.Key, Count = x.Count() }).ToListAsync();
 
             foreach (var group in syncStatusGroups)
             {
@@ -235,15 +253,17 @@ namespace TraceabilityDriver.Services
 
         public async Task<List<LogModel>> GetLastErrors(int top = 10)
         {
-            return await _context.Logs.OrderByDescending(x => x.Timestamp).Take(top).ToListAsync();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Logs.OrderByDescending(x => x.Timestamp).Take(top).ToListAsync();
         }
 
         public async Task ClearDatabaseAsync()
         {
             try
             {
-                await _context.Database.EnsureDeletedAsync();
-                await _context.Database.EnsureCreatedAsync();
+                using var context = await _contextFactory.CreateDbContextAsync();
+                await context.Database.EnsureDeletedAsync();
+                await context.Database.EnsureCreatedAsync();
             }
             catch (Exception ex)
             {

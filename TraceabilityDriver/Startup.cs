@@ -38,17 +38,19 @@ namespace TraceabilityDriver
             services.AddHttpClient();
 
             // CONFIGURE DB
-            if(Configuration["MongoDB:ConnectionString"] != null)
+            string mongoDbConnectionString = Configuration["MongoDB:ConnectionString"] ?? string.Empty;
+            string sqlServerConnectionString = Configuration["SqlServer:ConnectionString"] ?? string.Empty;
+            if (!string.IsNullOrEmpty(mongoDbConnectionString))
             {
                 services.AddSingleton<IDatabaseService, MongoDBService>();
             }
-            else if(Configuration["SqlServer:ConnectionString"] != null)
+            else if(!string.IsNullOrEmpty(sqlServerConnectionString))
             {
-                services.AddDbContext<ApplicationDbContext>(options =>
+                services.AddDbContextFactory<ApplicationDbContext>(options =>
                 {
-                    options.UseSqlServer(Configuration["SqlServer:ConnectionString"]);
+                    options.UseSqlServer(sqlServerConnectionString);
                 });
-                services.AddSingleton<IDatabaseService, SqlServerService>();
+                services.AddScoped<IDatabaseService, SqlServerService>();
             }
             else
             {
@@ -56,8 +58,8 @@ namespace TraceabilityDriver
             }
 
             // SERVICES
-            services.AddSingleton<ISynchronizeService, SynchronizeService>();
-            services.AddSingleton<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
+            services.AddScoped<ISynchronizeService, SynchronizeService>();
+            services.AddScoped<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
             services.AddHostedService<HostedSyncService>();
 
             // OPTIONS

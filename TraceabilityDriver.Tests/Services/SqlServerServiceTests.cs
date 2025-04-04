@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenTraceability.Mappers;
@@ -43,15 +44,12 @@ namespace TraceabilityDriver.Tests.Services
 
             // setup context
             string connectionString = testConfig["SqlServer:ConnectionString"] ?? throw new Exception("SqlServer connection string not configured");
-            
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlServer(connectionString, x => x.EnableRetryOnFailure()).Options;
-            ApplicationDbContext context = new ApplicationDbContext(options);
-            
+                .UseSqlServer(connectionString, x => x.EnableRetryOnFailure())
+                .Options;
+            IDbContextFactory<ApplicationDbContext> contextFactory = new PooledDbContextFactory<ApplicationDbContext>(options);
             ILogger<SqlServerService> logger = new LoggerFactory().CreateLogger<SqlServerService>();
-
-            // Create service with test configuration
-            _dbService = new SqlServerService(logger, context);
+            _dbService = new SqlServerService(logger, contextFactory);
 
             // Clear out the data.
             await _dbService.ClearDatabaseAsync();
