@@ -61,9 +61,9 @@ namespace TraceabilityDriver.Services.Mapping
             }
 
 #if DEBUG
-            if (!mappings.Any())
+            string? filePath = Environment.GetEnvironmentVariable("TD_INTEGRATION_TEST_MAPPING_FILE");
+            if (!mappings.Any() && !string.IsNullOrEmpty(filePath))
             {
-                string? filePath = Environment.GetEnvironmentVariable("TD_INTEGRATION_TEST_MAPPING_FILE");
                 if (!string.IsNullOrWhiteSpace(filePath))
                 {
                     var json = System.IO.File.ReadAllText(filePath);
