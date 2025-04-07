@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -93,7 +94,7 @@ namespace TraceabilityDriver
             var authenticationSchemeBuilder = services.AddAuthentication();
             List<string> policies = new();
 
-            if (Configuration.GetSection("Authentication:JWT") != null)
+            if (Configuration.GetSection("Authentication:JWT").Exists())
             {
                 policies.Add("Bearer");
 
@@ -112,7 +113,9 @@ namespace TraceabilityDriver
                         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                         {
                             ValidateIssuer = true,     // Ensure the issuer matches the Authority
+                            ValidIssuer = authConfig["Authority"], // Set the valid issuer
                             ValidateAudience = true,   // Ensure the audience matches your API
+                            ValidAudience = authConfig["Audience"], // Set the valid audience
                             ValidateLifetime = true,   // Check token expiration
                             ValidateIssuerSigningKey = true, // Validate the signature
                             ClockSkew = TimeSpan.FromMinutes(5) // Allow some clock skew
@@ -121,7 +124,7 @@ namespace TraceabilityDriver
             }
 
             // API KEY AUTHENTICATION
-            if (Configuration.GetSection("Authentication:APIKey") != null)
+            if (Configuration.GetSection("Authentication:APIKey").Exists())
             {
                 services.AddSingleton<IApiKeyStore, InMemoryApiKeyStore>();
 
@@ -130,8 +133,15 @@ namespace TraceabilityDriver
                 authenticationSchemeBuilder.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", options =>
                 {
                     var authConfig = Configuration.GetSection("Authentication:APIKey");
-                    options.HeaderName = authConfig["HeaderName"] ?? "X-API-Key";
+                    string headerName = authConfig["HeaderName"] ?? "X-API-Key";
+                    options.HeaderName = headerName;
                 });
+            }
+
+            if (!policies.Any())
+            {
+                policies.Add("AlwaysAuthenticated");
+                authenticationSchemeBuilder.AddScheme<AuthenticationSchemeOptions, AlwaysAuthenticatedHandler>("AlwaysAuthenticated", null);
             }
 
             // Set default authentication scheme (optional)

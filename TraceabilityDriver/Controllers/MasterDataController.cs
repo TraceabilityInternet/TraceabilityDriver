@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using OpenTraceability.Mappers;
@@ -5,6 +6,7 @@ using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Controllers
 {
+    [Authorize]
     [Route("masterdata")]
     public class MasterDataController : ControllerBase
     {

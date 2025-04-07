@@ -1,22 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
-using OpenTraceability.Models.Identifiers;
-using OpenTraceability.Models.MasterData;
 using OpenTraceability.Queries;
-using OpenTraceability.Utility;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Controllers
 {
+    [Authorize]
     [Route("epcis")]
     public class EPCISController : ControllerBase
     {
