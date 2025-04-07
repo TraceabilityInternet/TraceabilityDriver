@@ -113,7 +113,9 @@ namespace TraceabilityDriver
                         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                         {
                             ValidateIssuer = true,     // Ensure the issuer matches the Authority
+                            ValidIssuer = authConfig["Authority"], // Set the valid issuer
                             ValidateAudience = true,   // Ensure the audience matches your API
+                            ValidAudience = authConfig["Audience"], // Set the valid audience
                             ValidateLifetime = true,   // Check token expiration
                             ValidateIssuerSigningKey = true, // Validate the signature
                             ClockSkew = TimeSpan.FromMinutes(5) // Allow some clock skew
