@@ -162,7 +162,19 @@ namespace TraceabilityDriver
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            // docker containers are often deployed behind a reverse proxy that handles https communication.
+            // In those cases, the app in the container itself does not need to enforce https.
+            // However, if someone needs to configure the app to use https, we want them to be able to do so.
+            // Configuring the app to use https redirection would require them to mount the cert to the container in their docker compose file,
+            // configure the app to expose an https port, and set the app to use https redirection here.
+            //        -ASPNETCORE_URLS = https://+:443;http://+:80
+            //        -ASPNETCORE_Kestrel__Certificates__Default__Password=<certificate-password>
+            //        -ASPNETCORE_Kestrel__Certificates__Default__Path =/<path-to-your-certificate-file>/aspnetapp.pfx
+            if (!"TRUE".Equals(Environment.GetEnvironmentVariable("DISABLE_HTTPS_REDIRECTION"), StringComparison.OrdinalIgnoreCase))
+            {
+                app.UseHttpsRedirection();
+            }
+
             app.UseSerilogRequestLogging(); // Add HTTP request logging
 
             app.UseRouting();
