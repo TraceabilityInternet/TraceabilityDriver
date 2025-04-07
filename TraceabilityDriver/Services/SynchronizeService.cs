@@ -16,7 +16,7 @@ public class SynchronizeService : ISynchronizeService
     private readonly IEventsMergerService _eventsMergerService;
     private readonly IEventsConverterService _eventsConverterService;
     private readonly IMappingSource _mappingSource;
-    private readonly IDatabaseService _mongoDBService;
+    private readonly IDatabaseService _dbService;
     private readonly ISynchronizationContext _syncContext;
 
     public SynchronizeService(
@@ -24,7 +24,7 @@ public class SynchronizeService : ISynchronizeService
         ITDConnectorFactory connectorFactory,
         IEventsMergerService eventsMergerService,
         IEventsConverterService eventsConverterService,
-        IDatabaseService mongoDBService,
+        IDatabaseService dbService,
         IMappingSource mappingSource,
         ISynchronizationContext syncContext)
     {
@@ -32,7 +32,7 @@ public class SynchronizeService : ISynchronizeService
         _connectorFactory = connectorFactory;
         _eventsMergerService = eventsMergerService;
         _eventsConverterService = eventsConverterService;
-        _mongoDBService = mongoDBService;
+        _dbService = dbService;
         _logger.LogDebug("SynchronizeService initialized");
         _mappingSource = mappingSource;
         _syncContext = syncContext;
@@ -54,7 +54,7 @@ public class SynchronizeService : ISynchronizeService
         try
         {
             // Load the previous sync item.
-            _syncContext.PreviousSync = (await _mongoDBService.GetLatestSyncs(1)).FirstOrDefault();
+            _syncContext.PreviousSync = (await _dbService.GetLatestSyncs(1)).FirstOrDefault();
 
             // Read the mapping files.
             foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
@@ -101,7 +101,7 @@ public class SynchronizeService : ISynchronizeService
         finally
         {
             // Store the sync history item in the database regardless of success or failure
-            await _mongoDBService.StoreSyncHistory(_syncContext.CurrentSync);
+            await _dbService.StoreSyncHistory(_syncContext.CurrentSync);
             _logger.LogInformation("Sync history saved to database");
 
             _logger.LogDebug("Synchronization process completed");
@@ -204,7 +204,7 @@ public class SynchronizeService : ISynchronizeService
 
                 foreach (var batch in doc.Events.Batch(100))
                 {
-                    await _mongoDBService.StoreEventsAsync(batch);
+                    await _dbService.StoreEventsAsync(batch);
 
                     _syncContext.CurrentSync.ItemsProcessed += batch.Count();
                     _syncContext.Updated();
@@ -218,7 +218,7 @@ public class SynchronizeService : ISynchronizeService
 
                 foreach (var batch in doc.MasterData.Batch(100))
                 {
-                    await _mongoDBService.StoreMasterDataAsync(batch);
+                    await _dbService.StoreMasterDataAsync(batch);
 
                     _syncContext.CurrentSync.ItemsProcessed += batch.Count();
                     _syncContext.Updated();

@@ -77,7 +77,7 @@ namespace TraceabilityDriver.Services.Mapping
                         {
                             var json = System.IO.File.ReadAllText(mappingFile);
                             var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
-                                ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
+                                ?? throw new InvalidOperationException($"The mapping file {mappingFile} could not be deserialized.");
                             mappings.Add(mapping);
                         }
                     }
