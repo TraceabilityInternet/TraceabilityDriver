@@ -1,5 +1,6 @@
 using Serilog;
 using TraceabilityDriver;
+using TraceabilityDriver.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,14 @@ startup.Configure(app, app.Environment);
 
 try
 {
+    Log.Information("Initializing GDST Cache database...");
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbService = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
+        await dbService.InitializeDatabase();
+    }
+    Log.Information("GDST Cache database initialized successfully.");
+
     Log.Information("Starting TraceabilityDriver application");
     app.Run();
 }
