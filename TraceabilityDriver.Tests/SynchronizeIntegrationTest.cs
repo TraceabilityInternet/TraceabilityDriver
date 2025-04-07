@@ -2,11 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Connectors;
@@ -40,16 +35,26 @@ namespace TraceabilityDriver.Tests
             // does not exist, it should skip the tests.
             _mockMappingSource.Setup(x => x.GetMappings()).Returns(() =>
             {
-                string? filePath = Environment.GetEnvironmentVariable("TD_INTEGRATION_TEST_MAPPING_FILE");
+                var mappings = new List<TDMappingConfiguration>();
+                string? filePath = Environment.GetEnvironmentVariable("TD_MAPPINGS_FOLDER");
                 if (string.IsNullOrWhiteSpace(filePath))
                 {
-                    Assert.Ignore("The environment variable TD_INTEGRATION_TEST_MAPPING_FILE is not set.");
+                    Assert.Ignore("The environment variable TD_MAPPINGS_FOLDER is not set.");
                 }
+                Directory.EnumerateFiles(filePath, "*.json").ToList().ForEach(f =>
+                {
+                    if (!File.Exists(f))
+                    {
+                        Assert.Ignore($"The mapping file {f} does not exist.");
+                    }
 
-                var json = System.IO.File.ReadAllText(filePath);
-                var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
-                    ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
-                return new List<TDMappingConfiguration> { mapping };
+                    var json = System.IO.File.ReadAllText(f);
+                    var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
+                        ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
+                    mappings.Add(mapping);
+                });
+
+                return mappings;
             });
 
             // Create IConfiguration from appsettings.Tests.json

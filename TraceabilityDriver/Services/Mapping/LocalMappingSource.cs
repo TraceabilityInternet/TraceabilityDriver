@@ -23,7 +23,7 @@ namespace TraceabilityDriver.Services.Mapping
         public List<TDMappingConfiguration> GetMappings()
         {
             // Get the folder path of the assembly.
-            var assemblyFolder = Directory.GetCurrentDirectory(); // we want to reference the root of the container, which is set in the docker file WORKDIR command.
+            var assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             if (assemblyFolder == null)
             {
                 _logger.LogError("The executing assembly folder could not be found.");
@@ -31,7 +31,7 @@ namespace TraceabilityDriver.Services.Mapping
             }
 
             // Get the folder path of the mappings.
-            var mappingsFolder = Path.Combine(assemblyFolder, "mappings");
+            var mappingsFolder = Path.Combine(assemblyFolder, "Mappings");
 
             // Create a list of mappings.
             List<TDMappingConfiguration> mappings = new();
@@ -61,20 +61,30 @@ namespace TraceabilityDriver.Services.Mapping
             }
 
 #if DEBUG
-            string? filePath = Environment.GetEnvironmentVariable("TD_INTEGRATION_TEST_MAPPING_FILE");
+            string? filePath = Environment.GetEnvironmentVariable("TD_MAPPINGS_FOLDER");
             if (!mappings.Any() && !string.IsNullOrEmpty(filePath))
             {
                 if (!string.IsNullOrWhiteSpace(filePath))
                 {
-                    var json = System.IO.File.ReadAllText(filePath);
-                    var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
-                        ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
+                    // Scan the directory.
+                    if (Directory.Exists(filePath))
+                    {
+                        // Look for all .JSON files in the mappings folder.
+                        var mappingFiles = Directory.GetFiles(mappingsFolder, "*.json");
 
-                    mappings.Add(mapping);
+                        // Load the mappings.
+                        foreach(var mappingFile in mappingFiles)
+                        {
+                            var json = System.IO.File.ReadAllText(mappingFile);
+                            var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
+                                ?? throw new InvalidOperationException($"The mapping file {filePath} could not be deserialized.");
+                            mappings.Add(mapping);
+                        }
+                    }
+                        
                 }
             }
 #endif
-
             return mappings;
         }
     }

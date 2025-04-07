@@ -16,14 +16,14 @@ services:
         # - Authentication__APIKey__HeaderName=X-API-KEY
         # - Authentication__APIKey__ValidKeys__0=test
         # - Authentication__APIKey__ValidKeys__1=test_2
-        - TD_INTEGRATION_TEST_MAPPING_FILE
+        - TD_MAPPINGS_FOLDER
         ports:
             - "5444:8080"
             - "5445:8081"
         volumes:
             - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
             - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
-            - ${TD_INTEGRATION_TEST_MAPPING_FILE}:/app/mappings/mapping.json
+            - ${TD_MAPPINGS_FOLDER}:/app/bin/Debug/net8.0/Mappings
         networks:
             - dev-network
 
