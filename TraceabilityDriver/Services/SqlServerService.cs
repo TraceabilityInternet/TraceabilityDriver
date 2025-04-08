@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Extensions;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
@@ -46,25 +47,33 @@ namespace TraceabilityDriver.Services
 
         public async Task StoreEventsAsync(List<IEvent> events)
         {
-            using var context = await _contextFactory.CreateDbContextAsync();
-            foreach (IEvent evt in events)
+            List<List<IEvent>> batches = events.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
+            await Parallel.ForEachAsync(batches, async (batch, ct) =>
             {
-                EPCISEventDocument doc = new EPCISEventDocument(evt);
+                using var context = await _contextFactory.CreateDbContextAsync();
 
-                // double check if the event already exists and preserve the id
-                var existingEvent = await context.EPCISEvents.FirstOrDefaultAsync(x => x.EventId == doc.EventId);
-                if (existingEvent != null)
-                {
-                    doc.Id = existingEvent.Id;
-                    context.Entry(existingEvent).CurrentValues.SetValues(doc);
-                }
-                else
-                {
-                    context.EPCISEvents.Add(doc);
-                }
-            }
+                // rather than check for events to update in the loop below,
+                // we want to execute one large query to get all the events that will be updated rather than added
+                List<string> storingEventIds = batch.Select(x => x.EventID.ToString()).ToList();
+                var existingEvents = await context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId)).ToDictionaryAsync(x => x.EventId, y => y);
 
-            await context.SaveChangesAsync();
+                foreach (IEvent evt in batch)
+                {
+                    EPCISEventDocument doc = new EPCISEventDocument(evt);
+                    if (existingEvents.TryGetValue(evt.EventID.ToString(), out EPCISEventDocument? existingEvent))
+                    {
+                        // Preserve the _id field from the existing document
+                        doc.Id = existingEvent.Id;
+                        context.Entry(existingEvent).CurrentValues.SetValues(doc);
+                    }
+                    else
+                    {
+                        context.EPCISEvents.Add(doc);
+                    }
+                }
+
+                await context.SaveChangesAsync();
+            });
         }
 
         public async Task StoreMasterDataAsync(List<IVocabularyElement> masterData)

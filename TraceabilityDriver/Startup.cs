@@ -49,7 +49,10 @@ namespace TraceabilityDriver
             {
                 services.AddDbContextFactory<ApplicationDbContext>(options =>
                 {
-                    options.UseSqlServer(sqlServerConnectionString, options => options.EnableRetryOnFailure());
+                    options.UseSqlServer(sqlServerConnectionString, options =>
+                    {
+                        options.EnableRetryOnFailure();
+                    });
                 });
                 services.AddScoped<IDatabaseService, SqlServerService>();
             }
