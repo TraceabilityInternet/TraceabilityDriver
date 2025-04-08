@@ -8,3 +8,4 @@
 **/Logs/**
 .env
 **/mappings/**
+/TraceabilityDriver/appsettings.Development.json
