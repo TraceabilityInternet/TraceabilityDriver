@@ -1,25 +1,27 @@
 ![](./img/logo.jpg)
 
-The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. It is a standalone module that can be installed into an existing software system to expose traceability data using the GDST module.
+The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. 
+It is a standalone module that can be installed into an existing software system to expose traceability data using the GDST module.
 
 # How does it work?
 The Traceability Driver works by mapping data in an existing database into GDST events and master data.
-The GDST events and master data are then saved into a seperate database called the GDST Data Cachce.
-The GDST Cache Data can then be queried using the GDST Communication Protocol.
+The GDST events and master data are then saved into a seperate database called the GDST Data Cache.
+The GDST Data Cache can then be queried using the GDST Communication Protocol.
 
 ![](./img/screenshot_diagram01.png)
 
 ## GDST Data Cache
 The **GDST Data Cache** is where the traceability is stored.
 It serves as the data source for API queries. 
-By default, the GDST Data Cache is stored in a MongoDB, but it can be configured to use other databases such as SQL Server, MySQL, or PostgreSQL.
+By default, the GDST Data Cache built using MongoDB, but it can be configured to use other databases such as SQL Server, MySQL, or PostgreSQL.
 
 > The Traceability Drvier is designed to be able to be extended to use other databases as the GDST Data Cache by re-implementing the `IDatabaseService` interface.
 
 ## Synchronization
-Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection and is executed every hour. 
-The synchronization process is done by using the following steps:
+Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection. 
+Every minute, the Traceability Driver will sync up to 10,000 records from the database. Memory variables are used to keep track of where the last sync left off.
 
+The synchronization process involves the  following steps:
 - Upon start up, the synchronization will execute automatically.
 - The synchronization will load all mappings found in the local `Mappings` folder of the executing directory.
 - The synchronization will execute each mapping in the order that they are found in the `Mappings` folder.
@@ -37,7 +39,7 @@ The GDST capability test can also be executed from the dashboard.
 
 ![](./img/screenshot_dashboard01.png)
 
-The password for the dashboard is configured in the `appsettings.json`. The default password is `changeme`.
+The password for the dashboard is configured in the `appsettings.json` or an environment variable. The default password is `changeme`.
 
 ```json
 "Authentication": {
@@ -45,7 +47,7 @@ The password for the dashboard is configured in the `appsettings.json`. The defa
 }
 ```
 
-> This password only grants access to the dashboard and nothing else.
+> This password only grants access to the dashboard and nothing else. Authentication for API access is configured separately.
 
 **Login Page**
 ![](./img/screenshot_login01.png)
@@ -72,27 +74,15 @@ The driver can be installed as a release or docker image.
 The base image of the Traceability Driver does not contain any mappings.
 To configure the driver for your environment, you will need to create a docker file that uses the 
 Traceability Driver base image and copies your mapping files to the app/Mappings folder in the container.
+
 ```dockerfile
 # Use the public image as the base
 FROM pandojohn/traceability-driver:latest
 
-# Copy the user's configuration file into the container
+# Copy your mapping folder into the container
 COPY relative/path/to/your/mappings/folder/ /app/Mappings/
 
 # The entrypoint/command from the base image will run automatically unless overridden
-```
-
-
-The Traceability Driver is configured using environment variables.
-These environment variables can be configured within a docker compose file, or in the cloud environment 
-where the container will be deployed.
-
-When testing locally, a docker compose file is recommended.
-When using a docker compose file, the TD_MAPPINGS_FOLDER environment variable must be set to the location of the mappings folder on the host machine. 
-A corresponding mount point must be set in the docker compose file to mount the mappings folder into the container.
-```yaml
-volumes:
-    - ${TD_MAPPINGS_FOLDER}:/app/Mappings
 ```
 
 **The docker installation of the Traceability Driver is intended to be deployed behind a reverse proxy that 
@@ -102,6 +92,30 @@ handles SSL and HTTPS redirection.** Otherwise, a certificate for the Traceabili
 - ASPNETCORE_URLS = https://+:443;http://+:80
 - ASPNETCORE_Kestrel__Certificates__Default__Password=<certificate-password>
 - ASPNETCORE_Kestrel__Certificates__Default__Path =/<path-to-your-certificate-file>/aspnetapp.pfx
+```
+
+## Release Installation
+Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
+
+1. Download the latest release of the Traceability Driver.
+1. Install the Traceability Driver on a Windows or Linux server.
+1. Configure the Traceability Driver by editing the `appsettings.json` file.
+1. Create the mappings for the events that are being extracted from the database and place those in the `Mappings` folder.
+1. Start the Traceability Driver and let it synchronize the data.
+1. Navigate to the root URL of the Traceability Driver to see information about the current sync, previous syncs, and data that has been stored in the `GDST Data Cache`.
+
+# Configuration
+The Traceability Driver is configured using environment variables.
+These environment variables can be configured within a docker compose file for local development, or in a cloud environment where the container is deployed.
+
+## Local Development
+A docker compose file is recommended for local development.
+
+When using a docker compose file, the TD_MAPPINGS_FOLDER environment variable must be set to the location of the mappings folder on the host machine. 
+A corresponding mount point must be set in the docker compose file to mount the mappings folder into the container.
+```yaml
+volumes:
+    - ${TD_MAPPINGS_FOLDER}:/app/Mappings
 ```
 
 ### Docker Compose File Examples
@@ -186,33 +200,22 @@ services:
         
 ```
 
-## Release Installation
-Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
-
-1. Download the latest release of the Traceability Driver.
-1. Install the Traceability Driver on a Windows or Linux server.
-1. Configure the Traceability Driver by editing the `appsettings.json` file.
-1. Create the mappings for the events that are being extracted from the database and place those in the `Mappings` folder.
-1. Start the Traceability Driver and let it synchronize the data.
-1. Navigate to the root URL of the Traceability Driver to see information about the current sync, previous syncs, and data that has been stored in the `GDST Data Cache`.
-
-# Configuration
-The Traceability Driver targets individual events from the database and maps them into the Common Event Model which is a normalized into a common data model.
-
-## URL
-The first thing to configure is to tell the Traceability Driver where to host the API. This is done by configuring the `URL` in the `appsettings.json` file.
+## Configuration Variables
+### URL
+Defines the URL where the API will be hosted. This must be configured correctly or the GDST Capability Test will fail.
 
 **Example URL Configuration**
 ```json
 "URL": "http://localhost:5000"
 ```
 
-## GDST Capability Test
-It is possible to execute the capability test from the Traceability Driver portal. In order to do this, you must configure the `GDST Capability Test` in the `appsettings.json` file. With the following fields:
+### GDST Capability Test
+The Traceability Driver supports executing the capability test from the Traceability Driver portal. 
+In order to do this, you must configure the `GDST Capability Test` section with the following fields:
 
 - **Url** - The URL of the GDST Capability Test.
-- **ApiKey** - The API key that is used to authenticate the API.
-- **SolutionName** - The name of the solution that is being tested.
+- **ApiKey** - The API key assigned to you as a solution provider by the capability tool.
+- **SolutionName** - The name of the solution that is being tested. This must match the name of the solution in the capability tool exactly.
 - **PGLN** - The PGLN of the solution that is being tested.
 
 **Example GDST Capability Test Configuration**
@@ -229,7 +232,7 @@ It is possible to execute the capability test from the Traceability Driver porta
 
 > You need to reach out to [info@thegdst.org](info@thegdst.org) to get your credentials for executing the capability test.
 
-After configuring this, it is possible to execute the capability test from inside the Traceability Driver portal:
+After configuration, follow these steps to execute the capability test from inside the Traceability Driver portal:
 
 **Start Capability Test**
 ![](./img/screenshot_captest_start01.png)
@@ -243,10 +246,13 @@ After configuring this, it is possible to execute the capability test from insid
 **Capability Test Success**
 ![](./img/screenshot_captest_success01.png)
 
-> The Traceability Driver has the capability to execute the capability test from the portal. This is useful for testing that the Traceability Driver is interoperable with other GDST capable systems. However, this does not indicate that traceability data is being synchronized correctly or that the traceability data is complete with all the GDST CTEs and KDEs.
+> The Traceability Driver has the capability to execute the capability test from the portal. 
+This is useful for testing that the Traceability Driver is interoperable with other GDST capable systems. 
+However, this does not indicate that traceability data is being synchronized correctly or that the traceability data is complete with all the GDST CTEs and KDEs.
 
-## Identifiers
-The Traceability Driver is capable of automatically generating traceability identifiers such as the EPC, GTIN, PGLN, and/or GLN. A critical part of generating these identifiers has to do with the domain that is generating them as is outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).
+### Identifiers
+The Traceability Driver is capable of automatically generating traceability identifiers such as the EPC, GTIN, PGLN, and/or GLN. 
+A critical part of generating these identifiers has to do with the domain that is generating them as is outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).
 
 In order to configure this, you need to define the `Traceability:IdentifierDomain` in the `appsettings.json` file. The `Traceability:IdentifierDomain` are used to generate the identifiers for the traceability data.
 
@@ -258,13 +264,13 @@ In order to configure this, you need to define the `Traceability:IdentifierDomai
 
 The domain should be the domain site of the organization that is generating the traceability data. This domain is used to generate the URN for the traceability data.
 
-## Authorization
+### Authorization
 The Traceability Driver allows for three modes of authentication:
 - **OAuth (JWT) Authentication** - Allows for configuring OAuth authentication to the API using self-signed tokens.
 - **API Key Authentication** - Allows for configuring API key authentication to the API which is required by GDST 1.2 communication protocol.
 - **No Authentication** - If neither an API Key or OAuth authentication is present in the configuration, then no authentication is required to access the API.
 
-### OAuth (JWT) Authentication
+#### OAuth (JWT) Authentication
 The OAuth (JWT) authentication is used to authenticate the API using self-signed tokens. The authentication is configured in the `appsettings.json` file of the installation.
 
 - **Token Issuer** - The token issuer is the OAuth provider that is used to authenticate the API.
@@ -284,7 +290,7 @@ The OAuth (JWT) authentication is used to authenticate the API using self-signed
   },
 ```
 
-### API Key Authentication
+#### API Key Authentication
 API Key authentication is used to grant access to the controllers and the API keys are defined in the `appsettings.json` file.
 
 **Example API Key Configuration**
@@ -301,7 +307,15 @@ API Key authentication is used to grant access to the controllers and the API ke
 ```
 
 ## Mappings
-A mapping is created for each event type that is being extracted, transformed, and loaded into the GDST module. The mapping is defined by using the following fields:
+The Traceability Driver targets individual events from the database and maps them into the Common Event Model.
+Mapping files are used to define how to connect to the source database, how to query for the relevant data, and how to map the data to GDST CTEs and KDEs.
+
+Mappings are defined in the `Mappings` folder of the installation.
+> The base image of the traceability driver does not have any mappings. 
+You must either build a new docker image from the base image and copy the mappings to the `Mappings` folder of the base image or otherwise mount your mappings folder to the `Mappings` folder of the base image.
+
+Each event type that is being extracted, transformed, and loaded into the GDST module should have its own mapping file.
+The mapping is defined by using the following fields:
 
 - `Id` - A unique identifier for the mapping.
 - `Selectors` - An array of selectors that are used to select the data from the database.
