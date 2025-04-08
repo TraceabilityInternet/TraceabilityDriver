@@ -99,6 +99,8 @@ It is possible to execute the capability test from the Traceability Driver porta
 },
 ```
 
+> You need to reach out to [info@thegdst.org](info@thegdst.org) to get your credentials for executing the capability test.
+
 After configuring this, it is possible to execute the capability test from inside the Traceability Driver portal:
 
 **Start Capability Test**

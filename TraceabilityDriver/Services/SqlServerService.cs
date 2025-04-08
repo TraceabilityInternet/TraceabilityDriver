@@ -7,6 +7,7 @@ using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.Sql;
 
 namespace TraceabilityDriver.Services
 {
@@ -59,11 +60,11 @@ namespace TraceabilityDriver.Services
 
                 foreach (IEvent evt in batch)
                 {
-                    EPCISEventDocument doc = new EPCISEventDocument(evt);
-                    if (existingEvents.TryGetValue(evt.EventID.ToString(), out EPCISEventDocument? existingEvent))
+                    EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
+                    if (existingEvents.TryGetValue(evt.EventID.ToString(), out EPCISEventSqlDocument? existingEvent))
                     {
                         // Preserve the _id field from the existing document
-                        doc.Id = existingEvent.Id;
+                        doc.ID = existingEvent.ID;
                         context.Entry(existingEvent).CurrentValues.SetValues(doc);
                     }
                     else
@@ -71,6 +72,18 @@ namespace TraceabilityDriver.Services
                         context.EPCISEvents.Add(doc);
                     }
                 }
+
+                // Now save the search model.
+                List<EventSearchSqlDocument> searchDocuments = EventSearchSqlDocument.CreateSearchDocuments(batch);
+
+                // Batch save the search documents by first deleting all existing index documents 
+                // for the given event IDs and then adding the new ones.
+                var existingSearchDocuments = await context.EventSearchDocuments
+                    .Where(x => storingEventIds.Contains(x.EventId))
+                    .ToListAsync();
+
+                context.EventSearchDocuments.RemoveRange(existingSearchDocuments);
+                context.EventSearchDocuments.AddRange(searchDocuments);
 
                 await context.SaveChangesAsync();
             });
@@ -81,7 +94,7 @@ namespace TraceabilityDriver.Services
             using var context = await _contextFactory.CreateDbContextAsync();
             foreach (var element in masterData)
             {
-                var masterDataDoc = new MasterDataDocument
+                var masterDataDoc = new MasterDataSqlDocument
                 {
                     ElementId = element.ID,
                     ElementType = element.GetType().AssemblyQualifiedName ?? "",
@@ -99,7 +112,7 @@ namespace TraceabilityDriver.Services
                 else
                 {
                     // Preserve the _id field from the existing document
-                    masterDataDoc.Id = existingMasterData.Id;
+                    masterDataDoc.ID = existingMasterData.ID;
 
                     // Replace existing master data
                     context.Entry(existingMasterData).CurrentValues.SetValues(masterDataDoc);
@@ -119,9 +132,11 @@ namespace TraceabilityDriver.Services
         public async Task<EPCISQueryDocument> QueryEvents(EPCISQueryParameters options)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
-            var query = context.EPCISEvents.AsQueryable();
 
-            // Apply query filters
+            // First, query the search documents to find matching event IDs
+            var searchQuery = context.EventSearchDocuments.AsQueryable();
+
+            // Apply query filters to the search documents
             if (options.query.MATCH_anyEPCClass.Count > 0)
             {
                 List<string> prefixes = options.query.MATCH_anyEPCClass
@@ -129,64 +144,74 @@ namespace TraceabilityDriver.Services
                     .Select(epc => epc.Substring(0, epc.IndexOf('*')).ToLower())
                     .ToList();
 
-                query = query.Where(e =>
-                    e.EPCs.Any(epc => prefixes.Any(prefix => epc.StartsWith(prefix))) ||
-                    e.EPCs.Any(epc => options.query.MATCH_anyEPCClass.Contains(epc)));
+                searchQuery = searchQuery.Where(e =>
+                    prefixes.Any(prefix => e.EPC.StartsWith(prefix)) ||
+                    options.query.MATCH_anyEPCClass.Contains(e.EPC));
             }
 
             if (options.query.MATCH_anyEPC.Count > 0)
             {
-                query = query.Where(e => e.EPCs.Any(epc => options.query.MATCH_anyEPC.Contains(epc.ToLower())));
+                searchQuery = searchQuery.Where(e => options.query.MATCH_anyEPC.Contains(e.EPC.ToLower()));
             }
 
             // Add time range filters
             if (options.query.GE_eventTime.HasValue)
             {
-                query = query.Where(e => e.EventTime >= options.query.GE_eventTime.Value);
+                searchQuery = searchQuery.Where(e => e.EventTime >= options.query.GE_eventTime.Value);
             }
 
             if (options.query.LE_eventTime.HasValue)
             {
-                query = query.Where(e => e.EventTime <= options.query.LE_eventTime.Value);
+                searchQuery = searchQuery.Where(e => e.EventTime <= options.query.LE_eventTime.Value);
             }
 
             // Add record time range filters
             if (options.query.GE_recordTime.HasValue)
             {
-                query = query.Where(e => e.RecordTime >= options.query.GE_recordTime.Value);
+                searchQuery = searchQuery.Where(e => e.RecordTime >= options.query.GE_recordTime.Value);
             }
 
             if (options.query.LE_recordTime.HasValue)
             {
-                query = query.Where(e => e.RecordTime <= options.query.LE_recordTime.Value);
+                searchQuery = searchQuery.Where(e => e.RecordTime <= options.query.LE_recordTime.Value);
             }
 
             // Add bizStep filters
             if (options.query.EQ_bizStep?.Count > 0)
             {
-                query = query.Where(e => options.query.EQ_bizStep.Contains(e.BizStep));
+                searchQuery = searchQuery.Where(e => options.query.EQ_bizStep.Contains(e.BizStep));
             }
 
             // Add action filters
             if (options.query.EQ_action?.Count > 0)
             {
-                query = query.Where(e => options.query.EQ_action.Contains(e.Action));
+                searchQuery = searchQuery.Where(e => options.query.EQ_action.Contains(e.Action));
             }
 
             // Add location filters
             if (options.query.EQ_bizLocation.Count > 0)
             {
                 List<string> bizLocations = options.query.EQ_bizLocation.Select(loc => loc.ToString().ToLower()).ToList();
-                query = query.Where(e => e.LocationGLNs.Any(loc => bizLocations.Contains(loc)));
+                searchQuery = searchQuery.Where(e => bizLocations.Contains(e.LocationGLN));
             }
 
-            // Execute query
-            var events = await query.ToListAsync();
+            // Get unique event IDs from the search results
+            var matchingEventIds = await searchQuery
+                .Select(e => e.EventId)
+                .Distinct()
+                .ToListAsync();
+
+            // Now query the actual EPCIS events using the event IDs from search
+            var events = await context.EPCISEvents
+                .Where(e => matchingEventIds.Contains(e.EventId))
+                .ToListAsync();
 
             // Convert results back to EPCIS events
-            var doc = new EPCISQueryDocument();
-            doc.EPCISVersion = EPCISVersion.V2;
-            doc.Events = new List<IEvent>();
+            var doc = new EPCISQueryDocument
+            {
+                EPCISVersion = EPCISVersion.V2,
+                Events = new List<IEvent>()
+            };
 
             foreach (var evt in events)
             {
