@@ -71,13 +71,13 @@ The driver can be installed as a release or docker image.
 ## Docker Installation
 The base image of the Traceability Driver does not contain any mappings.
 To configure the driver for your environment, you will need to create a docker file that uses the 
-Traceability Driver base image and copies your configuration file to the app/Mappings folder in the container.
+Traceability Driver base image and copies your mapping files to the app/Mappings folder in the container.
 ```dockerfile
 # Use the public image as the base
 FROM pandojohn/traceability-driver:latest
 
 # Copy the user's configuration file into the container
-COPY absolute/path/to/your/mappings/folder/ /app/Mappings/
+COPY relative/path/to/your/mappings/folder/ /app/Mappings/
 
 # The entrypoint/command from the base image will run automatically unless overridden
 ```
@@ -87,7 +87,7 @@ The Traceability Driver is configured using environment variables.
 These environment variables can be configured within a docker compose file, or in the cloud environment 
 where the container will be deployed.
 
-When testing locally, a docker compose file is recommended to be used.
+When testing locally, a docker compose file is recommended.
 When using a docker compose file, the TD_MAPPINGS_FOLDER environment variable must be set to the location of the mappings folder on the host machine. 
 A corresponding mount point must be set in the docker compose file to mount the mappings folder into the container.
 ```yaml
@@ -186,7 +186,7 @@ services:
         
 ```
 
-## Release Instllation
+## Release Installation
 Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
 
 1. Download the latest release of the Traceability Driver.
