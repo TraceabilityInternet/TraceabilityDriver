@@ -1,5 +1,4 @@
-﻿using Azure;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenTraceability.Models.Events;
@@ -63,10 +62,22 @@ namespace TraceabilityDriver.Services.GDST
         {
             string digitalLinkURL = _config["URL"]?.TrimEnd('/') + "/digitallink/";
 
+            // if the app has an api key configured,
+            // we need include it in the request to the capability tool
+            string apiKey = "123";
+            if (_config.GetSection("Authentication:APIKey").Exists())
+            {
+                List<string> validKeys = _config.GetSection("Authentication:APIKey:ValidKeys").Get<List<string>>() ?? new List<string>();
+                if (validKeys.Any())
+                {
+                    apiKey = validKeys.First();
+                }
+            }
+
             JObject json = new JObject();
             json["SolutionName"] = _settings.Value.SolutionName;
             json["Version"] = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
-            json["APIKey"] = "123";
+            json["APIKey"] = apiKey;
             json["URL"] = digitalLinkURL;
             json["PGLN"] = _settings.Value.PGLN;
             json["GDSTVersion"] = "12";
