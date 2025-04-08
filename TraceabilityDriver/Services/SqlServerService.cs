@@ -51,41 +51,42 @@ namespace TraceabilityDriver.Services
             List<List<IEvent>> batches = events.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
             await Parallel.ForEachAsync(batches, async (batch, ct) =>
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
-
-                // rather than check for events to update in the loop below,
-                // we want to execute one large query to get all the events that will be updated rather than added
-                List<string> storingEventIds = batch.Select(x => x.EventID.ToString()).ToList();
-                var existingEvents = await context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId)).ToDictionaryAsync(x => x.EventId, y => y);
-
-                foreach (IEvent evt in batch)
+                using (var context = await _contextFactory.CreateDbContextAsync())
                 {
-                    EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
-                    if (existingEvents.TryGetValue(evt.EventID.ToString(), out EPCISEventSqlDocument? existingEvent))
+                    // rather than check for events to update in the loop below,
+                    // we want to execute one large query to get all the events that will be updated rather than added
+                    List<string> storingEventIds = batch.Select(x => x.EventID.ToString()).ToList();
+                    var existingEvents = await context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId)).ToDictionaryAsync(x => x.EventId, y => y);
+
+                    foreach (IEvent evt in batch)
                     {
-                        // Preserve the _id field from the existing document
-                        doc.ID = existingEvent.ID;
-                        context.Entry(existingEvent).CurrentValues.SetValues(doc);
+                        EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
+                        if (existingEvents.TryGetValue(evt.EventID.ToString(), out EPCISEventSqlDocument? existingEvent))
+                        {
+                            // Preserve the _id field from the existing document
+                            doc.ID = existingEvent.ID;
+                            context.Entry(existingEvent).CurrentValues.SetValues(doc);
+                        }
+                        else
+                        {
+                            context.EPCISEvents.Add(doc);
+                        }
                     }
-                    else
-                    {
-                        context.EPCISEvents.Add(doc);
-                    }
+
+                    // Now save the search model.
+                    List<EventSearchSqlDocument> searchDocuments = EventSearchSqlDocument.CreateSearchDocuments(batch);
+
+                    // Batch save the search documents by first deleting all existing index documents 
+                    // for the given event IDs and then adding the new ones.
+                    var existingSearchDocuments = await context.EventSearchDocuments
+                        .Where(x => storingEventIds.Contains(x.EventId))
+                        .ToListAsync();
+
+                    context.EventSearchDocuments.RemoveRange(existingSearchDocuments);
+                    context.EventSearchDocuments.AddRange(searchDocuments);
+
+                    await context.SaveChangesAsync();
                 }
-
-                // Now save the search model.
-                List<EventSearchSqlDocument> searchDocuments = EventSearchSqlDocument.CreateSearchDocuments(batch);
-
-                // Batch save the search documents by first deleting all existing index documents 
-                // for the given event IDs and then adding the new ones.
-                var existingSearchDocuments = await context.EventSearchDocuments
-                    .Where(x => storingEventIds.Contains(x.EventId))
-                    .ToListAsync();
-
-                context.EventSearchDocuments.RemoveRange(existingSearchDocuments);
-                context.EventSearchDocuments.AddRange(searchDocuments);
-
-                await context.SaveChangesAsync();
             });
         }
 

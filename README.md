@@ -3,17 +3,22 @@
 The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. It is a standalone module that can be installed into an existing software system to expose traceability data using the GDST module.
 
 # How does it work?
-The Traceability Driver works by mapping data in an existing database into GDST events and master data, then it stores that data in a MongoDB and allows that data to be queried using the GDST Communication Protocol.
+The Traceability Driver works by mapping data in an existing database into GDST events and master data.
+The GDST events and master data are then saved into a seperate database called the GDST Data Cachce.
+The GDST Cache Data can then be queried using the GDST Communication Protocol.
 
 ![](./img/screenshot_diagram01.png)
 
 ## GDST Data Cache
-The **GDST Data Cache** is where the traceability is stored and where the API queries are made. The default implementation uses MongoDB as the database for the GDST Data Cache.
+The **GDST Data Cache** is where the traceability is stored.
+It serves as the data source for API queries. 
+By default, the GDST Data Cache is stored in a MongoDB, but it can be configured to use other databases such as SQL Server, MySQL, or PostgreSQL.
 
 > The Traceability Drvier is designed to be able to be extended to use other databases as the GDST Data Cache by re-implementing the `IDatabaseService` interface.
 
 ## Synchronization
-Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection and is executed every hour. The synchronization process is done by using the following steps:
+Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection and is executed every hour. 
+The synchronization process is done by using the following steps:
 
 - Upon start up, the synchronization will execute automatically.
 - The synchronization will load all mappings found in the local `Mappings` folder of the executing directory.
@@ -23,10 +28,12 @@ Synchronizing the data between the existing software system and the Traceability
 
 ![](./img/screenshot_diagram02.png)
 
-> Important to know that currently it will only read up to 10,000 records from each selector statement. You must use the memory variables to remember where it last left off and then continue from there.
+> Important to know that currently it will only read up to 10,000 records from each selector statement. 
+You must use the memory variables to remember where it last left off and then continue from there.
 
 # Dashboard
-There is a dashboard landing page that can be viewed that gives some visual insight to the current state, stats, errors, and allows executing the GDST capability test.
+There is a dashboard landing page that can be viewed that gives some visual insight to the current state, stats, errors.
+The GDST capability test can also be executed from the dashboard.
 
 ![](./img/screenshot_dashboard01.png)
 
@@ -59,6 +66,127 @@ Here you can see the last 10 errors that have occurred during the sync process.
 ![](./img/screenshot_currenterrors01.png)
 
 # Installation
+The driver can be installed as a release or docker image.
+
+## Docker Installation
+The base image of the Traceability Driver does not contain any mappings.
+To configure the driver for your environment, you will need to create a docker file that uses the 
+Traceability Driver base image and copies your configuration file to the app/Mappings folder in the container.
+```dockerfile
+# Use the public image as the base
+FROM pandojohn/traceability-driver:latest
+
+# Copy the user's configuration file into the container
+COPY absolute/path/to/your/mappings/folder/ /app/Mappings/
+
+# The entrypoint/command from the base image will run automatically unless overridden
+```
+
+
+The Traceability Driver is configured using environment variables.
+These environment variables can be configured within a docker compose file, or in the cloud environment 
+where the container will be deployed.
+
+When testing locally, a docker compose file is recommended to be used.
+When using a docker compose file, the TD_MAPPINGS_FOLDER environment variable must be set to the location of the mappings folder on the host machine. 
+A corresponding mount point must be set in the docker compose file to mount the mappings folder into the container.
+```yaml
+volumes:
+    - ${TD_MAPPINGS_FOLDER}:/app/Mappings
+```
+
+**The docker installation of the Traceability Driver is intended to be deployed behind a reverse proxy that 
+handles SSL and HTTPS redirection.** Otherwise, a certificate for the Traceability Driver must be created and mounted to the container along with the relevant environment variables.
+
+```yaml
+- ASPNETCORE_URLS = https://+:443;http://+:80
+- ASPNETCORE_Kestrel__Certificates__Default__Password=<certificate-password>
+- ASPNETCORE_Kestrel__Certificates__Default__Path =/<path-to-your-certificate-file>/aspnetapp.pfx
+```
+
+### Docker Compose File Examples
+**Mongo, no Auth**
+```yaml
+services:
+    traceabilitydriver:
+        image: pandojohn/traceability-driver:latest
+        environment:
+        - ASPNETCORE_ENVIRONMENT=Release
+        - ASPNETCORE_HTTP_PORTS=8080
+        - URL=https://localhost:58950
+        - MongoDB__ConnectionString=<your-connectionstring>
+        - MongoDB__DatabaseName=TraceabilityDriverTests
+        - DISABLE_HTTPS_REDIRECTION=TRUE
+        ports:
+            - "80:8080"
+        volumes:
+            - ${TD_MAPPINGS_FOLDER}:/app/Mappings
+        
+```
+
+**Mongo, with API Key Auth**
+```yaml
+services:
+    traceabilitydriver:
+        image: pandojohn/traceability-driver:latest
+        environment:
+        - ASPNETCORE_ENVIRONMENT=Release
+        - ASPNETCORE_HTTP_PORTS=8080
+        - URL=https://localhost:58950
+        - MongoDB__ConnectionString=<your-connectionstring>
+        - MongoDB__DatabaseName=TraceabilityDriverTests
+        - DISABLE_HTTPS_REDIRECTION=TRUE
+        - Authentication__APIKey__HeaderName=X-API-KEY
+        - Authentication__APIKey__ValidKeys__0=test
+        - Authentication__APIKey__ValidKeys__1=test_2
+        ports:
+            - "80:8080"
+        volumes:
+            - ${TD_MAPPINGS_FOLDER}:/app/Mappings
+        
+```
+
+**Mongo, with OAuth**
+```yaml
+services:
+    traceabilitydriver:
+        image: pandojohn/traceability-driver:latest
+        environment:
+        - ASPNETCORE_ENVIRONMENT=Release
+        - ASPNETCORE_HTTP_PORTS=8080
+        - URL=https://localhost:58950
+        - MongoDB__ConnectionString=<your-connectionstring>
+        - MongoDB__DatabaseName=TraceabilityDriverTests
+        - DISABLE_HTTPS_REDIRECTION=TRUE
+        - Authentication__JWT__Audience=<your-audience>
+        - Authentication__JWT__Authority=<your authority>
+        - Authentication__JWT__MetadataAddress=<your-metadata-address>
+        ports:
+            - "80:8080"
+        volumes:
+            - ${TD_MAPPINGS_FOLDER}:/app/Mappings
+        
+```
+
+**SQL Server, No Auth**
+```yaml
+services:
+    traceabilitydriver:
+        image: pandojohn/traceability-driver:latest
+        environment:
+        - ASPNETCORE_ENVIRONMENT=Release
+        - ASPNETCORE_HTTP_PORTS=8080
+        - URL=https://localhost:58950
+        - SqlServer__ConnectionString=<your-connection-string>
+        - DISABLE_HTTPS_REDIRECTION=TRUE
+        ports:
+            - "80:8080"
+        volumes:
+            - ${TD_MAPPINGS_FOLDER}:/app/Mappings
+        
+```
+
+## Release Instllation
 Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
 
 1. Download the latest release of the Traceability Driver.
@@ -131,9 +259,10 @@ In order to configure this, you need to define the `Traceability:IdentifierDomai
 The domain should be the domain site of the organization that is generating the traceability data. This domain is used to generate the URN for the traceability data.
 
 ## Authorization
-The Traceability Driver allows for two modes of authentication:
+The Traceability Driver allows for three modes of authentication:
 - **OAuth (JWT) Authentication** - Allows for configuring OAuth authentication to the API using self-signed tokens.
 - **API Key Authentication** - Allows for configuring API key authentication to the API which is required by GDST 1.2 communication protocol.
+- **No Authentication** - If neither an API Key or OAuth authentication is present in the configuration, then no authentication is required to access the API.
 
 ### OAuth (JWT) Authentication
 The OAuth (JWT) authentication is used to authenticate the API using self-signed tokens. The authentication is configured in the `appsettings.json` file of the installation.
