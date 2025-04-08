@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
@@ -21,6 +22,11 @@ namespace TraceabilityDriver.Services
         public DbSet<SyncHistoryItem> SyncHistory { get; set; }
 
         public DbSet<LogModel> Logs { get; set; }
+
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            WriteIndented = false
+        };
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,12 +79,11 @@ namespace TraceabilityDriver.Services
                 .IsUnique(false)
                 .HasDatabaseName("IX_EventSearchDocuments_RecordTime");
 
-            modelBuilder.Entity<SyncHistoryItem>().OwnsOne(x => x.Memory, b =>
-                {
-                    b.WithOwner();
-                    b.ToJson();
-                }
-            );
+            modelBuilder.Entity<SyncHistoryItem>()
+                .Property(e => e.Memory)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, _jsonOptions),
+                    v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, _jsonOptions) ?? new());
         }
     }
 }
