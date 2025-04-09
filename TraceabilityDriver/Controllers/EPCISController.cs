@@ -6,6 +6,7 @@ using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using System.Net;
 using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Controllers
@@ -80,7 +81,7 @@ namespace TraceabilityDriver.Controllers
                     HttpContext.Response.Headers.Add(header);
                 }
 
-                HttpContext.Response.StatusCode = 201;
+                HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
                 string str = mapper.Map(epcisDoc);
 
