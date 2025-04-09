@@ -43,6 +43,12 @@ public class EventsConverterService : IEventsConverterService
                 switch (commonEvent.EventType?.Trim().ToLower())
                 {
                     case "gdstfishingevent": ConvertTo_GDSTFishingEvent(commonEvent, doc); break;
+                    case "gdstshippingevent": ConvertTo_GDSTShippingEvent(commonEvent, doc); break;
+                    case "gdstreceiveevent": ConvertTo_GDSTReceivingEvent(commonEvent, doc); break;
+                    case "gdstfarmharvestevent": ConvertTo_GDSTFarmHarvestEvent(commonEvent, doc); break;
+                    case "gdsthatchingevent": ConvertTo_GDSTHatchingEvent(commonEvent, doc); break;
+                    case "gdstfeedmillobjectevent": ConvertTo_FeedMillObjectEvent(commonEvent, doc); break;
+                    case "gdstfeedmilltransformationevent": ConvertTo_FeedMillTransformationEvent(commonEvent, doc); break;
                     default:
                         _logger.LogError("Event type not supported: {EventType}", commonEvent.EventType);
                         break;
@@ -142,6 +148,298 @@ public class EventsConverterService : IEventsConverterService
         epcisEvent.ILMD.CertificationList = new CertificationList();
         SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
 
+        // human wellfare policy
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    /// <summary>
+    /// Converts the common event to a GDST Fishing Event.
+    /// </summary>
+    /// <param name="commonEvent">The common event to convert.</param>
+    /// <param name="doc">The EPCIS document to add the event to.</param>
+    public void ConvertTo_GDSTShippingEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTShippingEvent epcisEvent = new GDSTShippingEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        // Source List
+        epcisEvent.SourceList = new List<EventSource>();
+        SetSourceList(epcisEvent.SourceList, commonEvent.SourceList);
+
+        // Destination List
+        epcisEvent.DestinationList = new List<EventDestination>();
+        SetDestinationList(epcisEvent.DestinationList, commonEvent.DestinationList);
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    /// <summary>
+    /// Converts the common event to a GDST Fishing Event.
+    /// </summary>
+    /// <param name="commonEvent">The common event to convert.</param>
+    /// <param name="doc">The EPCIS document to add the event to.</param>
+    public void ConvertTo_GDSTReceivingEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTReceiveEvent epcisEvent = new GDSTReceiveEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        // Source List
+        epcisEvent.SourceList = new List<EventSource>();
+        SetSourceList(epcisEvent.SourceList, commonEvent.SourceList);
+
+        // Destination List
+        epcisEvent.DestinationList = new List<EventDestination>();
+        SetDestinationList(epcisEvent.DestinationList, commonEvent.DestinationList);
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    /// <summary>
+    /// Converts the common event to a GDST Fishing Event.
+    /// </summary>
+    /// <param name="commonEvent">The common event to convert.</param>
+    /// <param name="doc">The EPCIS document to add the event to.</param>
+    public void ConvertTo_GDSTFarmHarvestEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTFarmHarvestEvent epcisEvent = new GDSTFarmHarvestEvent();
+        epcisEvent.ILMD = new GDSTILMD();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.ILMD.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
+
+        // humanWelfarePolicy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // aquaculture method
+        epcisEvent.ILMD.AquacultureMethod = commonEvent.AquacultureMethod;
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    /// <summary>
+    /// Converts the common event to a GDST Fishing Event.
+    /// </summary>
+    /// <param name="commonEvent">The common event to convert.</param>
+    /// <param name="doc">The EPCIS document to add the event to.</param>
+    public void ConvertTo_GDSTHatchingEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTHatchingEvent epcisEvent = new GDSTHatchingEvent();
+        epcisEvent.ILMD = new GDSTILMD();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.ILMD.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
+
+        // brood stock source
+        epcisEvent.ILMD.BroodstockSource = commonEvent.BroodStockSource;
+
+        // human well fare policy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    /// <summary>
+    /// Converts the common event to a GDST Fishing Event.
+    /// </summary>
+    /// <param name="commonEvent">The common event to convert.</param>
+    /// <param name="doc">The EPCIS document to add the event to.</param>
+    public void ConvertTo_FeedMillObjectEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTFeedmillObjectEvent epcisEvent = new GDSTFeedmillObjectEvent();
+        epcisEvent.ILMD = new GDSTILMD();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.ILMD.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
+
+        // humanWelfarePolicy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // protein source
+        epcisEvent.ILMD.ProteinSource = commonEvent.ProteinSource;
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    /// <summary>
+    /// Converts the common event to a GDST Fishing Event.
+    /// </summary>
+    /// <param name="commonEvent">The common event to convert.</param>
+    /// <param name="doc">The EPCIS document to add the event to.</param>
+    public void ConvertTo_FeedMillTransformationEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTFeedmillTransformationEvent epcisEvent = new GDSTFeedmillTransformationEvent();
+        epcisEvent.ILMD = new GDSTILMD();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.ILMD.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
+
+        // humanWelfarePolicy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // protein source
+        epcisEvent.ILMD.ProteinSource = commonEvent.ProteinSource;
+
         // Products
         if (commonEvent.Products != null)
         {
@@ -171,6 +469,42 @@ public class EventsConverterService : IEventsConverterService
                     CertificateType = "urn:gdst:certType:fishingAuth",
                     Identification = certificates.FishingAuthorization.Identifier
                 });
+            }
+        }
+    }
+
+    public void SetSourceList(List<EventSource> eventSources, List<CommonSource>? commonSources)
+    {
+        if(commonSources != null)
+        {
+            foreach (var source in commonSources)
+            {
+                if (source.Type != null && source.Source != null)
+                {
+                    eventSources.Add(new EventSource()
+                    {
+                        Type = new Uri(source.Type),
+                        Value = source.Source
+                    });
+                }
+            }
+        }
+    }
+
+    public void SetDestinationList(List<EventDestination> eventDestinations, List<CommonDestination>? commonDestinations)
+    {
+        if (commonDestinations != null)
+        {
+            foreach (var source in commonDestinations)
+            {
+                if (source.Type != null && source.Destination != null)
+                {
+                    eventDestinations.Add(new EventDestination()
+                    {
+                        Type = new Uri(source.Type),
+                        Value = source.Destination
+                    });
+                }
             }
         }
     }
