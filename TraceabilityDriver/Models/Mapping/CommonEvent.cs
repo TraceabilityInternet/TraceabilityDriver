@@ -54,6 +54,18 @@ public class CommonEvent : CommonBaseModel
     /// </summary>
     public CommonCatchInformation? CatchInformation { get; set; } = null;
 
+    public List<CommonSource>? SourceList { get; set; } = null;
+
+    public List<CommonDestination>? DestinationList { get; set; } = null;
+
+    public string? BroodStockSource { get; set; } = null;
+
+    public string? HumanWelfarePolicy { get; set; } = null;
+
+    public string? ProteinSource { get; set; } = null;
+
+    public string? AquacultureMethod { get; set; } = null;
+
     /// <summary>
     /// Merges property values from the source onto the target
     /// only if that property value has no value and the source
@@ -66,6 +78,72 @@ public class CommonEvent : CommonBaseModel
         if (this.EventTime == null && source.EventTime != null)
         {
             this.EventTime = source.EventTime;
+        }
+
+        // Brood stock Source
+        if (this.BroodStockSource == null && source.BroodStockSource != null)
+        {
+            this.BroodStockSource = source.BroodStockSource;
+        }
+
+        // Human Welfare Policy
+        if (this.HumanWelfarePolicy == null && source.HumanWelfarePolicy != null)
+        {
+            this.HumanWelfarePolicy = source.HumanWelfarePolicy;
+        }
+
+        // Protein Source
+        if (this.ProteinSource == null && source.ProteinSource != null)
+        {
+            this.ProteinSource = source.ProteinSource;
+        }
+
+        // Aquaculture Method
+        if (this.AquacultureMethod == null && source.AquacultureMethod != null)
+        {
+            this.AquacultureMethod = source.AquacultureMethod;
+        }
+
+        // Source List
+        if (this.SourceList == null && source.SourceList != null)
+        {
+            this.SourceList = source.SourceList;
+        }
+        else if (this.SourceList != null && source.SourceList != null)
+        {
+            foreach (var sourceItem in source.SourceList)
+            {
+                var thisSource = this.SourceList.FirstOrDefault(s => s.Type == sourceItem.Type);
+                if (thisSource == null)
+                {
+                    this.SourceList.Add(sourceItem);
+                }
+                else
+                {
+                    thisSource.Merge(sourceItem);
+                }
+            }
+        }
+
+        // Destination List
+        if (this.DestinationList == null && source.DestinationList != null)
+        {
+            this.DestinationList = source.DestinationList;
+        }
+        else if (this.DestinationList != null && source.DestinationList != null)
+        {
+            foreach (var destinationItem in source.DestinationList)
+            {
+                var thisDestination = this.DestinationList.FirstOrDefault(d => d.Type == destinationItem.Type);
+                if (thisDestination == null)
+                {
+                    this.DestinationList.Add(destinationItem);
+                }
+                else
+                {
+                    thisDestination.Merge(destinationItem);
+                }
+            }
         }
 
         // Product Owner
