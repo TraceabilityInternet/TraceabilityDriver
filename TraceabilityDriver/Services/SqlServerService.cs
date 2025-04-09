@@ -5,6 +5,7 @@ using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using System.Collections.Concurrent;
 using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
@@ -79,8 +80,8 @@ namespace TraceabilityDriver.Services
                     // Batch save the search documents by first deleting all existing index documents 
                     // for the given event IDs and then adding the new ones.
                     var existingSearchDocuments = await context.EventSearchDocuments
-                        .Where(x => storingEventIds.Contains(x.EventId))
-                        .ToListAsync();
+                    .Where(x => storingEventIds.Contains(x.EventId))
+                            .ToListAsync();
 
                     context.EventSearchDocuments.RemoveRange(existingSearchDocuments);
                     context.EventSearchDocuments.AddRange(searchDocuments);
@@ -214,9 +215,15 @@ namespace TraceabilityDriver.Services
                 Events = new List<IEvent>()
             };
 
-            foreach (var evt in events)
+            ConcurrentBag<EPCISQueryDocument> queryDocs = new();
+            Parallel.ForEach(events, (eventItem, ct) =>
             {
-                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(evt.EventJson);
+                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(eventItem.EventJson);
+                queryDocs.Add(queryDoc);
+            });
+
+            foreach (var queryDoc in queryDocs)
+            {
                 doc.Merge(queryDoc);
             }
 

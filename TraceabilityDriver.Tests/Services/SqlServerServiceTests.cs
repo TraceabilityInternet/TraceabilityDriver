@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
+using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Queries;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Services;
@@ -318,6 +321,119 @@ namespace TraceabilityDriver.Tests.Services
                 Assert.That(dbItem.Memory, Contains.Key("MaxID"));
                 Assert.That(dbItem.Memory["MaxID"], Is.EqualTo("123"));
             }
+        }
+
+        [Test]
+        public async Task StoreEvents_ShouldSavePerformantly()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Load test data from JSON file
+            string testDataPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Data", "testdata001.json");
+            if (!File.Exists(testDataPath))
+            {
+                Assert.Fail($"Test data file not found at {testDataPath}");
+            }
+
+            string jsonData = File.ReadAllText(testDataPath);
+
+            int maxEvents = 1000;
+            int maxIterations = 1000;
+            int iterations = 0;
+            List<IEvent> events = new List<IEvent>();
+            Random random = new();
+            while (events.Count < maxEvents)
+            {
+                EPCISDocument doc = OpenTraceabilityMappers.EPCISDocument.JSON.Map(jsonData);
+
+                foreach (var eventItem in doc.Events)
+                {
+                    foreach (var product in eventItem.Products)
+                    {
+                        if(product.EPC.Type == EPCType.SSCC)
+                        {
+                            List<string> epcParts = product.EPC.ToString().Split(":").ToList();
+                            string lotOrSerial = epcParts.Last();
+                            epcParts.Remove(lotOrSerial);
+                            epcParts.Add(Guid.NewGuid().ToString());
+                            string newEPC = string.Join(":", epcParts);
+                            product.EPC = new EPC(newEPC);
+                        }
+                        else
+                        {
+                            product.EPC = new EPC(product.EPC.Type, product.EPC.GTIN, Guid.NewGuid().ToString());
+                        }
+                    }
+
+                    eventItem.EventTime = eventItem.EventTime!.Value.AddMinutes(random.Next(0, 1000));
+                    eventItem.EventID = new Uri("urn:uuid:" + Guid.NewGuid().ToString());
+                    events.Add(eventItem);
+                }
+
+                if (events.Count >= maxEvents) break;
+
+                iterations++;
+                if(iterations >= maxIterations)
+                {
+                    Assert.Fail($"Failed to load {maxEvents} events after {maxIterations} iterations.");
+                    break;
+                }
+            }
+
+            // Measure the time taken to store events
+            List<List<IEvent>> batches = events.Batch(100);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            foreach(var batch in batches)
+            {
+                await _dbService.StoreEventsAsync(batch);
+            }
+            stopwatch.Stop();
+            TimeSpan savetime = stopwatch.Elapsed;
+
+            stopwatch.Reset();
+
+            // measure the time taken to update events
+            stopwatch.Start();
+            foreach (var batch in batches)
+            {
+                foreach (var eventItem in batch)
+                {
+                    eventItem.EventTime = eventItem.EventTime!.Value.AddMinutes(1);
+                }
+                await _dbService.StoreEventsAsync(batch);
+            }
+            stopwatch.Stop();
+            TimeSpan updatetime = stopwatch.Elapsed;
+
+            stopwatch.Reset();
+
+            // Measure the time taken to query events
+            stopwatch.Start();
+            int eventCount = 0;
+            foreach (var batch in batches.Take(1))
+            {
+                var result = await _dbService.QueryEvents(new EPCISQueryParameters
+                {
+                    query = new EPCISQuery
+                    {
+                        MATCH_anyEPCClass = batch.SelectMany(e => e.Products).Select(p => p.EPC.ToString()).Distinct().ToList()
+                    }
+                });
+                eventCount += result.Events.Count;
+            }
+            stopwatch.Stop();
+            TimeSpan querytime = stopwatch.Elapsed;
+
+            stopwatch.Reset();
+
+            Console.WriteLine($"Save Time: {savetime.TotalSeconds} s");
+            Console.WriteLine($"Update Time: {updatetime.TotalSeconds} s");
+            Console.WriteLine($"Query Time: {querytime.TotalSeconds} s");
         }
     }
 }
