@@ -2,9 +2,11 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Tests.Services
@@ -14,6 +16,7 @@ namespace TraceabilityDriver.Tests.Services
     {
         private IDatabaseService _dbService;
         private EPCISDocument _testEPCISDocument;
+        private IDbContextFactory<ApplicationDbContext> _contextFactory;
         private bool _skipTests = false;
 
         [OneTimeSetUp]
@@ -47,9 +50,10 @@ namespace TraceabilityDriver.Tests.Services
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseSqlServer(connectionString, x => x.EnableRetryOnFailure())
                 .Options;
-            IDbContextFactory<ApplicationDbContext> contextFactory = new PooledDbContextFactory<ApplicationDbContext>(options);
+
+            _contextFactory = new PooledDbContextFactory<ApplicationDbContext>(options);
             ILogger<SqlServerService> logger = new LoggerFactory().CreateLogger<SqlServerService>();
-            _dbService = new SqlServerService(logger, contextFactory);
+            _dbService = new SqlServerService(logger, _contextFactory);
 
             // Clear out the data.
             await _dbService.ClearDatabaseAsync();
@@ -275,6 +279,44 @@ namespace TraceabilityDriver.Tests.Services
                     $"Database report should contain count for master data type {dataType}");
                 Assert.That(report.MasterDataCounts[dataType], Is.EqualTo(expectedMasterDataTypeCount[dataType]),
                     $"Master data count for {dataType} should match expected value");
+            }
+        }
+
+        [Test]
+        public async Task SaveSyncHistoryItem_ShouldStoreMemory()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            var syncHistoryItem = new SyncHistoryItem
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(1),
+                Status = SyncStatus.Completed,
+                Memory = new Dictionary<string, string>
+                {
+                    { "MaxID", "123" },
+                },
+            };
+
+            // Act
+            await _dbService.StoreSyncHistory(syncHistoryItem);
+
+            // Assert
+            using (var context = _contextFactory.CreateDbContext())
+            {
+                var dbItem = await context.SyncHistory
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == syncHistoryItem.Id);
+                Assert.That(dbItem, Is.Not.Null);
+                Assert.That(dbItem.Memory, Is.Not.Null);
+                Assert.That(dbItem.Memory, Contains.Key("MaxID"));
+                Assert.That(dbItem.Memory["MaxID"], Is.EqualTo("123"));
             }
         }
     }
