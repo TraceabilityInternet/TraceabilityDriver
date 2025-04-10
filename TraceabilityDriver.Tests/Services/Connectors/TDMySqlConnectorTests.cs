@@ -14,7 +14,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
     [TestFixture]
     public class TDMySqlConnectorTests
     {
-        private string _connectionString = "server=localhost;database=test;user=root;password=your_password;";
+        private string _connectionString = "server=127.0.0.1; port=3307; database=TraceabilityDriverTests; user=root; password=YourStrong!Passw0rd;";
         private bool _skipTests;
 
         private readonly Mock<IOptions<TDConnectorConfiguration>> _mockOptions;
@@ -54,7 +54,46 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                 return;
             }
 
-            // Setup code for MySQL database if needed
+            // We need to set up the MySQL database.
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                try
+                {
+                    // Drop the Events table if it exists
+                    using (var dropCommand = connection.CreateCommand())
+                    {
+                        dropCommand.CommandText = "DROP TABLE IF EXISTS Events";
+                        dropCommand.ExecuteNonQuery();
+                    }
+
+                    // Create the Events table
+                    using (var createCommand = connection.CreateCommand())
+                    {
+                        createCommand.CommandText = @"
+                    CREATE TABLE Events (
+                        EventId BIGINT NOT NULL,
+                        EventType VARCHAR(255) NOT NULL
+                    )";
+                        createCommand.ExecuteNonQuery();
+                    }
+
+                    // Insert a test event into the Events table
+                    using (var insertCommand = connection.CreateCommand())
+                    {
+                        insertCommand.CommandText = @"
+                    INSERT INTO Events (EventId, EventType) 
+                    VALUES (123, 'Fishing')";
+                        insertCommand.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _mockLogger.Object.LogError(ex, "Error setting up test database");
+                    throw;
+                }
+            }
         }
 
         [Test]
@@ -116,7 +155,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             dataTable.Rows.Add(1, "Event1");
 
             _configuration.ConnectionString = _connectionString;
-            _configuration.Database = "test";
+            _configuration.Database = "TraceabilityDriverTests";
 
             // Setup the sync context with necessary properties for GetEventsAsync
             var syncHistoryItem = new SyncHistoryItem { Memory = new Dictionary<string, string>() };

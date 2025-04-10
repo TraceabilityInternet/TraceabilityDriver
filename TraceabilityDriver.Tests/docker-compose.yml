@@ -1,26 +1,50 @@
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb_unit_test
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-    ports:
-      - "37017:27017"
-    volumes:
-      - mongodb_unit_test_data:/data/db
+    mongodb:
+        image: mongo:latest
+        container_name: mongodb_unit_test
+        environment:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password
+        ports:
+          - "37017:27017"
+        volumes:
+          - mongodb_unit_test_data:/data/db
 
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver_unit_test
-    environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "YourStrong!Passw0rd"
-    ports:
-      - "3433:1433"
-    volumes:
-      - sqlserver_unit_test_data:/var/opt/mssql
+    sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        container_name: sqlserver_unit_test
+        environment:
+          ACCEPT_EULA: "Y"
+          SA_PASSWORD: "YourStrong!Passw0rd"
+        ports:
+          - "3433:1433"
+        volumes:
+          - sqlserver_unit_test_data:/var/opt/mssql
+
+    mysql-cache:
+        image: mysql:latest
+        container_name: mysql_cache_unit_test
+        environment:
+            MYSQL_ROOT_PASSWORD: YourStrong!Passw0rd
+            MYSQL_DATABASE: TraceabilityDriverTests
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_cache_unit_test_data:/var/lib/mysql
+ 
+    mysql-source:
+        image: mysql:latest
+        container_name: mysql_source_unit_test
+        environment:
+            MYSQL_ROOT_PASSWORD: YourStrong!Passw0rd
+            MYSQL_DATABASE: TraceabilityDriverTests
+        ports:
+            - "3307:3306"
+        volumes:
+            - mysql_source_unit_test_data:/var/lib/mysql
 
 volumes:
   mongodb_unit_test_data:
   sqlserver_unit_test_data:
+  mysql_cache_unit_test_data:  
+  mysql_source_unit_test_data:  
