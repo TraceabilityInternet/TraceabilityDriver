@@ -6,6 +6,7 @@ using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using System.Collections.Concurrent;
 using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 
@@ -301,9 +302,15 @@ namespace TraceabilityDriver.Services
             doc.EPCISVersion = EPCISVersion.V2;
             doc.Events = new List<IEvent>();
 
-            foreach (var evt in events)
+            ConcurrentBag<EPCISQueryDocument> queryDocs = new();
+            Parallel.ForEach(events, (eventItem, ct) =>
             {
-                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(evt.EventJson);
+                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(eventItem.EventJson);
+                queryDocs.Add(queryDoc);
+            });
+
+            foreach (var queryDoc in queryDocs)
+            {
                 doc.Merge(queryDoc);
             }
 

@@ -72,6 +72,7 @@ namespace TraceabilityDriver
             // CONNECTORS
             services.AddSingleton<ITDConnectorFactory, TDConnectorFactory>();
             services.AddTransient<TDSqlServerConnector>();
+            services.AddTransient<TDMySqlConnector>();
 
             // MAPPING
             services.AddSingleton<ISynchronizationContext, Services.SynchronizationContext>();

@@ -29,6 +29,8 @@ public class TDConnectorFactory : ITDConnectorFactory
             {
                 case ConnectorType.SqlServer:
                     return _serviceProvider.GetRequiredService<TDSqlServerConnector>();
+                case ConnectorType.MySql:
+                    return _serviceProvider.GetRequiredService<TDMySqlConnector>();
                 default:
                     throw new Exception($"Unsupported connector type: {connectorConfiguration.ConnectorType}");
             }

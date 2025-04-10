@@ -1,18 +1,10 @@
-using NUnit.Framework;
 using Moq;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using OpenTraceability.GDST.Events;
-using OpenTraceability.GDST.Events.KDEs;
 using OpenTraceability.GDST.MasterData;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Models.Events.KDEs;
-using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Models.MasterData;
-using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using OpenTraceability.Utility;
@@ -332,37 +324,153 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         }
 
         #region Helper Methods
-        
-        private CommonEvent CreateValidFishingEvent(string eventId)
+
+        private CommonEvent CreateValidEvent(string eventId)
         {
             return new CommonEvent
             {
                 EventId = eventId,
-                EventType = "GDSTFishingEvent",
                 EventTime = DateTimeOffset.Now,
                 InformationProvider = new CommonParty { OwnerId = "provider1", Name = "Provider" },
                 ProductOwner = new CommonParty { OwnerId = "owner1", Name = "Owner" },
-                Location = new CommonLocation 
-                { 
-                    LocationId = "loc1", 
+                HumanWelfarePolicy = "Policy123",
+                Location = new CommonLocation
+                {
+                    LocationId = "loc1",
                     Name = "Test Location",
                     OwnerId = "locowner1",
                     Country = Countries.FromAbbreviation("US")
                 },
-                CatchInformation = new CommonCatchInformation
-                {
-                    CatchArea = "FAO-27",
-                    GearType = "Trawl",
-                    GPSAvailable = true
-                },
-                Certificates = new CommonCertificates
-                {
-                    FishingAuthorization = new CommonCertificate { Identifier = "license123" }
-                },
                 Products = new List<CommonProduct> { CreateValidProduct() }
             };
         }
-        
+
+        private CommonEvent CreateValidFishingEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTFishingEvent";
+            commonEvent.CatchInformation = new CommonCatchInformation
+            {
+                CatchArea = "FAO-27",
+                GearType = "Trawl",
+                GPSAvailable = true
+            };
+            commonEvent.Certificates = new CommonCertificates
+            {
+                FishingAuthorization = new CommonCertificate { Identifier = "license123" }
+            };
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidFeedMillObjectEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTFeedMillObjectEvent";
+            commonEvent.ProteinSource = "Fishmeal";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidFeedMillTransformationevent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTFeedMillTransformationEvent";
+            commonEvent.ProteinSource = "Fishmeal";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidHatchingEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTHatchingEvent";
+            
+            commonEvent.Certificates = new();
+            commonEvent.Certificates.ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" };
+            commonEvent.Certificates.HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" };
+            commonEvent.Certificates.HarvestCertification = new CommonCertificate { Identifier = "harvest123" };
+
+            commonEvent.BroodStockSource = "Domestic";
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidShippingEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTShippingEvent";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+            };
+            commonEvent.Source = new CommonSource
+            {
+                Party = new CommonParty { OwnerId = "source1", Name = "Source Party" },
+                Location = new CommonLocation
+                {
+                    LocationId = "sourceLoc1",
+                    Name = "Source Location",
+                    OwnerId = "sourceLocOwner1",
+                    Country = Countries.FromAbbreviation("US")
+                }
+            };
+            commonEvent.Destination = new CommonDestination
+            {
+                Party = new CommonParty { OwnerId = "dest1", Name = "Destination Party" },
+                Location = new CommonLocation
+                {
+                    LocationId = "destLoc1",
+                    Name = "Destination Location",
+                    OwnerId = "destLocOwner1",
+                    Country = Countries.FromAbbreviation("US")
+                }
+            };
+
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidReceiveEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTReceiveEvent";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+            };
+            commonEvent.Source = new CommonSource
+            {
+                Party = new CommonParty { OwnerId = "source1", Name = "Source Party" },
+                Location = new CommonLocation
+                {
+                    LocationId = "sourceLoc1",
+                    Name = "Source Location",
+                    OwnerId = "sourceLocOwner1",
+                    Country = Countries.FromAbbreviation("US")
+                }
+            };
+            commonEvent.Destination = new CommonDestination
+            {
+                Party = new CommonParty { OwnerId = "dest1", Name = "Destination Party" },
+                Location = new CommonLocation
+                {
+                    LocationId = "destLoc1",
+                    Name = "Destination Location",
+                    OwnerId = "destLocOwner1",
+                    Country = Countries.FromAbbreviation("US")
+                }
+            };
+            return commonEvent;
+        }
+
         private CommonProduct CreateValidProduct()
         {
             return new CommonProduct

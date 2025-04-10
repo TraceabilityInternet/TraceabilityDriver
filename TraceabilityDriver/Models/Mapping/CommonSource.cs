@@ -2,9 +2,9 @@
 {
     public class CommonSource : CommonBaseModel
     {
-        public string? Type { get; set; } = null;
+        public CommonParty? Party { get; set; } = null;
 
-        public string? Source { get; set; } = null;
+        public CommonLocation? Location { get; set; } = null;
 
         /// <summary>
         /// Merges data from another CommonSource object into this instance.
@@ -16,10 +16,22 @@
         {
             ArgumentNullException.ThrowIfNull(source);
 
-            // Only update Name if current value is null or empty
-            if(this.Type?.Equals(source.Type, StringComparison.OrdinalIgnoreCase) == true && string.IsNullOrWhiteSpace(this.Source) && !string.IsNullOrWhiteSpace(source.Source))
+            if(this.Party == null && source.Party != null)
             {
-                this.Source = source.Source;
+                this.Party = source.Party;
+            }
+            else if (this.Party != null && source.Party != null)
+            {
+                this.Party.Merge(source.Party);
+            }
+
+            if (this.Location == null && source.Location != null)
+            {
+                this.Location = source.Location;
+            }
+            else if (this.Location != null && source.Location != null)
+            {
+                this.Location.Merge(source.Location);
             }
         }
     }

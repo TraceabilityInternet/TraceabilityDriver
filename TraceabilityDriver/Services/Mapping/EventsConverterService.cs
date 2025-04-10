@@ -6,7 +6,6 @@ using OpenTraceability.Models.Events;
 using OpenTraceability.Models.Events.KDEs;
 using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Models.MasterData;
-using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.Mapping;
 
 namespace TraceabilityDriver.Services;
@@ -202,11 +201,11 @@ public class EventsConverterService : IEventsConverterService
 
         // Source List
         epcisEvent.SourceList = new List<EventSource>();
-        SetSourceList(epcisEvent.SourceList, commonEvent.SourceList);
+        SetSourceList(epcisEvent.SourceList, commonEvent.Source);
 
         // Destination List
         epcisEvent.DestinationList = new List<EventDestination>();
-        SetDestinationList(epcisEvent.DestinationList, commonEvent.DestinationList);
+        SetDestinationList(epcisEvent.DestinationList, commonEvent.Destination);
 
         doc.Events.Add(epcisEvent);
     }
@@ -251,11 +250,11 @@ public class EventsConverterService : IEventsConverterService
 
         // Source List
         epcisEvent.SourceList = new List<EventSource>();
-        SetSourceList(epcisEvent.SourceList, commonEvent.SourceList);
+        SetSourceList(epcisEvent.SourceList, commonEvent.Source);
 
         // Destination List
         epcisEvent.DestinationList = new List<EventDestination>();
-        SetDestinationList(epcisEvent.DestinationList, commonEvent.DestinationList);
+        SetDestinationList(epcisEvent.DestinationList, commonEvent.Destination);
 
         doc.Events.Add(epcisEvent);
     }
@@ -473,39 +472,55 @@ public class EventsConverterService : IEventsConverterService
         }
     }
 
-    public void SetSourceList(List<EventSource> eventSources, List<CommonSource>? commonSources)
+    public void SetSourceList(List<EventSource> eventSources, CommonSource? commonSource)
     {
-        if(commonSources != null)
+        if (commonSource == null)
         {
-            foreach (var source in commonSources)
+            return;
+        }
+
+        if (commonSource.Party != null)
+        {
+            eventSources.Add(new EventSource()
             {
-                if (source.Type != null && source.Source != null)
-                {
-                    eventSources.Add(new EventSource()
-                    {
-                        Type = new Uri(source.Type),
-                        Value = source.Source
-                    });
-                }
-            }
+                Type = new Uri("owning_party"),
+                Value = commonSource.Party.GetPGLN().ToString()
+            });
+        }
+
+        if(commonSource.Location != null)
+        {
+            eventSources.Add(new EventSource()
+            {
+                Type = new Uri("urn:epcglobal:cbv:sdt:location"),
+                Value = commonSource.Location.GetGLN().ToString()
+            });
         }
     }
 
-    public void SetDestinationList(List<EventDestination> eventDestinations, List<CommonDestination>? commonDestinations)
+    public void SetDestinationList(List<EventDestination> eventDestinations, CommonDestination? commonDestination)
     {
-        if (commonDestinations != null)
+        if (commonDestination == null)
         {
-            foreach (var source in commonDestinations)
+            return;
+        }
+
+        if (commonDestination.Party != null)
+        {
+            eventDestinations.Add(new EventDestination()
             {
-                if (source.Type != null && source.Destination != null)
-                {
-                    eventDestinations.Add(new EventDestination()
-                    {
-                        Type = new Uri(source.Type),
-                        Value = source.Destination
-                    });
-                }
-            }
+                Type = new Uri("owning_party"),
+                Value = commonDestination.Party.GetPGLN().ToString()
+            });
+        }
+
+        if (commonDestination.Location != null)
+        {
+            eventDestinations.Add(new EventDestination()
+            {
+                Type = new Uri("urn:epcglobal:cbv:sdt:location"),
+                Value = commonDestination.Location.GetGLN().ToString()
+            });
         }
     }
 
@@ -593,7 +608,7 @@ public class EventsConverterService : IEventsConverterService
         {
             tradeItem.FisherySpeciesScientificName.Add(productDef.ScientificName);
         }
-        
+
         if (productDef.OwnerId != null)
         {
             tradeItem.OwningParty = productDef.GeneratePGLN(productDef.OwnerId);

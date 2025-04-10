@@ -54,9 +54,9 @@ public class CommonEvent : CommonBaseModel
     /// </summary>
     public CommonCatchInformation? CatchInformation { get; set; } = null;
 
-    public List<CommonSource>? SourceList { get; set; } = null;
+    public CommonSource? Source { get; set; } = null;
 
-    public List<CommonDestination>? DestinationList { get; set; } = null;
+    public CommonDestination? Destination { get; set; } = null;
 
     public string? BroodStockSource { get; set; } = null;
 
@@ -105,45 +105,23 @@ public class CommonEvent : CommonBaseModel
         }
 
         // Source List
-        if (this.SourceList == null && source.SourceList != null)
+        if (this.Source == null && source.Source != null)
         {
-            this.SourceList = source.SourceList;
+            this.Source = source.Source;
         }
-        else if (this.SourceList != null && source.SourceList != null)
+        else if (this.Source != null && source.Source != null)
         {
-            foreach (var sourceItem in source.SourceList)
-            {
-                var thisSource = this.SourceList.FirstOrDefault(s => s.Type == sourceItem.Type);
-                if (thisSource == null)
-                {
-                    this.SourceList.Add(sourceItem);
-                }
-                else
-                {
-                    thisSource.Merge(sourceItem);
-                }
-            }
+            this.Source.Merge(source.Source);
         }
 
         // Destination List
-        if (this.DestinationList == null && source.DestinationList != null)
+        if (this.Destination == null && source.Destination != null)
         {
-            this.DestinationList = source.DestinationList;
+            this.Destination = source.Destination;
         }
-        else if (this.DestinationList != null && source.DestinationList != null)
+        else if (this.Destination != null && source.Destination != null)
         {
-            foreach (var destinationItem in source.DestinationList)
-            {
-                var thisDestination = this.DestinationList.FirstOrDefault(d => d.Type == destinationItem.Type);
-                if (thisDestination == null)
-                {
-                    this.DestinationList.Add(destinationItem);
-                }
-                else
-                {
-                    thisDestination.Merge(destinationItem);
-                }
-            }
+            this.Destination.Merge(source.Destination);
         }
 
         // Product Owner

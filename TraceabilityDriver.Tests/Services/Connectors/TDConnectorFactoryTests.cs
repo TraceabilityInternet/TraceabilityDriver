@@ -18,7 +18,8 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         private readonly Mock<ILogger<TDConnectorFactory>> _mockLogger;
         private readonly Mock<IServiceProvider> _mockServiceProvider;
         private readonly TDConnectorFactory _factory;
-        private readonly TDSqlServerConnector _mockConnector;
+        private readonly TDSqlServerConnector _mockSqlServerConnector;
+        private readonly TDMySqlConnector _mockMySqlConnector;
 
         public TDConnectorFactoryTests()
         {
@@ -31,7 +32,11 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             Mock<ILogger<TDSqlServerConnector>> mockLogger = new Mock<ILogger<TDSqlServerConnector>>();
             Mock<IEventsTableMappingService> mockEventsTableMappingService = new Mock<IEventsTableMappingService>();
             Mock<ISynchronizationContext> mockSynchronizationContext = new Mock<ISynchronizationContext>();
-            _mockConnector = new TDSqlServerConnector(mockLogger.Object, mockEventsTableMappingService.Object, mockSynchronizationContext.Object);
+            _mockSqlServerConnector = new TDSqlServerConnector(mockLogger.Object, mockEventsTableMappingService.Object, mockSynchronizationContext.Object);
+
+            // Create a mock TDMySqlConnector.
+            Mock<ILogger<TDMySqlConnector>> mockMySqlLogger = new Mock<ILogger<TDMySqlConnector>>();
+            _mockMySqlConnector = new TDMySqlConnector(mockMySqlLogger.Object, mockEventsTableMappingService.Object, mockSynchronizationContext.Object);
         }
 
         [Test]
@@ -47,7 +52,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _mockServiceProvider.Reset();
             _mockServiceProvider
                 .Setup(sp => sp.GetService(typeof(TDSqlServerConnector)))
-                .Returns(_mockConnector);
+                .Returns(_mockSqlServerConnector);
 
             // Act
             var result = _factory.CreateConnector(config);
@@ -56,6 +61,30 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.InstanceOf<TDSqlServerConnector>());
             _mockServiceProvider.Verify(sp => sp.GetService(typeof(TDSqlServerConnector)), Times.Once);
+        }
+
+        [Test]
+        public void CreateConnector_MySqlConnectorType_ReturnsConnector()
+        {
+            // Arrange
+            var config = new TDConnectorConfiguration
+            {
+                ConnectorType = ConnectorType.MySql,
+                Database = "TestDb"
+            };
+
+            _mockServiceProvider.Reset();
+            _mockServiceProvider
+                .Setup(sp => sp.GetService(typeof(TDMySqlConnector)))
+                .Returns(_mockMySqlConnector);
+
+            // Act
+            var result = _factory.CreateConnector(config);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.InstanceOf<TDMySqlConnector>());
+            _mockServiceProvider.Verify(sp => sp.GetService(typeof(TDMySqlConnector)), Times.Once);
         }
 
         [Test]
