@@ -483,7 +483,7 @@ public class EventsConverterService : IEventsConverterService
         {
             eventSources.Add(new EventSource()
             {
-                Type = new Uri("owning_party"),
+                Type = new Uri("urn:epcglobal:cbv:owning_party"),
                 Value = commonSource.Party.GetPGLN().ToString()
             });
         }
@@ -509,7 +509,7 @@ public class EventsConverterService : IEventsConverterService
         {
             eventDestinations.Add(new EventDestination()
             {
-                Type = new Uri("owning_party"),
+                Type = new Uri("urn:epcglobal:cbv:owning_party"),
                 Value = commonDestination.Party.GetPGLN().ToString()
             });
         }

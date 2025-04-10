@@ -8,6 +8,7 @@ using OpenTraceability.Models.MasterData;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using OpenTraceability.Utility;
+using System.Net;
 
 namespace TraceabilityDriver.Tests.Services.Mapping
 {
@@ -16,32 +17,42 @@ namespace TraceabilityDriver.Tests.Services.Mapping
     {
         private Mock<ILogger<EventsConverterService>> _mockLogger;
         private EventsConverterService _service;
-        
+
         [SetUp]
         public void Setup()
         {
             _mockLogger = new Mock<ILogger<EventsConverterService>>();
             _service = new EventsConverterService(_mockLogger.Object);
         }
-        
+
         [Test]
         public async Task ConvertEventsAsync_WithValidEvents_ReturnsPopulatedEPCISDocument()
         {
             // Arrange
             var events = new List<CommonEvent>
             {
-                CreateValidFishingEvent("event1")
+                CreateValidFishingEvent("event1"),
+                CreateValidFeedMillObjectEvent("event2"),
+                CreateValidFeedMillTransformationevent("event3"),
+                CreateValidHatchingEvent("event4"),
+                CreateValidShippingEvent("event5"),
+                CreateValidReceiveEvent("event6")
             };
-            
+
             // Act
             var result = await _service.ConvertEventsAsync(events);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Events, Has.Count.EqualTo(1));
-            Assert.That(result.Events[0], Is.TypeOf<GDSTFishingEvent>());
+            Assert.That(result.Events, Has.Count.EqualTo(6));
+            Assert.That(result.Events, Has.One.TypeOf<GDSTFishingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillObjectEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillTransformationEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTHatchingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTShippingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTReceiveEvent>());
         }
-        
+
         [Test]
         public async Task ConvertEventsAsync_WithInvalidEvents_LogsErrorAndSkipsEvent()
         {
@@ -50,14 +61,14 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 new CommonEvent { EventId = "invalid1", EventType = "GDSTFishingEvent" } // Missing products
             };
-            
+
             // Act
             var result = await _service.ConvertEventsAsync(events);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Events, Is.Empty);
-            
+
             _mockLogger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -67,27 +78,27 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
-        
+
         [Test]
         public async Task ConvertEventsAsync_WithUnsupportedEventType_LogsErrorAndSkipsEvent()
         {
             // Arrange
             var events = new List<CommonEvent>
             {
-                new CommonEvent { 
-                    EventId = "unsupported1", 
+                new CommonEvent {
+                    EventId = "unsupported1",
                     EventType = "UnsupportedEventType",
-                    Products = new List<CommonProduct> { CreateValidProduct() }
+                    Products = new List<CommonProduct> { CreateValidReferenceProduct() }
                 }
             };
-            
+
             // Act
             var result = await _service.ConvertEventsAsync(events);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Events, Is.Empty);
-            
+
             _mockLogger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -97,7 +108,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
-        
+
         [Test]
         public async Task ConvertEventsAsync_WhenExceptionOccurs_LogsErrorAndContinues()
         {
@@ -107,14 +118,14 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidFishingEvent("event1")
             };
             events.First().Products = null;
-            
+
             // Act
             var result = await _service.ConvertEventsAsync(events);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Events, Is.Empty);
-            
+
             _mockLogger.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -124,85 +135,85 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
         }
-        
+
         [Test]
         public void IsEventValid_WithValidEvent_ReturnsTrue()
         {
             // Arrange
             var commonEvent = CreateValidFishingEvent("valid1");
-            
+
             // Act
             var result = _service.IsEventValid(commonEvent, out string error);
-            
+
             // Assert
             Assert.That(result, Is.True);
             Assert.That(error, Is.Empty);
         }
-        
+
         [Test]
         public void IsEventValid_WithNullProducts_ReturnsFalse()
         {
             // Arrange
             var commonEvent = new CommonEvent { EventId = "event1", Products = null };
-            
+
             // Act
             var result = _service.IsEventValid(commonEvent, out string error);
-            
+
             // Assert
             Assert.That(result, Is.False);
             Assert.That(error, Is.EqualTo("Products is NULL."));
         }
-        
+
         [Test]
         public void IsEventValid_WithEmptyProducts_ReturnsFalse()
         {
             // Arrange
             var commonEvent = new CommonEvent { EventId = "event1", Products = new List<CommonProduct>() };
-            
+
             // Act
             var result = _service.IsEventValid(commonEvent, out string error);
-            
+
             // Assert
             Assert.That(result, Is.False);
             Assert.That(error, Is.EqualTo("No products found on the event."));
         }
-        
+
         [Test]
         public void IsEventValid_WithNullProductDefinition_ReturnsFalse()
         {
             // Arrange
-            var commonEvent = new CommonEvent 
-            { 
-                EventId = "event1", 
-                Products = new List<CommonProduct> 
-                { 
-                    new CommonProduct 
-                    { 
+            var commonEvent = new CommonEvent
+            {
+                EventId = "event1",
+                Products = new List<CommonProduct>
+                {
+                    new CommonProduct
+                    {
                         ProductId = "product1",
                         ProductDefinition = null,
                         ProductType = EventProductType.Input
-                    } 
-                } 
+                    }
+                }
             };
-            
+
             // Act
             var result = _service.IsEventValid(commonEvent, out string error);
-            
+
             // Assert
             Assert.That(result, Is.False);
             Assert.That(error, Is.EqualTo("Product definition is NULL."));
         }
-        
+
         [Test]
         public void SetPartyMasterData_WithValidParty_ReturnsPartyAndAddsMasterData()
         {
             // Arrange
             var party = new CommonParty { OwnerId = "owner1", Name = "Test Party" };
             var doc = new EPCISDocument();
-            
+
             // Act
             var result = _service.SetPartyMasterData(party, doc);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(doc.MasterData, Has.Count.EqualTo(1));
@@ -211,54 +222,56 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(tradingParty, Is.Not.Null);
             Assert.That(tradingParty.Name[0].Value, Is.EqualTo("Test Party"));
         }
-        
+
         [Test]
         public void SetPartyMasterData_WithNullParty_ReturnsNull()
         {
             // Arrange
             CommonParty? party = null;
             var doc = new EPCISDocument();
-            
+
             // Act
             var result = _service.SetPartyMasterData(party, doc);
-            
+
             // Assert
             Assert.That(result, Is.Null);
             Assert.That(doc.MasterData, Is.Empty);
         }
-        
+
         [Test]
         public void SetEventLocation_WithValidLocation_SetsLocationAndAddsMasterData()
         {
             // Arrange
-            var location = new CommonLocation { 
-                LocationId = "loc1", 
-                Name = "Test Location", 
+            var location = new CommonLocation
+            {
+                LocationId = "loc1",
+                Name = "Test Location",
                 OwnerId = "owner1",
                 Country = Countries.FromAbbreviation("US")
             };
             var evt = new GDSTFishingEvent();
             var doc = new EPCISDocument();
-            
+
             // Act
             _service.SetEventLocation(evt, location, doc);
-            
+
             // Assert
             Assert.That(evt.Location, Is.Not.Null);
             Assert.That(evt.Location.GLN, Is.Not.Null);
             Assert.That(doc.MasterData, Has.Count.EqualTo(1));
             Assert.That(doc.MasterData[0], Is.TypeOf<GDSTLocation>());
             var locMasterData = doc.MasterData[0] as GDSTLocation;
-            Assert.That(locMasterData, Is.Not.Null);    
+            Assert.That(locMasterData, Is.Not.Null);
             Assert.That(locMasterData.Name[0].Value, Is.EqualTo("Test Location"));
             Assert.That(locMasterData.Address.Country, Is.EqualTo(Countries.FromAbbreviation("US")));
         }
-        
+
         [Test]
         public void SetProductMasterData_WithValidProductDefinition_ReturnsGTINAndAddsMasterData()
         {
             // Arrange
-            var productDef = new CommonProductDefinition {
+            var productDef = new CommonProductDefinition
+            {
                 ProductDefinitionId = "12345678901234",
                 OwnerId = "owner1",
                 ShortDescription = "Test Product",
@@ -266,10 +279,10 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 ScientificName = "Test Scientific Name"
             };
             var doc = new EPCISDocument();
-            
+
             // Act
             var result = _service.SetProductMasterData(productDef, doc);
-            
+
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(doc.MasterData, Has.Count.EqualTo(1));
@@ -280,16 +293,17 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(tradeItem.TradeItemConditionCode, Is.EqualTo("Fresh"));
             Assert.That(tradeItem.FisherySpeciesScientificName[0], Is.EqualTo("Test Scientific Name"));
         }
-        
+
         [Test]
         public void SetEventCertificates_WithValidCertificates_AddsCertificatesToList()
         {
             // Arrange
-            var certificates = new CommonCertificates {
+            var certificates = new CommonCertificates
+            {
                 FishingAuthorization = new CommonCertificate { Identifier = "auth123" }
             };
             var certList = new CertificationList();
-            
+
             // Act
             _service.SetEventCertificates(certList, certificates);
 
@@ -298,28 +312,28 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(certList.Certificates[0].CertificateType, Is.EqualTo("urn:gdst:certType:fishingAuth"));
             Assert.That(certList.Certificates[0].Identification, Is.EqualTo("auth123"));
         }
-        
+
         [Test]
         public void ConvertTo_GDSTFishingEvent_CreatesValidFishingEvent()
         {
             // Arrange
             var commonEvent = CreateValidFishingEvent("fishing1");
             var doc = new EPCISDocument();
-            
+
             // Act
             _service.ConvertTo_GDSTFishingEvent(commonEvent, doc);
-            
+
             // Assert
             Assert.That(doc.Events, Has.Count.EqualTo(1));
             Assert.That(doc.Events[0], Is.TypeOf<GDSTFishingEvent>());
-            
+
             var fishingEvent = doc.Events[0] as GDSTFishingEvent;
             Assert.That(fishingEvent, Is.Not.Null);
             Assert.That(fishingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(fishingEvent.ILMD.VesselCatchInformationList, Is.Not.Null);
             Assert.That(fishingEvent.ILMD.VesselCatchInformationList.Vessels, Has.Count.EqualTo(1));
             Assert.That(commonEvent.CatchInformation, Is.Not.Null);
-            Assert.That(fishingEvent.ILMD.VesselCatchInformationList.Vessels[0].CatchArea, 
+            Assert.That(fishingEvent.ILMD.VesselCatchInformationList.Vessels[0].CatchArea,
                 Is.EqualTo(commonEvent.CatchInformation.CatchArea));
         }
 
@@ -341,7 +355,6 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     OwnerId = "locowner1",
                     Country = Countries.FromAbbreviation("US")
                 },
-                Products = new List<CommonProduct> { CreateValidProduct() }
             };
         }
 
@@ -359,6 +372,10 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 FishingAuthorization = new CommonCertificate { Identifier = "license123" }
             };
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
             return commonEvent;
         }
 
@@ -372,6 +389,10 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
                 HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
                 HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
             };
             return commonEvent;
         }
@@ -387,6 +408,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
                 HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
             };
+            commonEvent.Products = CreateValidTransformationProducts();
             return commonEvent;
         }
 
@@ -394,13 +416,17 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
             commonEvent.EventType = "GDSTHatchingEvent";
-            
+
             commonEvent.Certificates = new();
             commonEvent.Certificates.ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" };
             commonEvent.Certificates.HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" };
             commonEvent.Certificates.HarvestCertification = new CommonCertificate { Identifier = "harvest123" };
 
             commonEvent.BroodStockSource = "Domestic";
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
             return commonEvent;
         }
 
@@ -433,6 +459,11 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     OwnerId = "destLocOwner1",
                     Country = Countries.FromAbbreviation("US")
                 }
+            };
+
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
             };
 
             return commonEvent;
@@ -468,10 +499,16 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     Country = Countries.FromAbbreviation("US")
                 }
             };
+
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
+
             return commonEvent;
         }
 
-        private CommonProduct CreateValidProduct()
+        private CommonProduct CreateValidReferenceProduct()
         {
             return new CommonProduct
             {
@@ -490,7 +527,46 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 }
             };
         }
-        
-        #endregion
+
+        private List<CommonProduct> CreateValidTransformationProducts()
+        {
+            return new List<CommonProduct>
+            {
+                new CommonProduct
+                {
+                    ProductId = "product1",
+                    ProductType = EventProductType.Input,
+                    LotNumber = "LOT123",
+                    Quantity = 100,
+                    UoM = "KGM",
+                    ProductDefinition = new CommonProductDefinition
+                    {
+                        ProductDefinitionId = "12345678901234", // 14 digits for GTIN
+                        OwnerId = "owner1",
+                        ShortDescription = "Test Fish",
+                        ProductForm = "Fresh",
+                        ScientificName = "Testus fishus"
+                    }
+                },
+                new CommonProduct
+                {
+                    ProductId = "product2",
+                    ProductType = EventProductType.Output,
+                    LotNumber = "LOT456",
+                    Quantity = 50,
+                    UoM = "KGM",
+                    ProductDefinition = new CommonProductDefinition
+                    {
+                        ProductDefinitionId = "98765432109876", // 14 digits for GTIN
+                        OwnerId = "owner2",
+                        ShortDescription = "Processed Fish",
+                        ProductForm = "Fillet",
+                        ScientificName = "Testus fishus"
+                    }
+                }
+            };
+
+            #endregion
+        }
     }
 }
