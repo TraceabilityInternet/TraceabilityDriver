@@ -5,25 +5,26 @@ using Moq;
 using System.Data;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Models.MongoDB;
-using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Connectors;
+using TraceabilityDriver.Services;
+using MySql.Data.MySqlClient;
 
 namespace TraceabilityDriver.Tests.Services.Connectors
 {
     [TestFixture]
-    public class TDSqlServerConnectorTests
+    public class TDMySqlConnectorTests
     {
-        private string _connectionString = "server=localhost;database=master;Integrated Security=SSPI;TrustServerCertificate=True;";
+        private string _connectionString = "server=localhost;database=test;user=root;password=your_password;";
         private bool _skipTests;
 
         private readonly Mock<IOptions<TDConnectorConfiguration>> _mockOptions;
         private readonly TDConnectorConfiguration _configuration;
-        private readonly Mock<ILogger<TDSqlServerConnector>> _mockLogger;
+        private readonly Mock<ILogger<TDMySqlConnector>> _mockLogger;
         private readonly Mock<IEventsTableMappingService> _mockEventsTableMappingService;
         private readonly Mock<ISynchronizationContext> _mockSyncContext;
-        private readonly TDSqlServerConnector _connector;
+        private readonly TDMySqlConnector _connector;
 
-        public TDSqlServerConnectorTests()
+        public TDMySqlConnectorTests()
         {
             _skipTests = Environment.GetEnvironmentVariable("NO_SQL_DB")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
 
@@ -31,14 +32,14 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _mockOptions = new Mock<IOptions<TDConnectorConfiguration>>();
             _mockOptions.Setup(o => o.Value).Returns(_configuration);
 
-            _mockLogger = new Mock<ILogger<TDSqlServerConnector>>();
+            _mockLogger = new Mock<ILogger<TDMySqlConnector>>();
             _mockEventsTableMappingService = new Mock<IEventsTableMappingService>();
             _mockSyncContext = new Mock<ISynchronizationContext>();
 
             // Set up the synchronization context with required properties
             _mockSyncContext.Setup(s => s.CurrentSync).Returns(new SyncHistoryItem());
 
-            _connector = new TDSqlServerConnector(
+            _connector = new TDMySqlConnector(
                 _mockLogger.Object,
                 _mockEventsTableMappingService.Object,
                 _mockSyncContext.Object);
@@ -49,67 +50,11 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
-            // We need to restore our backup of the database.
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
-
-                try
-                {
-                    // Get the path to the backup file
-                    string executingAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location!;
-                    string backupPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(executingAssemblyPath)!, "Data", "TestEventsDatabase.bak");
-
-                    // Copy the backup to the SQL Server backup folder
-                    string tempBackupPath = @"C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\Backup\TestEventsDatabase.bak";
-                    System.IO.File.Copy(backupPath, tempBackupPath, true);
-
-                    // First force close all existing connections to the TestEventsDatabase
-                    using (var killConnectionsCommand = connection.CreateCommand())
-                    {
-                        killConnectionsCommand.CommandText = @"
-                                IF EXISTS(SELECT * FROM sys.databases WHERE name = 'TestEventsDatabase')
-                                BEGIN
-                                    ALTER DATABASE TestEventsDatabase SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                                END";
-                        killConnectionsCommand.ExecuteNonQuery();
-                    }
-
-                    // Check if database exists and drop it
-                    using (var dropCommand = connection.CreateCommand())
-                    {
-                        dropCommand.CommandText = @"
-                                IF EXISTS(SELECT * FROM sys.databases WHERE name = 'TestEventsDatabase')
-                                BEGIN
-                                    DROP DATABASE TestEventsDatabase;
-                                END";
-                        dropCommand.ExecuteNonQuery();
-                    }
-
-                    // Restore the database from backup
-                    using (var restoreCommand = connection.CreateCommand())
-                    {
-                        restoreCommand.CommandText = $@"RESTORE DATABASE TestEventsDatabase FROM DISK = '{tempBackupPath}' WITH REPLACE";
-                        restoreCommand.ExecuteNonQuery();
-                    }
-
-                    // Set database back to multi-user mode
-                    using (var multiUserCommand = connection.CreateCommand())
-                    {
-                        multiUserCommand.CommandText = "ALTER DATABASE TestEventsDatabase SET MULTI_USER";
-                        multiUserCommand.ExecuteNonQuery();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _mockLogger.Object.LogError(ex, "Error setting up test database");
-                    throw;
-                }
-            }
+            // Setup code for MySQL database if needed
         }
 
         [Test]
@@ -117,12 +62,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
             // Arrange
-            _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
+            _configuration.ConnectionString = _connectionString;
 
             // Act
             var result = await _connector.TestConnectionAsync(_configuration);
@@ -136,7 +81,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
@@ -152,7 +97,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
@@ -170,8 +115,8 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             dataTable.Columns.Add("Name", typeof(string));
             dataTable.Rows.Add(1, "Event1");
 
-            _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
-            _configuration.Database = "TestEventsDatabase";
+            _configuration.ConnectionString = _connectionString;
+            _configuration.Database = "test";
 
             // Setup the sync context with necessary properties for GetEventsAsync
             var syncHistoryItem = new SyncHistoryItem { Memory = new Dictionary<string, string>() };
@@ -198,7 +143,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
@@ -211,7 +156,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                 Memory = new Dictionary<string, TDMappingSelectorMemoryVariable>()
             };
 
-            _configuration.ConnectionString = _connectionString.Replace("=master;", "=TestEventsDatabase;");
+            _configuration.ConnectionString = _connectionString;
 
             // Setup sync context
             var syncHistoryItem = new SyncHistoryItem { Memory = new Dictionary<string, string>() };
@@ -226,7 +171,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
@@ -258,7 +203,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
@@ -281,12 +226,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
             // Arrange
-            var command = new SqlCommand();
+            var command = new MySqlCommand();
 
             var memoryVariables = new Dictionary<string, TDMappingSelectorMemoryVariable>
             {
@@ -306,22 +251,22 @@ namespace TraceabilityDriver.Tests.Services.Connectors
 
             // Assert
             Assert.That(command.Parameters.Count, Is.EqualTo(6));
-            Assert.That(command.Parameters["@stringVar"].SqlDbType, Is.EqualTo(SqlDbType.NVarChar));
+            Assert.That(command.Parameters["@stringVar"].MySqlDbType, Is.EqualTo(MySqlDbType.VarChar));
             Assert.That(command.Parameters["@stringVar"].Value, Is.EqualTo("test"));
 
-            Assert.That(command.Parameters["@int32Var"].SqlDbType, Is.EqualTo(SqlDbType.Int));
+            Assert.That(command.Parameters["@int32Var"].MySqlDbType, Is.EqualTo(MySqlDbType.Int32));
             Assert.That(command.Parameters["@int32Var"].Value, Is.EqualTo(123));
 
-            Assert.That(command.Parameters["@int64Var"].SqlDbType, Is.EqualTo(SqlDbType.BigInt));
+            Assert.That(command.Parameters["@int64Var"].MySqlDbType, Is.EqualTo(MySqlDbType.Int64));
             Assert.That(command.Parameters["@int64Var"].Value, Is.EqualTo(9223372036854775807L));
 
-            Assert.That(command.Parameters["@doubleVar"].SqlDbType, Is.EqualTo(SqlDbType.Float));
+            Assert.That(command.Parameters["@doubleVar"].MySqlDbType, Is.EqualTo(MySqlDbType.Double));
             Assert.That(command.Parameters["@doubleVar"].Value, Is.EqualTo(123.45));
 
-            Assert.That(command.Parameters["@datetimeVar"].SqlDbType, Is.EqualTo(SqlDbType.DateTime));
+            Assert.That(command.Parameters["@datetimeVar"].MySqlDbType, Is.EqualTo(MySqlDbType.DateTime));
             Assert.That(command.Parameters["@datetimeVar"].Value, Is.EqualTo(new DateTime(2023, 1, 1)));
 
-            Assert.That(command.Parameters["@boolVar"].SqlDbType, Is.EqualTo(SqlDbType.Bit));
+            Assert.That(command.Parameters["@boolVar"].MySqlDbType, Is.EqualTo(MySqlDbType.Bit));
             Assert.That(command.Parameters["@boolVar"].Value, Is.EqualTo(true));
         }
 
@@ -330,12 +275,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
             // Arrange
-            var command = new SqlCommand();
+            var command = new MySqlCommand();
 
             var memory = new TDMappingSelectorMemoryVariable
             {
@@ -365,12 +310,12 @@ namespace TraceabilityDriver.Tests.Services.Connectors
         {
             if (_skipTests)
             {
-                Assert.Ignore("Skipping SQL Server tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
             // Arrange
-            var command = new SqlCommand();
+            var command = new MySqlCommand();
 
             var memory = new TDMappingSelectorMemoryVariable
             {
