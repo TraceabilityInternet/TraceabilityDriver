@@ -1,9 +1,6 @@
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Options;
 using System.Data;
-using System.Threading;
 using TraceabilityDriver.Models.Mapping;
-using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services.Connectors;
 
