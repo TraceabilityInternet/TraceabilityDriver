@@ -77,7 +77,7 @@ Traceability Driver base image and copies your mapping files to the app/Mappings
 
 ```dockerfile
 # Use the public image as the base
-FROM pandojohn/traceability-driver:latest
+FROM iftgftc/traceability-driver:latest
 
 # Copy your mapping folder into the container
 COPY relative/path/to/your/mappings/folder/ /app/Mappings/
@@ -123,7 +123,7 @@ volumes:
 ```yaml
 services:
     traceabilitydriver:
-        image: pandojohn/traceability-driver:latest
+        image: iftgftc/traceability-driver:latest
         environment:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
@@ -142,7 +142,7 @@ services:
 ```yaml
 services:
     traceabilitydriver:
-        image: pandojohn/traceability-driver:latest
+        image: iftgftc/traceability-driver:latest
         environment:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
@@ -164,7 +164,7 @@ services:
 ```yaml
 services:
     traceabilitydriver:
-        image: pandojohn/traceability-driver:latest
+        image: iftgftc/traceability-driver:latest
         environment:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
@@ -186,7 +186,7 @@ services:
 ```yaml
 services:
     traceabilitydriver:
-        image: pandojohn/traceability-driver:latest
+        image: iftgftc/traceability-driver:latest
         environment:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
