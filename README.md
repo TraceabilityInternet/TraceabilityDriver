@@ -201,6 +201,33 @@ services:
 ```
 
 ## Configuration Variables
+### Mongo
+The Traceability Driver uses MongoDB as the default database for the GDST Data Cache.
+To configure the MongoDB connection, you need to configure the connection string.
+Additionally, the database name and collection names can be configured.
+```json
+"MongoDB": {
+    "ConnectionString": "<your-connection-string>",
+    "DatabaseName": "TraceabilityDriverTests",
+    "EventsCollectionName": "events",
+    "MasterDataCollectionName": "masterdata",
+    "SyncHistoryCollectionName": "synchistory",
+    "LogCollectionName": "logs"
+}
+```
+
+### SQL Server
+The Traceability Driver can also be configured to use SQL Server as the database for the GDST Data Cache.
+To configure the SQL Server connection, you need to configure the connection string.
+```json
+"SqlServer": {
+    "ConnectionString": "<your-connection-string>",
+}
+```
+
+> The Traceability Driver will default to using MongoDB if a MongoDB connection string is provided.
+To use SQL Server, you must only provide a SQL Server connection string and not a MongoDB connection string.
+
 ### URL
 Defines the URL where the API will be hosted. This must be configured correctly or the GDST Capability Test will fail.
 
