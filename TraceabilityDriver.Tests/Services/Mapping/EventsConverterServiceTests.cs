@@ -9,6 +9,7 @@ using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using OpenTraceability.Utility;
 using System.Net;
+using OpenTraceability.MSC.Events;
 
 namespace TraceabilityDriver.Tests.Services.Mapping
 {
@@ -35,8 +36,12 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidFeedMillObjectEvent("event2"),
                 CreateValidFeedMillTransformationevent("event3"),
                 CreateValidHatchingEvent("event4"),
-                CreateValidShippingEvent("event5"),
-                CreateValidReceiveEvent("event6")
+                CreateValidShippingEvent("event5", "gdstshippingevent"),
+                CreateValidReceiveEvent("event6", "gdstreceiveevent"),
+                CreateValidFarmHarvestEvent("event7"),
+                CreateValidMSCProcessingEvent("event8"),
+                CreateValidShippingEvent("event9", "mscshippingevent"),
+                CreateValidReceiveEvent("event10", "mscreceiveevent"),
             };
 
             // Act
@@ -44,13 +49,17 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Events, Has.Count.EqualTo(6));
+            Assert.That(result.Events, Has.Count.EqualTo(10));
             Assert.That(result.Events, Has.One.TypeOf<GDSTFishingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillObjectEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillTransformationEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTHatchingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTShippingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTReceiveEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTFarmHarvestEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<MSCProcessingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<MSCReceiveEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<MSCShippingEvent>());
         }
 
         [Test]
@@ -430,10 +439,10 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return commonEvent;
         }
 
-        private CommonEvent CreateValidShippingEvent(string eventId)
+        private CommonEvent CreateValidShippingEvent(string eventId, string eventType)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
-            commonEvent.EventType = "GDSTShippingEvent";
+            commonEvent.EventType = eventType;
             commonEvent.Certificates = new CommonCertificates
             {
                 ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
@@ -460,6 +469,11 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     Country = Countries.FromAbbreviation("US")
                 }
             };
+
+            commonEvent.TransportNumber = "TR123";
+            commonEvent.TransportProviderID = "Provider123";
+            commonEvent.TransportType = "Truck";
+            commonEvent.TransportVehicleID = "Truck123";
 
             commonEvent.Products = new List<CommonProduct>
             {
@@ -469,10 +483,10 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return commonEvent;
         }
 
-        private CommonEvent CreateValidReceiveEvent(string eventId)
+        private CommonEvent CreateValidReceiveEvent(string eventId, string eventType)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
-            commonEvent.EventType = "GDSTReceiveEvent";
+            commonEvent.EventType = eventType;
             commonEvent.Certificates = new CommonCertificates
             {
                 ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
@@ -500,10 +514,49 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 }
             };
 
+            commonEvent.TransportNumber = "TR123";
+            commonEvent.TransportProviderID = "Provider123";
+            commonEvent.TransportType = "Truck";
+            commonEvent.TransportVehicleID = "Truck123";
+
             commonEvent.Products = new List<CommonProduct>
             {
                 CreateValidReferenceProduct()
             };
+
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidFarmHarvestEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTFarmHarvestEvent";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
+            commonEvent.AquacultureMethod = "Cage and pen";
+
+            commonEvent.Products = CreateValidTransformationProducts();
+
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidMSCProcessingEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "MSCProcessingEvent";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
+            commonEvent.ProcessingType = "GENERAL";
+
+            commonEvent.Products = CreateValidTransformationProducts();
 
             return commonEvent;
         }
