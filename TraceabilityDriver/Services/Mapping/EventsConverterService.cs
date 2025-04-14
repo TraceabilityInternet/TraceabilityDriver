@@ -6,6 +6,7 @@ using OpenTraceability.Models.Events;
 using OpenTraceability.Models.Events.KDEs;
 using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Models.MasterData;
+using OpenTraceability.MSC.Events;
 using TraceabilityDriver.Models.Mapping;
 
 namespace TraceabilityDriver.Services;
@@ -43,11 +44,15 @@ public class EventsConverterService : IEventsConverterService
                 {
                     case "gdstfishingevent": ConvertTo_GDSTFishingEvent(commonEvent, doc); break;
                     case "gdstshippingevent": ConvertTo_GDSTShippingEvent(commonEvent, doc); break;
-                    case "gdstreceiveevent": ConvertTo_GDSTReceivingEvent(commonEvent, doc); break;
+                    case "gdstreceiveevent": ConvertTo_GDSTReceiveEvent(commonEvent, doc); break;
                     case "gdstfarmharvestevent": ConvertTo_GDSTFarmHarvestEvent(commonEvent, doc); break;
                     case "gdsthatchingevent": ConvertTo_GDSTHatchingEvent(commonEvent, doc); break;
                     case "gdstfeedmillobjectevent": ConvertTo_FeedMillObjectEvent(commonEvent, doc); break;
                     case "gdstfeedmilltransformationevent": ConvertTo_FeedMillTransformationEvent(commonEvent, doc); break;
+                    case "mscprocessingevent": ConvertTo_MSCProcessingevent(commonEvent, doc); break;
+                    case "mscshippingevent": ConvertTo_MSCShippingEvent(commonEvent, doc); break;
+                    case "mscreceiveevent": ConvertTo_MSCReceiveEvent(commonEvent, doc); break;
+                    case "mscstorageevent": ConvertTo_MSCStorageEvent(commonEvent, doc); break;
                     default:
                         _logger.LogError("Event type not supported: {EventType}", commonEvent.EventType);
                         break;
@@ -60,6 +65,44 @@ public class EventsConverterService : IEventsConverterService
         }
 
         return Task.FromResult(doc);
+    }
+
+    public void ConvertTo_MSCStorageEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        MSCStorageEvent epcisEvent = new MSCStorageEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+
+        // Human Welfare Policy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+        doc.Events.Add(epcisEvent);
     }
 
     /// <summary>
@@ -105,6 +148,155 @@ public class EventsConverterService : IEventsConverterService
         return true;
     }
 
+    public void ConvertTo_MSCReceiveEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        MSCReceiveEvent epcisEvent = new MSCReceiveEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        // Source List
+        epcisEvent.SourceList = new List<EventSource>();
+        SetSourceList(epcisEvent.SourceList, commonEvent.Source);
+
+        // Destination List
+        epcisEvent.DestinationList = new List<EventDestination>();
+        SetDestinationList(epcisEvent.DestinationList, commonEvent.Destination);
+
+        // Human Welfare Policy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // Transport
+        epcisEvent.TransportType = commonEvent.TransportType;
+        epcisEvent.TransportVehicleID = commonEvent.TransportVehicleID;
+        epcisEvent.TransportNumber = commonEvent.TransportNumber;
+        epcisEvent.TransportProviderID = commonEvent.TransportProviderID;
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    public void ConvertTo_MSCShippingEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        MSCShippingEvent epcisEvent = new MSCShippingEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        // Source List
+        epcisEvent.SourceList = new List<EventSource>();
+        SetSourceList(epcisEvent.SourceList, commonEvent.Source);
+
+        // Destination List
+        epcisEvent.DestinationList = new List<EventDestination>();
+        SetDestinationList(epcisEvent.DestinationList, commonEvent.Destination);
+
+        // Human Welfare Policy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // Transport
+        epcisEvent.TransportType = commonEvent.TransportType;
+        epcisEvent.TransportVehicleID = commonEvent.TransportVehicleID;
+        epcisEvent.TransportNumber = commonEvent.TransportNumber;
+        epcisEvent.TransportProviderID = commonEvent.TransportProviderID;
+
+        doc.Events.Add(epcisEvent);
+    }
+
+    public void ConvertTo_MSCProcessingevent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        MSCProcessingEvent epcisEvent = new MSCProcessingEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Certificates
+        epcisEvent.ILMD = new();
+        epcisEvent.ILMD.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
+
+        // Human Welfare Policy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
+
+        // ILMD
+        epcisEvent.ILMD.ProcessingType = commonEvent.ProcessingType;
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(epcisEvent);
+    }
+
     /// <summary>
     /// Converts the common event to a GDST Fishing Event.
     /// </summary>
@@ -147,7 +339,8 @@ public class EventsConverterService : IEventsConverterService
         epcisEvent.ILMD.CertificationList = new CertificationList();
         SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
 
-        // human wellfare policy
+        // Human Welfare Policy
+        epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
 
         // Products
         if (commonEvent.Products != null)
@@ -215,7 +408,7 @@ public class EventsConverterService : IEventsConverterService
     /// </summary>
     /// <param name="commonEvent">The common event to convert.</param>
     /// <param name="doc">The EPCIS document to add the event to.</param>
-    public void ConvertTo_GDSTReceivingEvent(CommonEvent commonEvent, EPCISDocument doc)
+    public void ConvertTo_GDSTReceiveEvent(CommonEvent commonEvent, EPCISDocument doc)
     {
         GDSTReceiveEvent epcisEvent = new GDSTReceiveEvent();
 
@@ -289,11 +482,12 @@ public class EventsConverterService : IEventsConverterService
         epcisEvent.ILMD.CertificationList = new CertificationList();
         SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
 
-        // humanWelfarePolicy
+        // Human Welfare Policy
         epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
 
         // aquaculture method
         epcisEvent.ILMD.AquacultureMethod = commonEvent.AquacultureMethod;
+        epcisEvent.ILMD.ProductionMethodForFishAndSeafoodCode = commonEvent.ProductionMethod;
 
         // Products
         if (commonEvent.Products != null)
@@ -467,6 +661,33 @@ public class EventsConverterService : IEventsConverterService
                 {
                     CertificateType = "urn:gdst:certType:fishingAuth",
                     Identification = certificates.FishingAuthorization.Identifier
+                });
+            }
+
+            if (certificates.ChainOfCustodyCertification != null)
+            {
+                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+                {
+                    CertificateType = "urn:gdst:certType:harvestCoC",
+                    Identification = certificates.ChainOfCustodyCertification.Identifier
+                });
+            }
+
+            if (certificates.HumanPolicyCertificate != null)
+            {
+                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+                {
+                    CertificateType = "urn:gdst:certType:humanyPolicy",
+                    Identification = certificates.HumanPolicyCertificate.Identifier
+                });
+            }
+
+            if (certificates.HarvestCertification != null)
+            {
+                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+                {
+                    CertificateType = "urn:gdst:certType:harvestCert",
+                    Identification = certificates.HarvestCertification.Identifier
                 });
             }
         }
