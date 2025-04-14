@@ -44,7 +44,7 @@ public class EventsConverterService : IEventsConverterService
                 {
                     case "gdstfishingevent": ConvertTo_GDSTFishingEvent(commonEvent, doc); break;
                     case "gdstshippingevent": ConvertTo_GDSTShippingEvent(commonEvent, doc); break;
-                    case "gdstreceiveevent": ConvertTo_GDSTReceivingEvent(commonEvent, doc); break;
+                    case "gdstreceiveevent": ConvertTo_GDSTReceiveEvent(commonEvent, doc); break;
                     case "gdstfarmharvestevent": ConvertTo_GDSTFarmHarvestEvent(commonEvent, doc); break;
                     case "gdsthatchingevent": ConvertTo_GDSTHatchingEvent(commonEvent, doc); break;
                     case "gdstfeedmillobjectevent": ConvertTo_FeedMillObjectEvent(commonEvent, doc); break;
@@ -408,7 +408,7 @@ public class EventsConverterService : IEventsConverterService
     /// </summary>
     /// <param name="commonEvent">The common event to convert.</param>
     /// <param name="doc">The EPCIS document to add the event to.</param>
-    public void ConvertTo_GDSTReceivingEvent(CommonEvent commonEvent, EPCISDocument doc)
+    public void ConvertTo_GDSTReceiveEvent(CommonEvent commonEvent, EPCISDocument doc)
     {
         GDSTReceiveEvent epcisEvent = new GDSTReceiveEvent();
 
@@ -487,6 +487,7 @@ public class EventsConverterService : IEventsConverterService
 
         // aquaculture method
         epcisEvent.ILMD.AquacultureMethod = commonEvent.AquacultureMethod;
+        epcisEvent.ILMD.ProductionMethodForFishAndSeafoodCode = commonEvent.ProductionMethod;
 
         // Products
         if (commonEvent.Products != null)
@@ -660,6 +661,33 @@ public class EventsConverterService : IEventsConverterService
                 {
                     CertificateType = "urn:gdst:certType:fishingAuth",
                     Identification = certificates.FishingAuthorization.Identifier
+                });
+            }
+
+            if (certificates.ChainOfCustodyCertification != null)
+            {
+                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+                {
+                    CertificateType = "urn:gdst:certType:harvestCoC",
+                    Identification = certificates.ChainOfCustodyCertification.Identifier
+                });
+            }
+
+            if (certificates.HumanPolicyCertificate != null)
+            {
+                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+                {
+                    CertificateType = "urn:gdst:certType:humanyPolicy",
+                    Identification = certificates.HumanPolicyCertificate.Identifier
+                });
+            }
+
+            if (certificates.HarvestCertification != null)
+            {
+                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+                {
+                    CertificateType = "urn:gdst:certType:harvestCert",
+                    Identification = certificates.HarvestCertification.Identifier
                 });
             }
         }

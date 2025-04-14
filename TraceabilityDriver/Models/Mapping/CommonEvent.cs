@@ -76,6 +76,8 @@ public class CommonEvent : CommonBaseModel
 
     public string? TransportProviderID { get; set; } = null;
 
+    public string? ProductionMethod { get; set; } = null;
+
     /// <summary>
     /// Merges property values from the source onto the target
     /// only if that property value has no value and the source
@@ -142,6 +144,12 @@ public class CommonEvent : CommonBaseModel
         if (this.TransportProviderID == null && source.TransportProviderID != null)
         {
             this.TransportProviderID = source.TransportProviderID;
+        }
+
+        // Production Method
+        if (this.ProductionMethod== null && source.ProductionMethod != null)
+        {
+            this.ProductionMethod = source.ProductionMethod;
         }
 
         // Source List

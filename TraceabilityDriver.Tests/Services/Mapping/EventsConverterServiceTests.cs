@@ -42,6 +42,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidMSCProcessingEvent("event8"),
                 CreateValidShippingEvent("event9", "mscshippingevent"),
                 CreateValidReceiveEvent("event10", "mscreceiveevent"),
+                CreateValidStorageEvent("event11"),
             };
 
             // Act
@@ -49,7 +50,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Events, Has.Count.EqualTo(10));
+            Assert.That(result.Events, Has.Count.EqualTo(11));
             Assert.That(result.Events, Has.One.TypeOf<GDSTFishingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillObjectEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillTransformationEvent>());
@@ -60,6 +61,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(result.Events, Has.One.TypeOf<MSCProcessingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<MSCReceiveEvent>());
             Assert.That(result.Events, Has.One.TypeOf<MSCShippingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<MSCStorageEvent>());
         }
 
         [Test]
@@ -346,6 +348,278 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 Is.EqualTo(commonEvent.CatchInformation.CatchArea));
         }
 
+        [Test]
+        public void ConvertTo_GDSTFeedMillObjectEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidFeedMillObjectEvent("feedmill-object-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_FeedMillObjectEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTFeedmillObjectEvent>());
+
+            var feedmillObjectEvent = doc.Events[0] as GDSTFeedmillObjectEvent;
+            Assert.That(feedmillObjectEvent, Is.Not.Null);
+            Assert.That(feedmillObjectEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(feedmillObjectEvent.ILMD.ProteinSource, Is.EqualTo(commonEvent.ProteinSource));
+            Assert.That(feedmillObjectEvent.ILMD.CertificationList, Is.Not.Null);
+            Assert.That(feedmillObjectEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
+            Assert.That(feedmillObjectEvent.HumanWelfarePolicy, Is.Not.Null);
+            Assert.That(feedmillObjectEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTFeedMillTransformationEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidFeedMillTransformationevent("feedmill-transform-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_FeedMillTransformationEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTFeedmillTransformationEvent>());
+
+            var feedmillTransformEvent = doc.Events[0] as GDSTFeedmillTransformationEvent;
+            Assert.That(feedmillTransformEvent, Is.Not.Null);
+            Assert.That(feedmillTransformEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(feedmillTransformEvent.ILMD.ProteinSource, Is.EqualTo(commonEvent.ProteinSource));
+            Assert.That(feedmillTransformEvent.ILMD.CertificationList, Is.Not.Null);
+            Assert.That(feedmillTransformEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
+            Assert.That(feedmillTransformEvent.HumanWelfarePolicy, Is.Not.Null);
+            Assert.That(feedmillTransformEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTFarmHarvestEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidFarmHarvestEvent("farm-harvest-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTFarmHarvestEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTFarmHarvestEvent>());
+
+            var farmHarvestEvent = doc.Events[0] as GDSTFarmHarvestEvent;
+            Assert.That(farmHarvestEvent, Is.Not.Null);
+            Assert.That(farmHarvestEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(farmHarvestEvent.ILMD.AquacultureMethod, Is.EqualTo(commonEvent.AquacultureMethod));
+            Assert.That(farmHarvestEvent.ILMD.ProductionMethodForFishAndSeafoodCode, Is.EqualTo(commonEvent.ProductionMethod));
+
+            Assert.That(farmHarvestEvent.ILMD.CertificationList, Is.Not.Null);
+            Assert.That(farmHarvestEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
+
+            Assert.That(farmHarvestEvent.HumanWelfarePolicy, Is.Not.Null);
+            Assert.That(farmHarvestEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTHatchingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidHatchingEvent("hatching-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTHatchingEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTHatchingEvent>());
+
+            var harvestEvent = doc.Events[0] as GDSTHatchingEvent;
+            Assert.That(harvestEvent, Is.Not.Null);
+            Assert.That(harvestEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(harvestEvent.ILMD.BroodstockSource, Is.EqualTo(commonEvent.BroodStockSource));
+
+            Assert.That(harvestEvent.ILMD.CertificationList, Is.Not.Null);
+            Assert.That(harvestEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
+
+            Assert.That(harvestEvent.HumanWelfarePolicy, Is.Not.Null);
+            Assert.That(harvestEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTShippingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidShippingEvent("gdst-shipping-1", "gdstshippingevent");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTShippingEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTShippingEvent>());
+
+            var shippingEvent = doc.Events[0] as GDSTShippingEvent;
+            Assert.That(shippingEvent, Is.Not.Null);
+            Assert.That(shippingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(shippingEvent.SourceList, Is.Not.Null);
+            Assert.That(shippingEvent.SourceList, Has.Count.EqualTo(2));
+
+            Assert.That(shippingEvent.DestinationList, Is.Not.Null);
+            Assert.That(shippingEvent.DestinationList, Has.Count.EqualTo(2));
+
+            Assert.That(shippingEvent.CertificationList, Is.Not.Null);
+            Assert.That(shippingEvent.CertificationList.Certificates, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTReceiveEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidReceiveEvent("gdst-receive-1", "gdstreceiveevent");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTReceiveEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTReceiveEvent>());
+
+            var receiveEvent = doc.Events[0] as GDSTReceiveEvent;
+            Assert.That(receiveEvent, Is.Not.Null);
+            Assert.That(receiveEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(receiveEvent.SourceList, Is.Not.Null);
+            Assert.That(receiveEvent.SourceList, Has.Count.EqualTo(2));
+
+            Assert.That(receiveEvent.DestinationList, Is.Not.Null);
+            Assert.That(receiveEvent.DestinationList, Has.Count.EqualTo(2));
+
+            Assert.That(receiveEvent.CertificationList, Is.Not.Null);
+            Assert.That(receiveEvent.CertificationList.Certificates, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void ConvertTo_MSCShippingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidShippingEvent("msc-shipping-1", "mscshippingevent");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_MSCShippingEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<MSCShippingEvent>());
+
+            var shippingEvent = doc.Events[0] as MSCShippingEvent;
+            Assert.That(shippingEvent, Is.Not.Null);
+            Assert.That(shippingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(shippingEvent.SourceList, Is.Not.Null);
+            Assert.That(shippingEvent.SourceList, Has.Count.EqualTo(2));
+
+            Assert.That(shippingEvent.DestinationList, Is.Not.Null);
+            Assert.That(shippingEvent.DestinationList, Has.Count.EqualTo(2));
+
+            Assert.That(shippingEvent.CertificationList, Is.Not.Null);
+            Assert.That(shippingEvent.CertificationList.Certificates, Has.Count.EqualTo(1));
+
+            Assert.That(shippingEvent.TransportNumber, Is.EqualTo(commonEvent.TransportNumber));
+            Assert.That(shippingEvent.TransportProviderID, Is.EqualTo(commonEvent.TransportProviderID));
+            Assert.That(shippingEvent.TransportType, Is.EqualTo(commonEvent.TransportType));
+            Assert.That(shippingEvent.TransportVehicleID, Is.EqualTo(commonEvent.TransportVehicleID));
+        }
+
+        [Test]
+        public void ConvertTo_MSCReceiveEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidShippingEvent("msc-receive-1", "mscreceiveevent");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_MSCReceiveEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<MSCReceiveEvent>());
+
+            var receiveEvent = doc.Events[0] as MSCReceiveEvent;
+            Assert.That(receiveEvent, Is.Not.Null);
+            Assert.That(receiveEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(receiveEvent.SourceList, Is.Not.Null);
+            Assert.That(receiveEvent.SourceList, Has.Count.EqualTo(2));
+
+            Assert.That(receiveEvent.DestinationList, Is.Not.Null);
+            Assert.That(receiveEvent.DestinationList, Has.Count.EqualTo(2));
+
+            Assert.That(receiveEvent.CertificationList, Is.Not.Null);
+            Assert.That(receiveEvent.CertificationList.Certificates, Has.Count.EqualTo(1));
+
+            Assert.That(receiveEvent.TransportNumber, Is.EqualTo(commonEvent.TransportNumber));
+            Assert.That(receiveEvent.TransportProviderID, Is.EqualTo(commonEvent.TransportProviderID));
+            Assert.That(receiveEvent.TransportType, Is.EqualTo(commonEvent.TransportType));
+            Assert.That(receiveEvent.TransportVehicleID, Is.EqualTo(commonEvent.TransportVehicleID));
+        }
+
+        [Test]
+        public void ConvertTo_MSCProcessingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidMSCProcessingEvent("msc-processing-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_MSCProcessingevent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<MSCProcessingEvent>());
+
+            var processingEvent = doc.Events[0] as MSCProcessingEvent;
+            Assert.That(processingEvent, Is.Not.Null);
+            Assert.That(processingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(processingEvent.ILMD.ProcessingType, Is.EqualTo(commonEvent.ProcessingType));
+
+            Assert.That(processingEvent.ILMD.CertificationList, Is.Not.Null);
+            Assert.That(processingEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
+
+            Assert.That(processingEvent.HumanWelfarePolicy, Is.Not.Null);
+            Assert.That(processingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_MSCStorageEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidStorageEvent("msc-storage-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_MSCStorageEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<MSCStorageEvent>());
+
+            var storageEvent = doc.Events[0] as MSCStorageEvent;
+            Assert.That(storageEvent, Is.Not.Null);
+            Assert.That(storageEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(storageEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
         #region Helper Methods
 
         private CommonEvent CreateValidEvent(string eventId)
@@ -432,6 +706,19 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             commonEvent.Certificates.HarvestCertification = new CommonCertificate { Identifier = "harvest123" };
 
             commonEvent.BroodStockSource = "Domestic";
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidStorageEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "mscstorageevent";
+
+            commonEvent.HumanWelfarePolicy = "Policy123";
             commonEvent.Products = new List<CommonProduct>
             {
                 CreateValidReferenceProduct()
@@ -538,6 +825,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
             };
             commonEvent.AquacultureMethod = "Cage and pen";
+            commonEvent.ProductionMethod = "Aquaculture";
 
             commonEvent.Products = CreateValidTransformationProducts();
 
