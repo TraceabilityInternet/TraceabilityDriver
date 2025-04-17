@@ -5,7 +5,7 @@ services:
         - ASPNETCORE_HTTP_PORTS=8080
         - ASPNETCORE_HTTPS_PORTS=8081
         - URL=https://127.0.0.1:5445
-        - EnableMSC=true 
+        # - EnableMSC=true 
         # - MongoDB__ConnectionString=mongodb://admin:password@mongodb_test:27017/TraceabilityDriverTests?authSource=admin
         - MongoDB__DatabaseName=TraceabilityDriverTests
         - SqlServer__ConnectionString=Server=sqlserver_test;Database=TraceabilityDriverTests;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;

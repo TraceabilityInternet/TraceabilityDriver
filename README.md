@@ -277,6 +277,13 @@ After configuration, follow these steps to execute the capability test from insi
 This is useful for testing that the Traceability Driver is interoperable with other GDST capable systems. 
 However, this does not indicate that traceability data is being synchronized correctly or that the traceability data is complete with all the GDST CTEs and KDEs.
 
+### MSC (Marine Stewardship Council) Extensions
+The Traceability Driver supports mapping to the CTE and KDE extensions in the OpenTraceability.MSC extension library.
+To enable mapping to MSC CTEs and KDEs, you need to set the `EnableMSC` configuration option to `true` in the `appsettings.json` file.
+```json
+"EnableMSC": true
+```
+
 ### Identifiers
 The Traceability Driver is capable of automatically generating traceability identifiers such as the EPC, GTIN, PGLN, and/or GLN. 
 A critical part of generating these identifiers has to do with the domain that is generating them as is outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).
