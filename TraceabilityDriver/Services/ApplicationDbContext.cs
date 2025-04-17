@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Text.Json;
-using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
 
@@ -21,7 +21,7 @@ namespace TraceabilityDriver.Services
 
         public DbSet<SyncHistoryItem> SyncHistory { get; set; }
 
-        public DbSet<LogModel> Logs { get; set; }
+        public DbSet<LogModelSql> Logs { get; set; }
 
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
@@ -34,6 +34,18 @@ namespace TraceabilityDriver.Services
             //modelBuilder.Entity<EPCISEventDocument>().Property(x => x.ProductGTINs).ToJson();
             //modelBuilder.Entity<EPCISEventDocument>().Property(x => x.LocationGLNs).ToJson();
             //modelBuilder.Entity<EPCISEventDocument>().Property(x => x.PartyPGLNs).ToJson();
+
+            // Configure log model
+            var logLevelConverter = new ValueConverter<LogLevel, string>(
+                x => x.ToString(),
+                x => Enum.Parse<LogLevel>(x)
+            );
+            modelBuilder.Entity<LogModelSql>(entity =>
+            {
+                entity.ToTable("Logs"); // Match the table Serilog writes to
+                entity.Property(x => x.Level).HasConversion(logLevelConverter);
+                entity.Property(x => x.Level).HasColumnType("nvarchar(50)");
+            });
 
             // Add index for EventId on EPCISEventSqlDocument
             modelBuilder.Entity<EPCISEventSqlDocument>()

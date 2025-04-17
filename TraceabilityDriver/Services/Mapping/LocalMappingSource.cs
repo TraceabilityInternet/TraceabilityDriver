@@ -85,6 +85,13 @@ namespace TraceabilityDriver.Services.Mapping
                 }
             }
 #endif
+
+            // The sync process should not succeed if no mappings are found.
+            if (!mappings.Any())
+            {
+                throw new Exception("No mappings were found in the folder " + mappingsFolder);
+            }
+
             return mappings;
         }
     }

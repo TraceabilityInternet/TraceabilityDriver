@@ -1,9 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using System;
-using System.Collections.Generic;
 
-namespace TraceabilityDriver.Models
+namespace TraceabilityDriver.Models.MongoDB
 {
     public class LogModel
     {
