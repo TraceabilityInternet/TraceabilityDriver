@@ -38,8 +38,6 @@ else if (!string.IsNullOrWhiteSpace(builder.Configuration["SqlServer:ConnectionS
         sinkOptions: new MSSqlServerSinkOptions
         {
             TableName = "Logs",
-            AutoCreateSqlTable = true,
-            BatchPostingLimit = 1,
         },
         columnOptions: columnOptions);
 }
