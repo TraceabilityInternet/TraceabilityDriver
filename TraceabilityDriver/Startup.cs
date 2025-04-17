@@ -21,7 +21,16 @@ namespace TraceabilityDriver
         public Startup(IConfiguration configuration)
         {
             OpenTraceability.Setup.Initialize();
-            OpenTraceability.GDST.Setup.Initialize();
+
+            // conditionally setup MSC event profiles
+            if ("true".Equals(configuration["EnableMSC"], StringComparison.OrdinalIgnoreCase))
+            {
+                OpenTraceability.MSC.Setup.Initialize();
+            }
+            else
+            {
+                OpenTraceability.GDST.Setup.Initialize();
+            }
 
             Configuration = configuration;
         }

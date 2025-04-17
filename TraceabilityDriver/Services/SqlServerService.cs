@@ -6,7 +6,6 @@ using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using System.Collections.Concurrent;
-using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
 
@@ -296,7 +295,22 @@ namespace TraceabilityDriver.Services
         public async Task<List<LogModel>> GetLastErrors(int top = 10)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
-            return await context.Logs.OrderByDescending(x => x.Timestamp).Take(top).ToListAsync();
+
+            List<LogModelSql> logs = await context.Logs
+                .Where(x => x.Level == LogLevel.Error)
+                .OrderByDescending(x => x.TimeStamp)
+                .Take(top)
+                .ToListAsync();
+
+            List<LogModel> logModels = logs.Select(x => new LogModel()
+            {
+                Id = x.Id.ToString(),
+                Message = x.Message ?? string.Empty,
+                Level = x.Level.ToString(),
+                Timestamp = x.TimeStamp,
+            }).ToList();
+
+            return logModels;
         }
 
         public async Task ClearDatabaseAsync()

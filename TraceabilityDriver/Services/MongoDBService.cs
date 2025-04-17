@@ -7,7 +7,6 @@ using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using System.Collections.Concurrent;
-using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services

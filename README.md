@@ -15,7 +15,7 @@ The **GDST Data Cache** is where the traceability is stored.
 It serves as the data source for API queries. 
 By default, the GDST Data Cache built using MongoDB, but it can be configured to use other databases such as SQL Server, MySQL, or PostgreSQL.
 
-> The Traceability Drvier is designed to be able to be extended to use other databases as the GDST Data Cache by re-implementing the `IDatabaseService` interface.
+> The Traceability Drvier can be be extended for use with other database types by re-implementing the `IDatabaseService` interface.
 
 ## Synchronization
 Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection. 
@@ -106,7 +106,7 @@ Go to the official releases page of the GitHub and download the latest release o
 
 # Configuration
 The Traceability Driver is configured using environment variables.
-These environment variables can be configured within a docker compose file for local development, or in a cloud environment where the container is deployed.
+These environment variables can be configured within a docker compose file for local development or in a cloud environment where the container is deployed.
 
 ## Local Development
 A docker compose file is recommended for local development.

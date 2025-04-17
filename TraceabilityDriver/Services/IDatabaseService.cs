@@ -1,7 +1,6 @@
 ﻿using OpenTraceability.Interfaces;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
-using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services

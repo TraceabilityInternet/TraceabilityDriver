@@ -1,4 +1,6 @@
 using Serilog;
+using Serilog.Sinks.MSSqlServer;
+using System.Data;
 using TraceabilityDriver;
 using TraceabilityDriver.Services;
 
@@ -20,6 +22,26 @@ string? mongoDbConnectionString = builder.Configuration["MongoDB:ConnectionStrin
 if (!string.IsNullOrWhiteSpace(mongoDbConnectionString))
 {
     config.WriteTo.MongoDB(mongoDbConnectionString, collectionName: "logs");
+}
+else if (!string.IsNullOrWhiteSpace(builder.Configuration["SqlServer:ConnectionString"]))
+{
+    ColumnOptions columnOptions = new();
+    columnOptions.AdditionalColumns = new List<SqlColumn>
+    {
+        new SqlColumn("MachineName", SqlDbType.NVarChar, dataLength: 100),
+        new SqlColumn("ProcessId", SqlDbType.Int),
+        new SqlColumn("ThreadId", SqlDbType.Int)
+    };
+
+    config.WriteTo.MSSqlServer(
+        connectionString: builder.Configuration["SqlServer:ConnectionString"],
+        sinkOptions: new MSSqlServerSinkOptions
+        {
+            TableName = "Logs",
+            AutoCreateSqlTable = true,
+            BatchPostingLimit = 1,
+        },
+        columnOptions: columnOptions);
 }
 
 Log.Logger = config.CreateLogger();
