@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using System.Data;
@@ -8,6 +7,7 @@ using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json;
 
 namespace TraceabilityDriver.Tests.Services.Connectors
 {
@@ -94,6 +94,47 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                     throw;
                 }
             }
+        }
+
+        [Test]
+        public void DeserializeConnector_ResolvesToMySQLType()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Skipping MySQL tests because NO_SQL_DB environment variable is set to true");
+                return;
+            }
+
+            // Arrange
+            string json = @"
+{
+    ""Mappings"": [
+        {
+            ""Id"" : ""<your-mapping-id>"",
+            ""Selectors"" : [
+                {
+                    ""Id"" : ""your-selector-id"",
+                    ""Database"" : ""ExampleDBName""
+                }
+            ]
+        }
+    ],
+    ""Dictionaries"": {},
+    ""Connections"": {
+        ""ExampleDBName"": {
+            ""Database"": ""ExampleDBName"",
+            ""ConnectorType"": ""MySql"",
+            ""ConnectionString"": ""example connection string""
+        }
+    }
+}";
+
+            // Act
+            var mapping = JsonConvert.DeserializeObject<TDMappingConfiguration>(json);
+
+            // Assert
+            Assert.That(mapping, Is.Not.Null);
+            Assert.That(mapping.Connections.First().Value.ConnectorType, Is.EqualTo(ConnectorType.MySql));
         }
 
         [Test]

@@ -25,6 +25,7 @@ services:
             - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
             - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
             - ${TD_MAPPINGS_FOLDER}:/app/bin/Debug/net8.0/Mappings
+            - ${TD_KEYS_FOLDER}:/home/keys
         networks:
             - dev-network
 
@@ -57,6 +58,7 @@ services:
 volumes:
   mongodb_test_data:
   sqlserver_test_data:
+  local_keys:
 
 networks:
   dev-network:

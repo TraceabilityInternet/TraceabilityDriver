@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Runtime.InteropServices;
 using TraceabilityDriver.Models.GDST;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Pages;
@@ -106,6 +108,14 @@ namespace TraceabilityDriver
             // OAUTH (JWT) AUTHENTICATION
             var authenticationSchemeBuilder = services.AddAuthentication();
             List<string> policies = new();
+
+            // Persist keys on the file system to support release installations as well as docker deployments
+            string keysPath = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                            ? @"C:\home\keys"
+                            : "/home/keys";
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+                .SetApplicationName("TraceabilityDriver");
 
             if (Configuration.GetSection("Authentication:JWT").Exists())
             {
