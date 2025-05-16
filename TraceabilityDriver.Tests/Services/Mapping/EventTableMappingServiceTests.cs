@@ -36,14 +36,18 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 Fields = new List<TDEventMappingField>
                     {
-                        new TDEventMappingField("EventId", "$Id", typeof(CommonEvent).GetProperty("EventId")!)
+                        new TDEventMappingField("EventId", "$Id", typeof(CommonEvent).GetProperty("EventId")!),
+                        new TDEventMappingField("Products[0].ProductType", "$ProductType", typeof(CommonProduct).GetProperty("ProductType")!),
+                        new TDEventMappingField("Products[0].ProductId", "$ProductId", typeof(CommonProduct).GetProperty("ProductId")!),
                     }
             };
 
             var dataTable = new DataTable();
             dataTable.Columns.Add("Id", typeof(string));
-            dataTable.Rows.Add("Event1");
-            dataTable.Rows.Add("Event2");
+            dataTable.Columns.Add("ProductType", typeof(string));
+            dataTable.Columns.Add("ProductId", typeof(string));
+            dataTable.Rows.Add("Event1", "Input", "product_1");
+            dataTable.Rows.Add("Event2", "Output", "product_2");
 
             // Act
             var result = _service.MapEvents(eventMapping, dataTable, CancellationToken.None);
@@ -51,6 +55,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result.First().Products?.First().ProductType == OpenTraceability.Models.Events.EventProductType.Input);
+            Assert.That(result.Skip(1).First().Products?.First().ProductType == OpenTraceability.Models.Events.EventProductType.Output);
         }
 
         [Test]

@@ -249,6 +249,14 @@ public class EventsTableMappingService : IEventsTableMappingService
                 return Countries.Parse(value);
             }
 
+            if(targetType.IsEnum)
+            {
+                if(Enum.TryParse(targetType, value, true, out var result))
+                {
+                    return result;
+                }
+            }
+
             return null;
         }
         catch (Exception ex)
