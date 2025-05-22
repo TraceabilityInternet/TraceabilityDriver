@@ -39,10 +39,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidShippingEvent("event5", "gdstshippingevent"),
                 CreateValidReceiveEvent("event6", "gdstreceiveevent"),
                 CreateValidFarmHarvestEvent("event7"),
-                CreateValidMSCProcessingEvent("event8"),
+                CreateValidProcessingEvent("event8", true),
                 CreateValidShippingEvent("event9", "mscshippingevent"),
                 CreateValidReceiveEvent("event10", "mscreceiveevent"),
                 CreateValidStorageEvent("event11"),
+                CreateValidComminglingEvent("event12"),
+                CreateValidFarmHarvestObjectEvent("event13"),
+                CreateValidProcessingEvent("event14"),
+                CreateValidLandingEvent("event15"),
+                CreateValidTransshipmentEvent("event16"),
             };
 
             // Act
@@ -50,7 +55,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Events, Has.Count.EqualTo(11));
+            Assert.That(result.Events, Has.Count.EqualTo(16));
             Assert.That(result.Events, Has.One.TypeOf<GDSTFishingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillObjectEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillTransformationEvent>());
@@ -62,6 +67,11 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(result.Events, Has.One.TypeOf<MSCReceiveEvent>());
             Assert.That(result.Events, Has.One.TypeOf<MSCShippingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<MSCStorageEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTComminglingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTFarmHarvestObjectEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTProcessingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTLandingEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTTransshipmentEvent>());
         }
 
         [Test]
@@ -356,7 +366,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_FeedMillObjectEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTFeedMillObjectEvent(commonEvent, doc);
 
             // Assert
             Assert.That(doc.Events, Has.Count.EqualTo(1));
@@ -380,7 +390,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_FeedMillTransformationEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTFeedMillTransformationEvent(commonEvent, doc);
 
             // Assert
             Assert.That(doc.Events, Has.Count.EqualTo(1));
@@ -574,10 +584,35 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         }
 
         [Test]
+        public void ConvertTo_GDSTProcessingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidProcessingEvent("gdst-processing-1");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTProcessingEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTProcessingEvent>());
+
+            var processingEvent = doc.Events[0] as GDSTProcessingEvent;
+            Assert.That(processingEvent, Is.Not.Null);
+            Assert.That(processingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+
+            Assert.That(processingEvent.ILMD.CertificationList, Is.Not.Null);
+            Assert.That(processingEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
+
+            Assert.That(processingEvent.HumanWelfarePolicy, Is.Not.Null);
+            Assert.That(processingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
         public void ConvertTo_MSCProcessingEvent_CreatesValidEvent()
         {
             // Arrange
-            var commonEvent = CreateValidMSCProcessingEvent("msc-processing-1");
+            var commonEvent = CreateValidProcessingEvent("msc-processing-1", true);
             var doc = new EPCISDocument();
 
             // Act
@@ -598,6 +633,46 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(processingEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(processingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTTransshipmentEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidTransshipmentEvent("transshipment-event");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTTransshippmentEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTTransshipmentEvent>());
+
+            var transshipmentEvent = doc.Events[0] as GDSTTransshipmentEvent;
+            Assert.That(transshipmentEvent, Is.Not.Null);
+            Assert.That(transshipmentEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(transshipmentEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTLandingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidLandingEvent("landing-event");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTLandingEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTLandingEvent>());
+
+            var landingEvent = doc.Events[0] as GDSTLandingEvent;
+            Assert.That(landingEvent, Is.Not.Null);
+            Assert.That(landingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(landingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
         }
 
         [Test]
@@ -639,6 +714,25 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     Country = Countries.FromAbbreviation("US")
                 },
             };
+        }
+
+        private CommonEvent CreateValidTransshipmentEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTTransshipmentEvent";
+            
+            commonEvent.Certificates = new CommonCertificates
+            {
+                TransshipmentAuthority = new CommonCertificate { Identifier = "transshipment-authority-123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest-certification-123" },
+               HumanPolicyCertificate = new CommonCertificate { Identifier = "human-policy-123" }
+            };
+
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
+            return commonEvent;
         }
 
         private CommonEvent CreateValidFishingEvent(string eventId)
@@ -706,6 +800,19 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             commonEvent.Certificates.HarvestCertification = new CommonCertificate { Identifier = "harvest123" };
 
             commonEvent.BroodStockSource = "Domestic";
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
+            return commonEvent;
+        }
+
+        private CommonEvent CreateValidLandingEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "gdstlandingevent";
+
+            commonEvent.HumanWelfarePolicy = "Policy123";
             commonEvent.Products = new List<CommonProduct>
             {
                 CreateValidReferenceProduct()
@@ -814,6 +921,23 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return commonEvent;
         }
 
+        public CommonEvent CreateValidFarmHarvestObjectEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTFarmHarvestObjectEvent";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
+            commonEvent.Products = new List<CommonProduct>
+            {
+                CreateValidReferenceProduct()
+            };
+            return commonEvent;
+        }
+
         public CommonEvent CreateValidFarmHarvestEvent(string eventId)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
@@ -832,17 +956,44 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return commonEvent;
         }
 
-        public CommonEvent CreateValidMSCProcessingEvent(string eventId)
+        public CommonEvent CreateValidAggregationEvent(string eventId)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
-            commonEvent.EventType = "MSCProcessingEvent";
+            commonEvent.EventType = "GDSTAggregationEvent";
+            commonEvent.Products = CreateValidTransformationProducts();
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidComminglingEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTComminglingEvent";
+            commonEvent.Products = CreateValidTransformationProducts();
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidProcessingEvent(string eventId, bool isMSCProcessingEvent = false)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            if (isMSCProcessingEvent)
+            {
+                commonEvent.EventType = "MSCProcessingEvent";
+            }
+            else
+            {
+                commonEvent.EventType = "GDSTProcessingEvent";
+            }
             commonEvent.Certificates = new CommonCertificates
             {
                 ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
                 HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
                 HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
             };
-            commonEvent.ProcessingType = "GENERAL";
+
+            if (isMSCProcessingEvent)
+            {
+                commonEvent.ProcessingType = "GENERAL";
+            }
 
             commonEvent.Products = CreateValidTransformationProducts();
 
@@ -865,6 +1016,29 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                     ShortDescription = "Test Fish",
                     ProductForm = "Fresh",
                     ScientificName = "Testus fishus"
+                }
+            };
+        }
+
+        private List<CommonProduct> CreateValidAggregationProducts()
+        {
+            return new List<CommonProduct>
+            {
+                new CommonProduct
+                {
+                    ProductId = "parentProduct",
+                    ProductType = EventProductType.Parent,
+                    LotNumber = "LOT123",
+                    Quantity = 100,
+                    UoM = "KGM",
+                    ProductDefinition = new CommonProductDefinition
+                    {
+                        ProductDefinitionId = "12345678901234", // 14 digits for GTIN
+                        OwnerId = "owner1",
+                        ShortDescription = "Test Fish",
+                        ProductForm = "Fresh",
+                        ScientificName = "Testus fishus"
+                    }
                 }
             };
         }
