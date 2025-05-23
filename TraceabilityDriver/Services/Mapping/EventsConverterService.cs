@@ -42,11 +42,6 @@ public class EventsConverterService : IEventsConverterService
 
                 switch (commonEvent.EventType?.Trim().ToLower())
                 {
-
-                    // TODO: automatically generate SSCCs or lgtins for parent products
-                    case "gdstaggregationevent": ConvertTo_GDSTAggregationEvent(commonEvent, doc); break;
-                    // gdstdisaggregationevent
-
                     case "gdstcomminglingevent": ConvertTo_GDSTComminglingEvent(commonEvent, doc); break;
                     case "gdstlandingevent": ConvertTo_GDSTLandingEvent(commonEvent, doc); break;
                     case "gdsttransshipmentevent": ConvertTo_GDSTTransshippmentEvent(commonEvent, doc); break;

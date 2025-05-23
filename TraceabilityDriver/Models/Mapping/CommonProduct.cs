@@ -3,7 +3,7 @@ using OpenTraceability.Models.Identifiers;
 
 namespace TraceabilityDriver.Models.Mapping;
 
-public class CommonProduct : CommonBaseModel
+public class CommonProduct
 {
     /// <summary>
     /// A unique identifier for this product to be used for merging.
@@ -48,12 +48,6 @@ public class CommonProduct : CommonBaseModel
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(this.ProductId);
 
-        // if this is an aggregated product, then generate an epc for a logistics processing unit rather than a class or instance EPC.
-        if (ProductType == OpenTraceability.Models.Events.EventProductType.Parent)
-        {
-            EPC parentEPC = GenerateParentEPC(this.ProductId);
-        }
-
         // If the product definition ID is already a GTIN, then just parse that and return it.
         if (EPC.TryParse(this.ProductId, out EPC epc, out string err))
         {
@@ -77,7 +71,6 @@ public class CommonProduct : CommonBaseModel
             {
                 throw new Exception("Either the lot number or the serial number must be set to generate an EPC.");
             }
-
             return epc;
         }
     }
