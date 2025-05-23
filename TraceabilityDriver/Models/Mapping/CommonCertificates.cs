@@ -24,6 +24,11 @@ public class CommonCertificates
     public CommonCertificate? HumanPolicyCertificate { get; set; } = null;
 
     /// <summary>
+    /// The transhipment authority for the certificates.
+    /// </summary>
+    public CommonCertificate? TransshipmentAuthority { get; set; } = null;
+
+    /// <summary>
     /// Merges common certificates into the current context.
     /// </summary>
     /// <param name="other">Contains the certificates to be merged into the existing set.</param>
@@ -63,6 +68,15 @@ public class CommonCertificates
         else if (this.HumanPolicyCertificate != null && other.HumanPolicyCertificate != null)
         {
             this.HumanPolicyCertificate.Merge(other.HumanPolicyCertificate);
+        }
+
+        if (this.TransshipmentAuthority == null && other.TransshipmentAuthority != null)
+        {
+            this.TransshipmentAuthority = other.TransshipmentAuthority;
+        }
+        else if (this.TransshipmentAuthority != null && other.TransshipmentAuthority != null)
+        {
+            this.TransshipmentAuthority.Merge(other.TransshipmentAuthority);
         }
     }
 }

@@ -71,7 +71,6 @@ public class CommonProduct
             {
                 throw new Exception("Either the lot number or the serial number must be set to generate an EPC.");
             }
-
             return epc;
         }
     }

@@ -33,6 +33,11 @@ namespace TraceabilityDriver.Models.Mapping
             }
         }
 
+        public EPC GenerateParentEPC(string productId)
+        {
+            return new EPC($"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:lpn:obj:{NormalizeString(productId)}");
+        }
+
         public string NormalizeString(string value)
         {
             return value.Where(char.IsLetterOrDigit).Aggregate("", (current, c) => current + c);
