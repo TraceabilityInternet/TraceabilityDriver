@@ -42,6 +42,8 @@ public class EventsConverterService : IEventsConverterService
 
                 switch (commonEvent.EventType?.Trim().ToLower())
                 {
+                    case "gdstaggregationevent": ConvertTo_GDSTAggregationEvent(commonEvent, doc); break;
+                    case "gdstdisaggregationevent": ConvertTo_GDSTDisaggregationEvent(commonEvent, doc); break;
                     case "gdstcomminglingevent": ConvertTo_GDSTComminglingEvent(commonEvent, doc); break;
                     case "gdstlandingevent": ConvertTo_GDSTLandingEvent(commonEvent, doc); break;
                     case "gdsttransshipmentevent": ConvertTo_GDSTTransshippmentEvent(commonEvent, doc); break;
@@ -215,6 +217,40 @@ public class EventsConverterService : IEventsConverterService
         doc.Events.Add(epcisEvent);
     }
 
+    public void ConvertTo_GDSTDisaggregationEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        GDSTDisaggregationEvent epcisEvent = new GDSTDisaggregationEvent();
+
+        // Event ID
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Information Provider
+        epcisEvent.InformationProvider = SetPartyMasterData(commonEvent.InformationProvider, doc);
+
+        // Product Owner
+        epcisEvent.ProductOwner = SetPartyMasterData(commonEvent.ProductOwner, doc);
+
+        // Location
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // TODO: Implement read point
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(epcisEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(epcisEvent);
+    }
+
     public void ConvertTo_MSCStorageEvent(CommonEvent commonEvent, EPCISDocument doc)
     {
         MSCStorageEvent epcisEvent = new MSCStorageEvent();
@@ -276,15 +312,23 @@ public class EventsConverterService : IEventsConverterService
 
         foreach (var product in commonEvent.Products)
         {
-            if (product.ProductDefinition == null)
+            if (!string.IsNullOrEmpty(product.SSCC))
             {
-                error = "Product definition is NULL.";
-                return false;
+                // Ensure the SSCC can be generated. This will throw an exception if it cannot be generated.
+                EPC sscc = product.GenerateSSCC(product.SSCC);
             }
-            if (product.ProductDefinition.GetGTIN() == null)
+            else
             {
-                error = "GTIN is NULL.";
-                return false;
+                if (product.ProductDefinition == null)
+                {
+                    error = "Product definition is NULL.";
+                    return false;
+                }
+                if (product.ProductDefinition.GetGTIN() == null)
+                {
+                    error = "GTIN is NULL.";
+                    return false;
+                }
             }
             if (product.ProductType == null)
             {

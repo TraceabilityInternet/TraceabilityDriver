@@ -33,9 +33,9 @@ namespace TraceabilityDriver.Models.Mapping
             }
         }
 
-        public EPC GenerateParentEPC(string productId)
+        public EPC GenerateSSCC(string sscc)
         {
-            return new EPC($"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:lpn:obj:{NormalizeString(productId)}");
+            return new EPC($"urn:gdst:{GDST_IDENTIFIERS_DOMAIN}:lpn:obj:{NormalizeString(sscc)}");
         }
 
         public string NormalizeString(string value)

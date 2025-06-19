@@ -8,7 +8,6 @@ using OpenTraceability.Models.MasterData;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using OpenTraceability.Utility;
-using System.Net;
 using OpenTraceability.MSC.Events;
 
 namespace TraceabilityDriver.Tests.Services.Mapping
@@ -48,6 +47,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidProcessingEvent("event14"),
                 CreateValidLandingEvent("event15"),
                 CreateValidTransshipmentEvent("event16"),
+                CreateValidAggregationEvent("event17"),
+                CreateValidDisggregationEvent("event18")
             };
 
             // Act
@@ -55,7 +56,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Events, Has.Count.EqualTo(16));
+            Assert.That(result.Events, Has.Count.EqualTo(18));
             Assert.That(result.Events, Has.One.TypeOf<GDSTFishingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillObjectEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTFeedmillTransformationEvent>());
@@ -72,6 +73,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(result.Events, Has.One.TypeOf<GDSTProcessingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTLandingEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTTransshipmentEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTAggregationEvent>());
+            Assert.That(result.Events, Has.One.TypeOf<GDSTDisaggregationEvent>());
         }
 
         [Test]
@@ -695,6 +698,48 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(storageEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
         }
 
+        [Test]
+        public void ConvertTo_GDSTAggregationEvent_CreatesValidAggregationEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidAggregationEvent("aggregation-event");
+
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTAggregationEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTAggregationEvent>());
+            var aggregationEvent = doc.Events[0] as GDSTAggregationEvent;
+            Assert.That(aggregationEvent, Is.Not.Null);
+            Assert.That(aggregationEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(aggregationEvent.Products.Count, Is.EqualTo(2));
+            Assert.That(aggregationEvent.Products[0].Type, Is.EqualTo(EventProductType.Parent));
+            Assert.That(aggregationEvent.Products[1].Type, Is.EqualTo(EventProductType.Child));
+        }
+
+        [Test]
+        public void ConvertTo_GDSTDisaggregationEvent_CreatesValidDisaggregationEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidDisggregationEvent("disaggregation-event");
+            var doc = new EPCISDocument();
+
+            // Act
+            _service.ConvertTo_GDSTDisaggregationEvent(commonEvent, doc);
+
+            // Assert
+            Assert.That(doc.Events, Has.Count.EqualTo(1));
+            Assert.That(doc.Events[0], Is.TypeOf<GDSTDisaggregationEvent>());
+            var disaggregationEvent = doc.Events[0] as GDSTDisaggregationEvent;
+            Assert.That(disaggregationEvent, Is.Not.Null);
+            Assert.That(disaggregationEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(disaggregationEvent.Products.Count, Is.EqualTo(2));
+            Assert.That(disaggregationEvent.Products[0].Type, Is.EqualTo(EventProductType.Parent));
+            Assert.That(disaggregationEvent.Products[1].Type, Is.EqualTo(EventProductType.Child));
+        }
         #region Helper Methods
 
         private CommonEvent CreateValidEvent(string eventId)
@@ -960,7 +1005,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
             commonEvent.EventType = "GDSTAggregationEvent";
-            commonEvent.Products = CreateValidTransformationProducts();
+            commonEvent.Products = CreateValidAggregationProducts();
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidDisggregationEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "GDSTDisaggregationEvent";
+            commonEvent.Products = CreateValidAggregationProducts();
             return commonEvent;
         }
 
@@ -1028,18 +1081,24 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 {
                     ProductId = "parentProduct",
                     ProductType = EventProductType.Parent,
+                    SSCC = "sscc-123",
+                },
+                new CommonProduct
+                {
+                    ProductId = "childProduct1",
+                    ProductType = EventProductType.Child,
                     LotNumber = "LOT123",
-                    Quantity = 100,
+                    Quantity = 50,
                     UoM = "KGM",
                     ProductDefinition = new CommonProductDefinition
                     {
                         ProductDefinitionId = "12345678901234", // 14 digits for GTIN
                         OwnerId = "owner1",
-                        ShortDescription = "Test Fish",
+                        ShortDescription = "Child Fish 1",
                         ProductForm = "Fresh",
                         ScientificName = "Testus fishus"
                     }
-                }
+                },
             };
         }
 

@@ -3,7 +3,7 @@ using OpenTraceability.Models.Identifiers;
 
 namespace TraceabilityDriver.Models.Mapping;
 
-public class CommonProduct
+public class CommonProduct : CommonBaseModel
 {
     /// <summary>
     /// A unique identifier for this product to be used for merging.
@@ -24,6 +24,11 @@ public class CommonProduct
     /// The serial number of the product.
     /// </summary>
     public string? SerialNumber { get; set; } = null;
+
+    /// <summary>
+    /// The SSCC (Serial Shipping Container Code) of the product, if applicable.
+    /// </summary>
+    public string? SSCC { get; set; } = null;
 
     /// <summary>
     /// The quantity of the product.
@@ -48,13 +53,19 @@ public class CommonProduct
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(this.ProductId);
 
-        // If the product definition ID is already a GTIN, then just parse that and return it.
+        // If the product definition ID is already a valid EPC, then just parse that and return it.
         if (EPC.TryParse(this.ProductId, out EPC epc, out string err))
         {
             return epc;
         }
         else
         {
+            if (!string.IsNullOrEmpty(this.SSCC))
+            {
+                EPC sscc = GenerateSSCC(this.SSCC);
+                return sscc;
+            }
+
             ArgumentNullException.ThrowIfNull(this.ProductDefinition);
 
             GTIN gtin = this.ProductDefinition.GetGTIN();
@@ -81,6 +92,10 @@ public class CommonProduct
     /// <param name="other">The product instance to merge with the current one.</param>
     public void Merge(CommonProduct other)
     {
+        if (this.SSCC == null && other.SSCC != null)
+        {
+            this.SSCC = other.SSCC;
+        }
         if (this.LotNumber == null && other.LotNumber != null)
         {
             this.LotNumber = other.LotNumber;
