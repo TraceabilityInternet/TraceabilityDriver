@@ -29,6 +29,8 @@ public class EventsConverterService : IEventsConverterService
     public Task<EPCISDocument> ConvertEventsAsync(List<CommonEvent> events)
     {
         EPCISDocument doc = new EPCISDocument();
+        doc.EPCISVersion = EPCISVersion.V2;
+        doc.CreationDate = DateTimeOffset.UtcNow;
 
         foreach (var commonEvent in events)
         {
@@ -980,7 +982,7 @@ public class EventsConverterService : IEventsConverterService
         {
             eventSources.Add(new EventSource()
             {
-                Type = new Uri("urn:epcglobal:cbv:owning_party"),
+                Type = new Uri("urn:epcglobal:cbv:sdt:owning_party"),
                 Value = commonSource.Party.GetPGLN().ToString()
             });
         }
@@ -1006,7 +1008,7 @@ public class EventsConverterService : IEventsConverterService
         {
             eventDestinations.Add(new EventDestination()
             {
-                Type = new Uri("urn:epcglobal:cbv:owning_party"),
+                Type = new Uri("urn:epcglobal:cbv:sdt:owning_party"),
                 Value = commonDestination.Party.GetPGLN().ToString()
             });
         }

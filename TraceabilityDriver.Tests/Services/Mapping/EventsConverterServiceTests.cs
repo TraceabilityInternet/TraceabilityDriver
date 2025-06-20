@@ -9,6 +9,7 @@ using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using OpenTraceability.Utility;
 using OpenTraceability.MSC.Events;
+using OpenTraceability.Mappers;
 
 namespace TraceabilityDriver.Tests.Services.Mapping
 {
@@ -17,12 +18,18 @@ namespace TraceabilityDriver.Tests.Services.Mapping
     {
         private Mock<ILogger<EventsConverterService>> _mockLogger;
         private EventsConverterService _service;
+        private EPCISDocument _document;
 
         [SetUp]
         public void Setup()
         {
             _mockLogger = new Mock<ILogger<EventsConverterService>>();
             _service = new EventsConverterService(_mockLogger.Object);
+            _document = new EPCISDocument
+            {
+                EPCISVersion = EPCISVersion.V2,
+                CreationDate = DateTimeOffset.UtcNow
+            };
         }
 
         [Test]
@@ -75,6 +82,9 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(result.Events, Has.One.TypeOf<GDSTTransshipmentEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTAggregationEvent>());
             Assert.That(result.Events, Has.One.TypeOf<GDSTDisaggregationEvent>());
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(result);
+            Assert.That(json, Is.Not.Null.Or.Empty);
         }
 
         [Test]
@@ -342,16 +352,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidFishingEvent("fishing1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTFishingEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTFishingEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTFishingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTFishingEvent>());
 
-            var fishingEvent = doc.Events[0] as GDSTFishingEvent;
+            var fishingEvent = _document.Events[0] as GDSTFishingEvent;
             Assert.That(fishingEvent, Is.Not.Null);
             Assert.That(fishingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(fishingEvent.ILMD.VesselCatchInformationList, Is.Not.Null);
@@ -359,6 +368,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(commonEvent.CatchInformation, Is.Not.Null);
             Assert.That(fishingEvent.ILMD.VesselCatchInformationList.Vessels[0].CatchArea,
                 Is.EqualTo(commonEvent.CatchInformation.CatchArea));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -366,16 +377,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidFeedMillObjectEvent("feedmill-object-1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTFeedMillObjectEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTFeedMillObjectEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTFeedmillObjectEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTFeedmillObjectEvent>());
 
-            var feedmillObjectEvent = doc.Events[0] as GDSTFeedmillObjectEvent;
+            var feedmillObjectEvent = _document.Events[0] as GDSTFeedmillObjectEvent;
             Assert.That(feedmillObjectEvent, Is.Not.Null);
             Assert.That(feedmillObjectEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(feedmillObjectEvent.ILMD.ProteinSource, Is.EqualTo(commonEvent.ProteinSource));
@@ -383,6 +393,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(feedmillObjectEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
             Assert.That(feedmillObjectEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(feedmillObjectEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -390,16 +402,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidFeedMillTransformationevent("feedmill-transform-1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTFeedMillTransformationEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTFeedMillTransformationEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTFeedmillTransformationEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTFeedmillTransformationEvent>());
 
-            var feedmillTransformEvent = doc.Events[0] as GDSTFeedmillTransformationEvent;
+            var feedmillTransformEvent = _document.Events[0] as GDSTFeedmillTransformationEvent;
             Assert.That(feedmillTransformEvent, Is.Not.Null);
             Assert.That(feedmillTransformEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(feedmillTransformEvent.ILMD.ProteinSource, Is.EqualTo(commonEvent.ProteinSource));
@@ -407,6 +418,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(feedmillTransformEvent.ILMD.CertificationList.Certificates, Has.Count.EqualTo(3));
             Assert.That(feedmillTransformEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(feedmillTransformEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -414,16 +427,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidFarmHarvestEvent("farm-harvest-1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTFarmHarvestEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTFarmHarvestEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTFarmHarvestEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTFarmHarvestEvent>());
 
-            var farmHarvestEvent = doc.Events[0] as GDSTFarmHarvestEvent;
+            var farmHarvestEvent = _document.Events[0] as GDSTFarmHarvestEvent;
             Assert.That(farmHarvestEvent, Is.Not.Null);
             Assert.That(farmHarvestEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -435,6 +447,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(farmHarvestEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(farmHarvestEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -442,16 +456,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidHatchingEvent("hatching-1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTHatchingEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTHatchingEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTHatchingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTHatchingEvent>());
 
-            var harvestEvent = doc.Events[0] as GDSTHatchingEvent;
+            var harvestEvent = _document.Events[0] as GDSTHatchingEvent;
             Assert.That(harvestEvent, Is.Not.Null);
             Assert.That(harvestEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -462,6 +475,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(harvestEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(harvestEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -469,16 +484,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidShippingEvent("gdst-shipping-1", "gdstshippingevent");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTShippingEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTShippingEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTShippingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTShippingEvent>());
 
-            var shippingEvent = doc.Events[0] as GDSTShippingEvent;
+            var shippingEvent = _document.Events[0] as GDSTShippingEvent;
             Assert.That(shippingEvent, Is.Not.Null);
             Assert.That(shippingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -490,6 +504,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(shippingEvent.CertificationList, Is.Not.Null);
             Assert.That(shippingEvent.CertificationList.Certificates, Has.Count.EqualTo(1));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -497,16 +513,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidReceiveEvent("gdst-receive-1", "gdstreceiveevent");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTReceiveEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTReceiveEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTReceiveEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTReceiveEvent>());
 
-            var receiveEvent = doc.Events[0] as GDSTReceiveEvent;
+            var receiveEvent = _document.Events[0] as GDSTReceiveEvent;
             Assert.That(receiveEvent, Is.Not.Null);
             Assert.That(receiveEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -518,6 +533,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(receiveEvent.CertificationList, Is.Not.Null);
             Assert.That(receiveEvent.CertificationList.Certificates, Has.Count.EqualTo(1));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -525,16 +542,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidShippingEvent("msc-shipping-1", "mscshippingevent");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_MSCShippingEvent(commonEvent, doc);
+            _service.ConvertTo_MSCShippingEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<MSCShippingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<MSCShippingEvent>());
 
-            var shippingEvent = doc.Events[0] as MSCShippingEvent;
+            var shippingEvent = _document.Events[0] as MSCShippingEvent;
             Assert.That(shippingEvent, Is.Not.Null);
             Assert.That(shippingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -551,6 +567,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(shippingEvent.TransportProviderID, Is.EqualTo(commonEvent.TransportProviderID));
             Assert.That(shippingEvent.TransportType, Is.EqualTo(commonEvent.TransportType));
             Assert.That(shippingEvent.TransportVehicleID, Is.EqualTo(commonEvent.TransportVehicleID));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -558,16 +576,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidShippingEvent("msc-receive-1", "mscreceiveevent");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_MSCReceiveEvent(commonEvent, doc);
+            _service.ConvertTo_MSCReceiveEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<MSCReceiveEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<MSCReceiveEvent>());
 
-            var receiveEvent = doc.Events[0] as MSCReceiveEvent;
+            var receiveEvent = _document.Events[0] as MSCReceiveEvent;
             Assert.That(receiveEvent, Is.Not.Null);
             Assert.That(receiveEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -584,6 +601,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(receiveEvent.TransportProviderID, Is.EqualTo(commonEvent.TransportProviderID));
             Assert.That(receiveEvent.TransportType, Is.EqualTo(commonEvent.TransportType));
             Assert.That(receiveEvent.TransportVehicleID, Is.EqualTo(commonEvent.TransportVehicleID));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -591,16 +610,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidProcessingEvent("gdst-processing-1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTProcessingEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTProcessingEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTProcessingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTProcessingEvent>());
 
-            var processingEvent = doc.Events[0] as GDSTProcessingEvent;
+            var processingEvent = _document.Events[0] as GDSTProcessingEvent;
             Assert.That(processingEvent, Is.Not.Null);
             Assert.That(processingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -609,6 +627,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(processingEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(processingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -616,16 +636,15 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidProcessingEvent("msc-processing-1", true);
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_MSCProcessingevent(commonEvent, doc);
+            _service.ConvertTo_MSCProcessingevent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<MSCProcessingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<MSCProcessingEvent>());
 
-            var processingEvent = doc.Events[0] as MSCProcessingEvent;
+            var processingEvent = _document.Events[0] as MSCProcessingEvent;
             Assert.That(processingEvent, Is.Not.Null);
             Assert.That(processingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
 
@@ -636,6 +655,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             Assert.That(processingEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(processingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -643,19 +664,20 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidTransshipmentEvent("transshipment-event");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTTransshippmentEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTTransshippmentEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTTransshipmentEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTTransshipmentEvent>());
 
-            var transshipmentEvent = doc.Events[0] as GDSTTransshipmentEvent;
+            var transshipmentEvent = _document.Events[0] as GDSTTransshipmentEvent;
             Assert.That(transshipmentEvent, Is.Not.Null);
             Assert.That(transshipmentEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(transshipmentEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -663,19 +685,20 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidLandingEvent("landing-event");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTLandingEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTLandingEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTLandingEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTLandingEvent>());
 
-            var landingEvent = doc.Events[0] as GDSTLandingEvent;
+            var landingEvent = _document.Events[0] as GDSTLandingEvent;
             Assert.That(landingEvent, Is.Not.Null);
             Assert.That(landingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(landingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -683,19 +706,20 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidStorageEvent("msc-storage-1");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_MSCStorageEvent(commonEvent, doc);
+            _service.ConvertTo_MSCStorageEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<MSCStorageEvent>());
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<MSCStorageEvent>());
 
-            var storageEvent = doc.Events[0] as MSCStorageEvent;
+            var storageEvent = _document.Events[0] as MSCStorageEvent;
             Assert.That(storageEvent, Is.Not.Null);
             Assert.That(storageEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(storageEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -704,20 +728,20 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var commonEvent = CreateValidAggregationEvent("aggregation-event");
 
-            var doc = new EPCISDocument();
-
             // Act
-            _service.ConvertTo_GDSTAggregationEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTAggregationEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTAggregationEvent>());
-            var aggregationEvent = doc.Events[0] as GDSTAggregationEvent;
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTAggregationEvent>());
+            var aggregationEvent = _document.Events[0] as GDSTAggregationEvent;
             Assert.That(aggregationEvent, Is.Not.Null);
             Assert.That(aggregationEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(aggregationEvent.Products.Count, Is.EqualTo(2));
             Assert.That(aggregationEvent.Products[0].Type, Is.EqualTo(EventProductType.Parent));
             Assert.That(aggregationEvent.Products[1].Type, Is.EqualTo(EventProductType.Child));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
         [Test]
@@ -725,20 +749,21 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = CreateValidDisggregationEvent("disaggregation-event");
-            var doc = new EPCISDocument();
 
             // Act
-            _service.ConvertTo_GDSTDisaggregationEvent(commonEvent, doc);
+            _service.ConvertTo_GDSTDisaggregationEvent(commonEvent, _document);
 
             // Assert
-            Assert.That(doc.Events, Has.Count.EqualTo(1));
-            Assert.That(doc.Events[0], Is.TypeOf<GDSTDisaggregationEvent>());
-            var disaggregationEvent = doc.Events[0] as GDSTDisaggregationEvent;
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<GDSTDisaggregationEvent>());
+            var disaggregationEvent = _document.Events[0] as GDSTDisaggregationEvent;
             Assert.That(disaggregationEvent, Is.Not.Null);
             Assert.That(disaggregationEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
             Assert.That(disaggregationEvent.Products.Count, Is.EqualTo(2));
             Assert.That(disaggregationEvent.Products[0].Type, Is.EqualTo(EventProductType.Parent));
             Assert.That(disaggregationEvent.Products[1].Type, Is.EqualTo(EventProductType.Child));
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
         #region Helper Methods
 
