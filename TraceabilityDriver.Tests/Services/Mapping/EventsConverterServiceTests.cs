@@ -1012,6 +1012,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
             commonEvent.EventType = "GDSTFarmHarvestEvent";
+            commonEvent.HumanWelfarePolicy = "Policy";
             commonEvent.Certificates = new CommonCertificates
             {
                 ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },

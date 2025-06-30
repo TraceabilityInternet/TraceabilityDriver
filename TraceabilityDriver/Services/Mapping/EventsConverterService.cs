@@ -955,7 +955,7 @@ public class EventsConverterService : IEventsConverterService
             {
                 certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
                 {
-                    CertificateType = "urn:gdst:certType:humanyPolicy",
+                    CertificateType = "urn:gdst:certType:humanPolicy",
                     Identification = certificates.HumanPolicyCertificate.Identifier
                 });
             }
