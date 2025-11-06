@@ -394,7 +394,7 @@ The field value stored is always the value from the field from the last row proc
     "LastID": {
         "DefaultValue": "0",
         "Field": "$idEventRecord",
-        "Type": "Int64"
+        "DataType": "Int64"
     }
 },
 ```
@@ -414,43 +414,83 @@ The mapping field values are defined by using the following syntax:
 - **Functions** - Functions are defined by using the function name and the parameters. The function name is followed by the parameters in parentheses.
 
 #### Common Event Model
-The common event model is a simplified data model that the data from the database is mapped into. The Traceability Driver then builds up the traceability data using the Common Event Model after which it is then transformed into EPCIS data and stored in the `GDST Data Cache`.
+The **`CommonEvent`** model defines the standard representation of an event within the Traceability Driver. It provides a normalized structure for mapping event data from diverse traceability systems.
 
-The common event model is defined by using the following fields:
-- `EventId` - The unique identifier for the event.
-- `EventType` - The type of event.
-- `EventTime` - The time of the event.
-- `InformationProvider` - The information provider of the event.
-    - `OwnerId` - The unique identifier for the information provider.
-    - `Name` - The name of the information provider.
-- `ProductOwner` - The product owner of the event.
-    - `OwnerId` - The unique identifier for the product owner.
-    - `Name` - The name of the product owner.
-- `Location` - The location of the event.
-    - `LocationId` - The unique identifier for the location.
-    - `OwnerId` - The unique identifier for the location owner.
-    - `RegistrationNumber` - The registration number of the location.
-    - `Name` - The name of the location.
-    - `Country` - The country of the location.
-- `Products` - The products of the event.
-    - `ProductId` - The unique identifier for the product.
-    - `ProductType` - This indicates the type of the reference to the product and can be either `Reference`, `Input`, `Output`, `Child`, or `Parent`.
-    - `LotNumber` - The lot number of the product.
-    - `Quantity` - The quantity of the product.
-    - `UoM` - The unit of measure of the product.
-    - `ProductDefinition` - The product definition of the product.
-        - `ProductDefinitionId` - The unique identifier for the product definition. This should either be the GTIN in the required URN format from EPCIS, or it should be a unique identifier for the product definition. If the value is not a GTIN, then a valid GTIN will be generated for the product definition using the `ProductDefinitionId` and the `OwnerId`.
-        - `OwnerId` - The unique identifier for the product definition owner.
-        - `ShortDescription` - The short description of the product definition.
-        - `ProductForm` - The product form of the product definition.
-        - `ScientificName` - The scientific name of the product definition.
-- `CatchInformation` - The catch information of the event.
-    - `CatchArea` - The catch area of the event.
-    - `GearType` - The gear type of the event.
-    - `GPSAvailable` - The GPS availability of the event.
-- `Certificates` - The certificates of the event.
-    - `FishingAuthorization` - The fishing authorization certificate of the event.
-        - `Identifier` - The identifier of the authorization certificate.
+The common event model is defined by the following fields:
+
+- **`EventId`** The unique identifier for the event. Used to merge or correlate events.
+- **`EventType`** The type of the event (e.g., `CatchEvent`, `LandingEvent`, `ShippingEvent`, etc.).
+- **`EventTime`** The time of the event.
+- **`HumanWelfarePolicy`** The human welfare policy associated with the event.
+- **`InformationProvider`** The party providing information about the event.
+  - **`OwnerId`**  The unique identifier for the information provider.
+  - **`Name`**  The name of the information provider.
+- **`ProductOwner`**  The party that owns the product at the time of the event.
+  - **`OwnerId`**  The unique identifier for the product owner.
+  - **`Name`** The name of the product owner.
+- **`Location`** The location where the event occurred.
+  - **`LocationId`** The unique identifier for the location.
+  - **`OwnerId`** The unique identifier for the location’s owner.
+  - **`RegistrationNumber`** The registration number of the location.
+  - **`Name`** The name of the location.
+  - **`Country`** The country of the location.
+- **`Certificates`** Certificates associated with the event.
+  - **`FishingAuthorization`**
+    - **`Identifier`** The identifier of the fishing authorization certificate.
+  - **`HumanPolicyCertificate`**
+    - **`Identifier`** The identifier of the human policy certificate.
+  - **`HarvestCertification`**
+    - **`Identifier`** The identifier of the harvest certification.
+- **`Products`** The products associated with the event.
+   Each product is represented by a **`CommonProduct`** object with the following structure:
+  - **`ProductId`** The unique identifier for the product (used for merging).
+  - **`ProductType`** The type of product reference. One of: `Reference`, `Input`, `Output`, `Child`, or `Parent`.
+  - **`LotNumber`** The lot number of the product.
+  - **`SerialNumber`** The serial number of the product, if applicable.
+  - **`SSCC`** The Serial Shipping Container Code, if applicable.
+  - **`Quantity`** The quantity of the product.
+  - **`UoM`** The unit of measure for the product quantity.
+  - **`ProductDefinition`** The definition of the product, represented by a **`CommonProductDefinition`**:
+    - **`ProductDefinitionId`** The unique identifier for the product definition.
+      - Should be a GTIN in EPCIS URN format when available.
+      - If not a GTIN, a GTIN will be generated using the `ProductDefinitionId` and `OwnerId`.
+    - **`OwnerId`** The unique identifier of the product definition’s owner.
+    - **`ShortDescription`** A short textual description of the product.
+    - **`ProductForm`** The physical form of the product (e.g., whole, fillet, frozen).
+    - **`ScientificName`** The scientific name of the species.
+- **`CatchInformation`** The catch information related to the event.
+  - **`CatchArea`** The catch area of the event.
+  - **`GearType`** The gear type used during the catch.
+  - **`GPSAvailable`** Whether GPS data was available for the event.
+- **`Source`** The source entity associated with the event, represented by a **`CommonSource`**:
+  - **`Party`** The source party involved in the event.
+    - **`OwnerId`** The unique identifier for the source party.
+    - **`Name`** The name of the source party.
+  - **`Location`** The location of the source party.
+    - **`LocationId`** The unique identifier for the source location.
+    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`RegistrationNumber`** The registration number of the source location.
+    - **`Name`** The name of the source location.
+    - **`Country`** The country of the source location.
+- **`Destination`** The destination entity associated with the event, represented by a **`CommonDestination`**:
+  - **`Party`** The destination party involved in the event.
+    - **`OwnerId`** The unique identifier for the destination party.
+    - **`Name`** The name of the destination party.
+  - **`Location`** The location of the destination party.
+    - **`LocationId`** The unique identifier for the destination location.
+    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`RegistrationNumber`** The registration number of the destination location.
+    - **`Name`** The name of the destination location.
+    - **`Country`** The country of the destination location.
+- **`BroodStockSource`** The source of brood stock, if applicable (for aquaculture contexts).
+- **`ProteinSource`** The type of protein source (e.g., wild-caught, aquaculture, plant-based).
+- **`AquacultureMethod`** The aquaculture method used (e.g., pond, cage, recirculating).
+- **`ProcessingType`** The type of processing performed during the event.
+- **`TransportType`** The transport mode (e.g., vessel, truck, air).
+- **`TransportVehicleID`** The unique identifier of the transport vehicle.
+- **`TransportNumber`** The voyage, flight, or trip number associated with the transport.
+- **`TransportProviderID`** The identifier of the carrier or transport provider.
+- **`ProductionMethod`** The production method associated with the product or species (e.g., aquaculture, wild-caught).
 
 #### Event ID
 The `EventId` field is used as a unique identifier for the event such that events are merged together on common `EventId` values. When saving to the database, the `EventId` is used as the primary key for the event.
@@ -460,6 +500,31 @@ For instance:
 - If the same or multiple selector(s) returns two rows with the same `EventId`, the event is merged together into a single event with the same `EventId`. Values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be priororized for the event over the value found in future selectors for the same event.
 
 It is important that the `EventId` is unique for each event such that events are not duplicated in the `GDST Data Cache`.
+
+### Event Type
+The `EventType` field is used to define the type of event that is being mapped. The event type must be one of the following values:
+
+Valid Event Types:
+- GDST
+    - gdstaggregationevent
+    - gdstdisaggregationevent
+    - gdstcomminglingevent
+    - gdstlandingevent
+    - gdsttransshipmentevent
+    - gdstprocessingevent
+    - gdstfishingevent
+    - gdstshippingevent
+    - gdstreceiveevent
+    - gdstfarmharvestevent
+    - gdstfarmharvestobjectevent
+    - gdsthatchingevent
+    - gdstfeedmillobjectevent
+    - gdstfeedmilltransformationevent
+- MSC
+    - mscprocessingevent
+    - mscshippingevent
+    - mscreceiveevent
+    - mscstorageevent
 
 #### Example Mapping
 ```
@@ -475,7 +540,7 @@ It is important that the `EventId` is unique for each event such that events are
                         "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
                         "EventMapping": {
                             "EventId": "$idEventRecord",
-                            "EventType": "!GenericEvent",
+                            "EventType": "!gdstfishingevent",
                             "EventTime": "$eventStart",
                             "InformationProvider": {
                                 "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
