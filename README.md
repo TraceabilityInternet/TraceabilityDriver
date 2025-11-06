@@ -418,79 +418,79 @@ The **`CommonEvent`** model defines the standard representation of an event with
 
 The common event model is defined by the following fields:
 
-- **`EventId`** — The unique identifier for the event. Used to merge or correlate events.
-- **`EventType`** — The type of the event (e.g., `CatchEvent`, `LandingEvent`, `ShippingEvent`, etc.).
-- **`EventTime`** — The time of the event.
-- **`HumanWelfarePolicy`** — The human welfare policy associated with the event.
-- **`InformationProvider`** — The party providing information about the event.
-  - **`OwnerId`** — The unique identifier for the information provider.
-  - **`Name`** — The name of the information provider.
-- **`ProductOwner`** — The party that owns the product at the time of the event.
-  - **`OwnerId`** — The unique identifier for the product owner.
-  - **`Name`** — The name of the product owner.
-- **`Location`** — The location where the event occurred.
-  - **`LocationId`** — The unique identifier for the location.
-  - **`OwnerId`** — The unique identifier for the location’s owner.
-  - **`RegistrationNumber`** — The registration number of the location.
-  - **`Name`** — The name of the location.
-  - **`Country`** — The country of the location.
-- **`Certificates`** — Certificates associated with the event.
+- **`EventId`** The unique identifier for the event. Used to merge or correlate events.
+- **`EventType`** The type of the event (e.g., `CatchEvent`, `LandingEvent`, `ShippingEvent`, etc.).
+- **`EventTime`** The time of the event.
+- **`HumanWelfarePolicy`** The human welfare policy associated with the event.
+- **`InformationProvider`** The party providing information about the event.
+  - **`OwnerId`**  The unique identifier for the information provider.
+  - **`Name`**  The name of the information provider.
+- **`ProductOwner`**  The party that owns the product at the time of the event.
+  - **`OwnerId`**  The unique identifier for the product owner.
+  - **`Name`** The name of the product owner.
+- **`Location`** The location where the event occurred.
+  - **`LocationId`** The unique identifier for the location.
+  - **`OwnerId`** The unique identifier for the location’s owner.
+  - **`RegistrationNumber`** The registration number of the location.
+  - **`Name`** The name of the location.
+  - **`Country`** The country of the location.
+- **`Certificates`** Certificates associated with the event.
   - **`FishingAuthorization`**
-    - **`Identifier`** — The identifier of the fishing authorization certificate.
+    - **`Identifier`** The identifier of the fishing authorization certificate.
   - **`HumanPolicyCertificate`**
-    - **`Identifier`** — The identifier of the human policy certificate.
+    - **`Identifier`** The identifier of the human policy certificate.
   - **`HarvestCertification`**
-    - **`Identifier`** — The identifier of the harvest certification.
-- **`Products`** — The products associated with the event.
+    - **`Identifier`** The identifier of the harvest certification.
+- **`Products`** The products associated with the event.
    Each product is represented by a **`CommonProduct`** object with the following structure:
-  - **`ProductId`** — The unique identifier for the product (used for merging).
-  - **`ProductType`** — The type of product reference. One of: `Reference`, `Input`, `Output`, `Child`, or `Parent`.
-  - **`LotNumber`** — The lot number of the product.
-  - **`SerialNumber`** — The serial number of the product, if applicable.
-  - **`SSCC`** — The Serial Shipping Container Code, if applicable.
-  - **`Quantity`** — The quantity of the product.
-  - **`UoM`** — The unit of measure for the product quantity.
-  - **`ProductDefinition`** — The definition of the product, represented by a **`CommonProductDefinition`**:
-    - **`ProductDefinitionId`** — The unique identifier for the product definition.
+  - **`ProductId`** The unique identifier for the product (used for merging).
+  - **`ProductType`** The type of product reference. One of: `Reference`, `Input`, `Output`, `Child`, or `Parent`.
+  - **`LotNumber`** The lot number of the product.
+  - **`SerialNumber`** The serial number of the product, if applicable.
+  - **`SSCC`** The Serial Shipping Container Code, if applicable.
+  - **`Quantity`** The quantity of the product.
+  - **`UoM`** The unit of measure for the product quantity.
+  - **`ProductDefinition`** The definition of the product, represented by a **`CommonProductDefinition`**:
+    - **`ProductDefinitionId`** The unique identifier for the product definition.
       - Should be a GTIN in EPCIS URN format when available.
       - If not a GTIN, a GTIN will be generated using the `ProductDefinitionId` and `OwnerId`.
-    - **`OwnerId`** — The unique identifier of the product definition’s owner.
-    - **`ShortDescription`** — A short textual description of the product.
-    - **`ProductForm`** — The physical form of the product (e.g., whole, fillet, frozen).
-    - **`ScientificName`** — The scientific name of the species.
-- **`CatchInformation`** — The catch information related to the event.
-  - **`CatchArea`** — The catch area of the event.
-  - **`GearType`** — The gear type used during the catch.
-  - **`GPSAvailable`** — Whether GPS data was available for the event.
-- **`Source`** — The source entity associated with the event, represented by a **`CommonSource`**:
-  - **`Party`** — The source party involved in the event.
-    - **`OwnerId`** — The unique identifier for the source party.
-    - **`Name`** — The name of the source party.
-  - **`Location`** — The location of the source party.
-    - **`LocationId`** — The unique identifier for the source location.
-    - **`OwnerId`** — The unique identifier for the location’s owner.
-    - **`RegistrationNumber`** — The registration number of the source location.
-    - **`Name`** — The name of the source location.
-    - **`Country`** — The country of the source location.
-- **`Destination`** — The destination entity associated with the event, represented by a **`CommonDestination`**:
-  - **`Party`** — The destination party involved in the event.
-    - **`OwnerId`** — The unique identifier for the destination party.
-    - **`Name`** — The name of the destination party.
-  - **`Location`** — The location of the destination party.
-    - **`LocationId`** — The unique identifier for the destination location.
-    - **`OwnerId`** — The unique identifier for the location’s owner.
-    - **`RegistrationNumber`** — The registration number of the destination location.
-    - **`Name`** — The name of the destination location.
-    - **`Country`** — The country of the destination location.
-- **`BroodStockSource`** — The source of brood stock, if applicable (for aquaculture contexts).
-- **`ProteinSource`** — The type of protein source (e.g., wild-caught, aquaculture, plant-based).
-- **`AquacultureMethod`** — The aquaculture method used (e.g., pond, cage, recirculating).
-- **`ProcessingType`** — The type of processing performed during the event.
-- **`TransportType`** — The transport mode (e.g., vessel, truck, air).
-- **`TransportVehicleID`** — The unique identifier of the transport vehicle.
-- **`TransportNumber`** — The voyage, flight, or trip number associated with the transport.
-- **`TransportProviderID`** — The identifier of the carrier or transport provider.
-- **`ProductionMethod`** — The production method associated with the product or species (e.g., aquaculture, wild-caught).
+    - **`OwnerId`** The unique identifier of the product definition’s owner.
+    - **`ShortDescription`** A short textual description of the product.
+    - **`ProductForm`** The physical form of the product (e.g., whole, fillet, frozen).
+    - **`ScientificName`** The scientific name of the species.
+- **`CatchInformation`** The catch information related to the event.
+  - **`CatchArea`** The catch area of the event.
+  - **`GearType`** The gear type used during the catch.
+  - **`GPSAvailable`** Whether GPS data was available for the event.
+- **`Source`** The source entity associated with the event, represented by a **`CommonSource`**:
+  - **`Party`** The source party involved in the event.
+    - **`OwnerId`** The unique identifier for the source party.
+    - **`Name`** The name of the source party.
+  - **`Location`** The location of the source party.
+    - **`LocationId`** The unique identifier for the source location.
+    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`RegistrationNumber`** The registration number of the source location.
+    - **`Name`** The name of the source location.
+    - **`Country`** The country of the source location.
+- **`Destination`** The destination entity associated with the event, represented by a **`CommonDestination`**:
+  - **`Party`** The destination party involved in the event.
+    - **`OwnerId`** The unique identifier for the destination party.
+    - **`Name`** The name of the destination party.
+  - **`Location`** The location of the destination party.
+    - **`LocationId`** The unique identifier for the destination location.
+    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`RegistrationNumber`** The registration number of the destination location.
+    - **`Name`** The name of the destination location.
+    - **`Country`** The country of the destination location.
+- **`BroodStockSource`** The source of brood stock, if applicable (for aquaculture contexts).
+- **`ProteinSource`** The type of protein source (e.g., wild-caught, aquaculture, plant-based).
+- **`AquacultureMethod`** The aquaculture method used (e.g., pond, cage, recirculating).
+- **`ProcessingType`** The type of processing performed during the event.
+- **`TransportType`** The transport mode (e.g., vessel, truck, air).
+- **`TransportVehicleID`** The unique identifier of the transport vehicle.
+- **`TransportNumber`** The voyage, flight, or trip number associated with the transport.
+- **`TransportProviderID`** The identifier of the carrier or transport provider.
+- **`ProductionMethod`** The production method associated with the product or species (e.g., aquaculture, wild-caught).
 
 #### Event ID
 The `EventId` field is used as a unique identifier for the event such that events are merged together on common `EventId` values. When saving to the database, the `EventId` is used as the primary key for the event.
