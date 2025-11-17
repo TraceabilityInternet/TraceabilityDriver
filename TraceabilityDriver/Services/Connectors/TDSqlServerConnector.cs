@@ -1,4 +1,6 @@
+using CsvHelper.Configuration.Attributes;
 using Microsoft.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using System.Data;
 using TraceabilityDriver.Models.Mapping;
 
@@ -57,7 +59,13 @@ public class TDSqlServerConnector : ITDConnector
 
                 using (SqlCommand cmd = new SqlCommand(selector.Count, connection))
                 {
-                    return (int)(await cmd.ExecuteScalarAsync())!;
+                    // Add a memory variable.
+                    foreach (var memory in selector.Memory)
+                    {
+                        AddMemoryVariable(cmd, memory.Key, memory.Value);
+                    }
+
+                    return Convert.ToInt32(await cmd.ExecuteScalarAsync());
                 }
             }
         }
@@ -110,6 +118,13 @@ public class TDSqlServerConnector : ITDConnector
 
                     // Create a list to store the events.
                     List<CommonEvent> events = new List<CommonEvent>();
+
+                    // If there are no rows, set memory variables to the previous sync values and return early.
+                    if (totalRows < 1)
+                    {
+                        PreservePreviousSyncMemoryVariables(selector);
+                        return events;
+                    }
 
                     // We are going to page the data in chunks of 1000.
                     for (int start = 0; start < totalRows && start < 10000; start += 1000)
@@ -169,7 +184,23 @@ public class TDSqlServerConnector : ITDConnector
             values.Add(row[column]);
         }
 
-        _syncContext.CurrentSync.Memory[key] = values.Last().ToString() ?? "";
+        _syncContext.CurrentSync.Memory[key] = values.LastOrDefault()?.ToString() ?? memory.DefaultValue;
+    }
+
+    /// <summary>
+    /// Sets the current sync memory variables to the previous sync memory variables.
+    /// </summary>
+    public void PreservePreviousSyncMemoryVariables(TDMappingSelector selector)
+    {
+        if (_syncContext.PreviousSync == null) return;
+
+        foreach (var memory in selector.Memory)
+        {
+            if (_syncContext.PreviousSync.Memory.ContainsKey(memory.Key))
+            {
+                _syncContext.CurrentSync.Memory[memory.Key] = _syncContext.PreviousSync.Memory[memory.Key];
+            }
+        }
     }
 
     public void AddMemoryVariable(SqlCommand selectCommand, string key, TDMappingSelectorMemoryVariable memory)
