@@ -57,6 +57,12 @@ namespace TraceabilityDriver.Services.Connectors
 
                     using (MySqlCommand cmd = new MySqlCommand(selector.Count, connection))
                     {
+                        // Add a memory variable.
+                        foreach (var memory in selector.Memory)
+                        {
+                            AddMemoryVariable(cmd, memory.Key, memory.Value);
+                        }
+
                         return Convert.ToInt32(await cmd.ExecuteScalarAsync());
                     }
                 }
@@ -169,7 +175,17 @@ namespace TraceabilityDriver.Services.Connectors
                 values.Add(row[column]);
             }
 
-            _syncContext.CurrentSync.Memory[key] = values.Last().ToString() ?? "";
+            // if no results were returned, make sure we preserve the last sync value for the memory variable.
+            if (values.Count < 1)
+            {
+                if (_syncContext.PreviousSync?.Memory.ContainsKey(key) == true)
+                {
+                    _syncContext.CurrentSync.Memory[key] = _syncContext.PreviousSync.Memory[key];
+                    return;
+                }
+            }
+
+            _syncContext.CurrentSync.Memory[key] = values.LastOrDefault()?.ToString() ?? memory.DefaultValue;
         }
 
         public void AddMemoryVariable(MySqlCommand selectCommand, string key, TDMappingSelectorMemoryVariable memory)
