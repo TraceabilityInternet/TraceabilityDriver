@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTraceability.Models.Events;
@@ -16,9 +16,9 @@ using TraceabilityDriver.Services.Mapping;
 namespace TraceabilityDriver.Tests.Services
 {
     [TestFixture]
-    public class SyncServiceTests
+    public class SyncService_MySqlConnector_Tests
     {
-        private string _sqlConnectionString = "server=localhost;database=TraceabilityDriverTestDB;Integrated Security=SSPI;TrustServerCertificate=True;";
+        private string _mySqlConnectionString = "server=127.0.0.1;port=3307;database=TraceabilityDriverTestDB;user=root;password=YourStrong!Passw0rd;";
         private bool _skipTests;
 
         [OneTimeSetUp]
@@ -28,7 +28,7 @@ namespace TraceabilityDriver.Tests.Services
 
             if (_skipTests)
             {
-                Assert.Ignore("Skipping synchronization tests because NO_SQL_DB environment variable is set to true");
+                Assert.Ignore("Skipping MySQL synchronization tests because NO_SQL_DB environment variable is set to true");
                 return;
             }
 
@@ -38,7 +38,7 @@ namespace TraceabilityDriver.Tests.Services
 
         private void SetupTestDatabase()
         {
-            using (var connection = new SqlConnection(_sqlConnectionString.Replace("=TraceabilityDriverTestDB;", "=master;")))
+            using (var connection = new MySqlConnection(_mySqlConnectionString.Replace("database=TraceabilityDriverTestDB;", "database=mysql;")))
             {
                 connection.Open();
 
@@ -46,18 +46,14 @@ namespace TraceabilityDriver.Tests.Services
                 using (var cmd = connection.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        IF EXISTS(SELECT * FROM sys.databases WHERE name = 'TraceabilityDriverTestDB')
-                        BEGIN
-                            ALTER DATABASE TraceabilityDriverTestDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                            DROP DATABASE TraceabilityDriverTestDB;
-                        END
+                        DROP DATABASE IF EXISTS TraceabilityDriverTestDB;
                         CREATE DATABASE TraceabilityDriverTestDB;";
                     cmd.ExecuteNonQuery();
                 }
             }
 
             // Create test table and insert sample data
-            using (var connection = new SqlConnection(_sqlConnectionString))
+            using (var connection = new MySqlConnection(_mySqlConnectionString))
             {
                 connection.Open();
 
@@ -65,7 +61,7 @@ namespace TraceabilityDriver.Tests.Services
                 {
                     cmd.CommandText = @"
                         CREATE TABLE Events (
-                            Id INT PRIMARY KEY IDENTITY(1,1),
+                            Id INT PRIMARY KEY AUTO_INCREMENT,
                             EventType VARCHAR(50),
                             EventTime DATETIME,
                             OperatorId VARCHAR(50),
@@ -106,11 +102,11 @@ namespace TraceabilityDriver.Tests.Services
             var mockMappingSource = new Mock<IMappingSource>();
             var syncContext = new TraceabilityDriver.Services.SynchronizationContext();
 
-            // Setup connector to return real SQL Server connector
-            var mockConnectorLogger = new Mock<ILogger<TDSqlServerConnector>>();
+            // Setup connector to return real MySQL connector
+            var mockConnectorLogger = new Mock<ILogger<TDMySqlConnector>>();
             var mockTableMappingService = new Mock<IEventsTableMappingService>();
 
-            var connector = new TDSqlServerConnector(
+            var connector = new TDMySqlConnector(
                 mockConnectorLogger.Object,
                 mockTableMappingService.Object,
                 syncContext
@@ -126,8 +122,8 @@ namespace TraceabilityDriver.Tests.Services
                         new TDConnectorConfiguration
                         {
                             Database = "TraceabilityDriverTestDB",
-                            ConnectionString = _sqlConnectionString,
-                            ConnectorType = ConnectorType.SqlServer,
+                            ConnectionString = _mySqlConnectionString,
+                            ConnectorType = ConnectorType.MySql,
                         }
                     }
                 },
@@ -142,7 +138,7 @@ namespace TraceabilityDriver.Tests.Services
                             {
                                 Database = "TestDB",
                                 Count = "SELECT COUNT(*) FROM Events WHERE Id > @LastID",
-                                Selector = "SELECT * FROM Events WHERE Id > @LastID ORDER BY Id ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY",
+                                Selector = "SELECT * FROM Events WHERE Id > @LastID ORDER BY Id ASC LIMIT @limit OFFSET @offset",
                                 Memory = new Dictionary<string, TDMappingSelectorMemoryVariable>
                                 {
                                     {
@@ -205,12 +201,12 @@ namespace TraceabilityDriver.Tests.Services
                 .Setup(m => m.GetMappings())
                 .Returns(new List<TDMappingConfiguration> { mappingConfig });
 
-            // Setup events merger - Fix the ReturnsAsync syntax
+            // Setup events merger
             mockEventsMerger
                 .Setup(m => m.MergeEventsAsync(It.IsAny<TDMapping>(), It.IsAny<List<CommonEvent>>()))
                 .ReturnsAsync((TDMapping mapping, List<CommonEvent> events) => events);
 
-            // Setup events converter - Fix the ReturnsAsync syntax
+            // Setup events converter
             mockEventsConverter
                 .Setup(c => c.ConvertEventsAsync(It.IsAny<List<CommonEvent>>()))
                 .ReturnsAsync((List<CommonEvent> events) =>
@@ -268,14 +264,14 @@ namespace TraceabilityDriver.Tests.Services
                 It.IsAny<System.Data.DataTable>(),
                 It.IsAny<CancellationToken>()), Times.AtLeastOnce);
 
-            // then sync again with no new records
+            // Sync again with no new records
             await synchronizeService.SynchronizeAsync(CancellationToken.None);
             Assert.That(syncContext.CurrentSync.Status, Is.EqualTo(SyncStatus.Completed));
             Assert.That(syncContext.CurrentSync.Memory.ContainsKey("LastID"), Is.True);
-            Assert.That(syncContext.CurrentSync.Memory["LastID"], Is.EqualTo("3")); // Last ID should be 3
+            Assert.That(syncContext.CurrentSync.Memory["LastID"], Is.EqualTo("3")); // Last ID should still be 3
 
             // Add more records to the database
-            using (var connection = new SqlConnection(_sqlConnectionString))
+            using (var connection = new MySqlConnection(_mySqlConnectionString))
             {
                 connection.Open();
                 using (var cmd = connection.CreateCommand())
@@ -289,24 +285,24 @@ namespace TraceabilityDriver.Tests.Services
                 }
             }
 
-            // Setup for second sync - return previous sync history
+            // Setup for third sync - return previous sync history
             mockDatabaseService
                 .Setup(d => d.GetLatestSyncs(It.IsAny<int>()))
                 .ReturnsAsync(new List<SyncHistoryItem> { syncContext.CurrentSync });
 
-            // Reset sync context for second sync
+            // Reset sync context for third sync
             syncContext.PreviousSync = syncContext.CurrentSync;
             syncContext.CurrentSync = new SyncHistoryItem();
 
-            // Act - Second Sync (should only sync new records with Id > 3)
+            // Act - Third Sync (should only sync new records with Id > 3)
             await synchronizeService.SynchronizeAsync(CancellationToken.None);
 
-            // Assert - Second Sync
+            // Assert - Third Sync
             Assert.That(syncContext.CurrentSync.Status, Is.EqualTo(SyncStatus.Completed));
             Assert.That(syncContext.CurrentSync.Memory.ContainsKey("LastID"), Is.True);
             Assert.That(syncContext.CurrentSync.Memory["LastID"], Is.EqualTo("5")); // Last ID should now be 5
 
-            // Verify sync history was stored
+            // Verify sync history was stored (3 syncs total)
             mockDatabaseService.Verify(d => d.StoreSyncHistory(It.IsAny<SyncHistoryItem>()), Times.Exactly(3));
         }
 
@@ -318,17 +314,12 @@ namespace TraceabilityDriver.Tests.Services
             // Cleanup test database
             try
             {
-                using (var connection = new SqlConnection(_sqlConnectionString.Replace("=TraceabilityDriverTestDB;", "=master;")))
+                using (var connection = new MySqlConnection(_mySqlConnectionString.Replace("database=TraceabilityDriverTestDB;", "database=mysql;")))
                 {
                     connection.Open();
                     using (var cmd = connection.CreateCommand())
                     {
-                        cmd.CommandText = @"
-                            IF EXISTS(SELECT * FROM sys.databases WHERE name = 'TraceabilityDriverTestDB')
-                            BEGIN
-                                ALTER DATABASE TraceabilityDriverTestDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                                DROP DATABASE TraceabilityDriverTestDB;
-                            END";
+                        cmd.CommandText = "DROP DATABASE IF EXISTS TraceabilityDriverTestDB;";
                         cmd.ExecuteNonQuery();
                     }
                 }
