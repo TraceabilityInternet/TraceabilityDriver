@@ -42,57 +42,65 @@ namespace TraceabilityDriver.Controllers
         [HttpPost]
         public async Task<IActionResult> SimpleQueryPost([FromBody] EPCISQueryParameters options)
         {
-            return await SimpleQuery_internal(options);
+            try
+            {
+                return await SimpleQuery_internal(options);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return Problem("An error occurred while processing the request.");
+            }
         }
 
         [Route("events")]
         [HttpGet]
         public async Task<IActionResult> SimpleQueryGet()
         {
-            string url = this.HttpContext.Request.GetEncodedUrl();
-            Uri relativeUri = new Uri(url, UriKind.Absolute);
-            EPCISQueryParameters options = new EPCISQueryParameters(relativeUri);
-
-            return await SimpleQuery_internal(options);
-        }
-
-        private async Task<IActionResult> SimpleQuery_internal(EPCISQueryParameters options)
-        {
             try
             {
-                if (options == null) throw new ArgumentNullException(nameof(options));
-                if (options.query == null) throw new ArgumentNullException(nameof(options.query));
-                if (!options.IsValid(out string? error)) throw new ArgumentException($"options are not valid. {error}");
+                string url = this.HttpContext.Request.GetEncodedUrl();
+                Uri relativeUri = new Uri(url, UriKind.Absolute);
+                EPCISQueryParameters options = new EPCISQueryParameters(relativeUri);
 
-                // Query MongoDB for events
-                EPCISQueryDocument epcisDoc = await _dbService.QueryEvents(options);
-
-                // Determine response format based on headers
-                IEPCISQueryDocumentMapper mapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
-                if (HttpContext.Request.Headers["GS1-EPCIS-Version"].FirstOrDefault() != "1.2")
-                {
-                    epcisDoc.EPCISVersion = EPCISVersion.V2;
-                    mapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
-                }
-
-                // Add response headers
-                foreach (var header in HttpContext.Request.Headers.Where(h => h.Key.StartsWith("GS1-")))
-                {
-                    HttpContext.Response.Headers.Add(header);
-                }
-
-                HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-
-                string str = mapper.Map(epcisDoc);
-
-                await HttpContext.Response.WriteAsync(str);
-                return Empty;
+                return await SimpleQuery_internal(options);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred during SimpleQuery.");
-                return BadRequest(ex.Message);
+                return Problem("An error occurred while processing the request.");
             }
+        }
+
+        private async Task<IActionResult> SimpleQuery_internal(EPCISQueryParameters options)
+        {
+            if (options == null) throw new ArgumentNullException(nameof(options));
+            if (options.query == null) throw new ArgumentNullException(nameof(options.query));
+            if (!options.IsValid(out string? error)) throw new ArgumentException($"options are not valid. {error}");
+
+            // Query MongoDB for events
+            EPCISQueryDocument epcisDoc = await _dbService.QueryEvents(options);
+
+            // Determine response format based on headers
+            IEPCISQueryDocumentMapper mapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
+            if (HttpContext.Request.Headers["GS1-EPCIS-Version"].FirstOrDefault() != "1.2")
+            {
+                epcisDoc.EPCISVersion = EPCISVersion.V2;
+                mapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
+            }
+
+            // Add response headers
+            foreach (var header in HttpContext.Request.Headers.Where(h => h.Key.StartsWith("GS1-")))
+            {
+                HttpContext.Response.Headers.Add(header);
+            }
+
+            HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+
+            string str = mapper.Map(epcisDoc);
+
+            await HttpContext.Response.WriteAsync(str);
+            return Empty;
         }
 
         private IActionResult? ValidateHeader(string name, string expectedValue, string expectedValueText)
