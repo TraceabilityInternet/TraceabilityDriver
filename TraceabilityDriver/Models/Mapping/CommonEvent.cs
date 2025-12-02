@@ -256,7 +256,7 @@ public class CommonEvent : CommonBaseModel
         using var sha256 = SHA256.Create();
         var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventId}"));
 
-        return new Uri($"urn:uuid:{BitConverter.ToString(hash).Replace("-", "")}");
+        return new Uri($"ni:///sha-256;{BitConverter.ToString(hash).Replace("-", "").ToLower()}?ver=cbv2.0");
     }
 }
 
