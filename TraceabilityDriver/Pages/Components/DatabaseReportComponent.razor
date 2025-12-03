@@ -1,5 +1,6 @@
 ﻿@using TraceabilityDriver.Services
 @using TraceabilityDriver.Models.MongoDB
+@using TraceabilityDriver.Pages.Components
 
 @inject IDatabaseService DatabaseService
 
@@ -125,6 +126,7 @@
                     </div>
                 </div>
             </div>
+            <ReportDisclaimer />
         </div>
     }
 </div>
