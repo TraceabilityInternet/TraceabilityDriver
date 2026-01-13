@@ -62,6 +62,10 @@ public class EventsConverterService : IEventsConverterService
                     case "mscshippingevent": ConvertTo_MSCShippingEvent(commonEvent, doc); break;
                     case "mscreceiveevent": ConvertTo_MSCReceiveEvent(commonEvent, doc); break;
                     case "mscstorageevent": ConvertTo_MSCStorageEvent(commonEvent, doc); break;
+                    case "coreobjectevent": ConvertTo_CoreObjectEvent(commonEvent, doc); break;
+                    case "coretransformationevent": ConvertTo_CoreTransformationEvent(commonEvent, doc); break;
+                    case "coreaggregationevent": ConvertTo_CoreAggregationEvent(commonEvent, doc, EventAction.ADD); break;
+                    case "coredisaggregationevent": ConvertTo_CoreAggregationEvent(commonEvent, doc, EventAction.DELETE); break;
                     default:
                         _logger.LogError("Event type not supported: {EventType}", commonEvent.EventType);
                         break;
@@ -251,6 +255,132 @@ public class EventsConverterService : IEventsConverterService
         }
 
         doc.Events.Add(epcisEvent);
+    }
+
+    public void ConvertTo_CoreAggregationEvent(CommonEvent commonEvent, EPCISDocument doc, EventAction action)
+    {
+        AggregationEvent<EventILMD> aggregationEvent = new AggregationEvent<EventILMD>();
+
+        // Event ID
+        aggregationEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Event Time
+        aggregationEvent.EventTime = commonEvent.EventTime;
+        aggregationEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Action
+        aggregationEvent.Action = action;
+
+        // Location
+        SetEventLocation(aggregationEvent, commonEvent.Location, doc);
+
+        // Certificates
+        aggregationEvent.CertificationList = new CertificationList();
+        SetEventCertificates(aggregationEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(aggregationEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(aggregationEvent);
+    }
+
+    public void ConvertTo_CoreTransformationEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        TransformationEvent<EventILMD> transformationEvent = new TransformationEvent<EventILMD>();
+
+        // Event ID
+        transformationEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Business Step
+        if (!string.IsNullOrEmpty(commonEvent.BusinessStep))
+        {
+            transformationEvent.BusinessStep = new Uri(commonEvent.BusinessStep);
+        }
+
+        // Event Time
+        transformationEvent.EventTime = commonEvent.EventTime;
+        transformationEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Location
+        SetEventLocation(transformationEvent, commonEvent.Location, doc);
+
+        // Certificates
+        transformationEvent.CertificationList = new CertificationList();
+        SetEventCertificates(transformationEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(transformationEvent, product, doc);
+            }
+        }
+
+        doc.Events.Add(transformationEvent);
+    }
+
+
+    public void ConvertTo_CoreObjectEvent(CommonEvent commonEvent, EPCISDocument doc)
+    {
+        ObjectEvent<EventILMD> objectEvent = new ObjectEvent<EventILMD>();
+
+        // Event ID
+        objectEvent.EventID = commonEvent.GetEpcisEventId();
+
+        // Business Step
+        if (!string.IsNullOrEmpty(commonEvent.BusinessStep))
+        {
+            objectEvent.BusinessStep = new Uri(commonEvent.BusinessStep);
+        }
+
+        // Disposition
+        if (!string.IsNullOrEmpty(commonEvent.Dispostion))
+        {
+            objectEvent.Disposition = new Uri(commonEvent.Dispostion);
+        }
+
+        // Event Time
+        objectEvent.EventTime = commonEvent.EventTime;
+        objectEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+
+        // Location
+        SetEventLocation(objectEvent, commonEvent.Location, doc);
+
+        // Certificates
+        objectEvent.CertificationList = new CertificationList();
+        SetEventCertificates(objectEvent.CertificationList, commonEvent.Certificates);
+
+        // Products
+        if (commonEvent.Products != null)
+        {
+            foreach (var product in commonEvent.Products)
+            {
+                SetProduct(objectEvent, product, doc);
+            }
+        }
+
+        // Source Location
+        if (commonEvent.Source != null)
+        {
+            objectEvent.SourceList = new List<EventSource>();
+            SetSourceList(objectEvent.SourceList, commonEvent.Source);
+        }
+
+        // Destination Location
+        if (commonEvent.Destination != null)
+        {
+            objectEvent.DestinationList = new List<EventDestination>();
+            SetDestinationList(objectEvent.DestinationList, commonEvent.Destination);
+        }
+
+        doc.Events.Add(objectEvent);
     }
 
     public void ConvertTo_MSCStorageEvent(CommonEvent commonEvent, EPCISDocument doc)
@@ -987,7 +1117,7 @@ public class EventsConverterService : IEventsConverterService
             });
         }
 
-        if(commonSource.Location != null)
+        if (commonSource.Location != null)
         {
             eventSources.Add(new EventSource()
             {

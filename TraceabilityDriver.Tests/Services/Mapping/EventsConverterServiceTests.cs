@@ -33,6 +33,35 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         }
 
         [Test]
+        public async Task ConvertEventsAsync_WithCoreEvents_ReturnsPopulatedEPCISDocument()
+        {
+            // Arrange
+            var events = new List<CommonEvent>
+            {
+                CreateValidShippingEvent("core_shipping_event","coreobjectevent"),
+                CreateValidReceiveEvent("core_receive_event","coreobjectevent"),
+                CreateValidProcessingEvent("core_transformation_event", "coretransformationevent"),
+                CreateValidAggregationEvent("core_aggregation_event", "coreaggregationevent"),
+                CreateValidDisaggregationEvent("core_disaggregation_event", "coredisaggregationevent"),
+                CreateValidCommissioningEvent("core_commissioning_event"),
+                CreateValidDecommissioningEvent("core_decommissioning_event"),
+            };
+
+            // Act
+            var result = await _service.ConvertEventsAsync(events);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Events, Has.Count.EqualTo(7));
+            
+            foreach(var evt in events)
+            {
+                var epcisEvent = result.Events.First(x => x.EventID == evt.GetEpcisEventId());
+                Assert.That(epcisEvent, Is.Not.Null);
+            }
+        }
+
+        [Test]
         public async Task ConvertEventsAsync_WithValidEvents_ReturnsPopulatedEPCISDocument()
         {
             // Arrange
@@ -45,7 +74,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidShippingEvent("event5", "gdstshippingevent"),
                 CreateValidReceiveEvent("event6", "gdstreceiveevent"),
                 CreateValidFarmHarvestEvent("event7"),
-                CreateValidProcessingEvent("event8", true),
+                CreateValidProcessingEvent("event8", "mscprocessingevent"),
                 CreateValidShippingEvent("event9", "mscshippingevent"),
                 CreateValidReceiveEvent("event10", "mscreceiveevent"),
                 CreateValidStorageEvent("event11"),
@@ -55,7 +84,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 CreateValidLandingEvent("event15"),
                 CreateValidTransshipmentEvent("event16"),
                 CreateValidAggregationEvent("event17"),
-                CreateValidDisggregationEvent("event18")
+                CreateValidDisaggregationEvent("event18")
             };
 
             // Act
@@ -635,7 +664,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         public void ConvertTo_MSCProcessingEvent_CreatesValidEvent()
         {
             // Arrange
-            var commonEvent = CreateValidProcessingEvent("msc-processing-1", true);
+            var commonEvent = CreateValidProcessingEvent("msc-processing-1", "mscprocessingevent");
 
             // Act
             _service.ConvertTo_MSCProcessingevent(commonEvent, _document);
@@ -748,7 +777,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         public void ConvertTo_GDSTDisaggregationEvent_CreatesValidDisaggregationEvent()
         {
             // Arrange
-            var commonEvent = CreateValidDisggregationEvent("disaggregation-event");
+            var commonEvent = CreateValidDisaggregationEvent("disaggregation-event");
 
             // Act
             _service.ConvertTo_GDSTDisaggregationEvent(commonEvent, _document);
@@ -1027,18 +1056,36 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return commonEvent;
         }
 
-        public CommonEvent CreateValidAggregationEvent(string eventId)
+        public CommonEvent CreateValidAggregationEvent(string eventId, string? eventType = null)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
-            commonEvent.EventType = "GDSTAggregationEvent";
+            commonEvent.EventType = eventType ?? "GDSTAggregationEvent";
             commonEvent.Products = CreateValidAggregationProducts();
             return commonEvent;
         }
 
-        public CommonEvent CreateValidDisggregationEvent(string eventId)
+        public CommonEvent CreateValidCommissioningEvent(string eventId)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
-            commonEvent.EventType = "GDSTDisaggregationEvent";
+            commonEvent.EventType = "coreobjectevent";
+            commonEvent.Products = new() { CreateValidReferenceProduct() };
+            commonEvent.Action = "ADD";
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidDecommissioningEvent(string eventId)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = "coreobjectevent";
+            commonEvent.Products = new() { CreateValidReferenceProduct() };
+            commonEvent.Action = "DELETE";
+            return commonEvent;
+        }
+
+        public CommonEvent CreateValidDisaggregationEvent(string eventId, string? eventType = null)
+        {
+            CommonEvent commonEvent = CreateValidEvent(eventId);
+            commonEvent.EventType = eventType ?? "GDSTDisaggregationEvent";
             commonEvent.Products = CreateValidAggregationProducts();
             return commonEvent;
         }
@@ -1051,17 +1098,11 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             return commonEvent;
         }
 
-        public CommonEvent CreateValidProcessingEvent(string eventId, bool isMSCProcessingEvent = false)
+
+        public CommonEvent CreateValidProcessingEvent(string eventId, string? eventType = null)
         {
             CommonEvent commonEvent = CreateValidEvent(eventId);
-            if (isMSCProcessingEvent)
-            {
-                commonEvent.EventType = "MSCProcessingEvent";
-            }
-            else
-            {
-                commonEvent.EventType = "GDSTProcessingEvent";
-            }
+            commonEvent.EventType = eventType ?? "GDSTProcessingEvent";
             commonEvent.Certificates = new CommonCertificates
             {
                 ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
@@ -1069,7 +1110,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
                 HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
             };
 
-            if (isMSCProcessingEvent)
+            if (eventType?.ToLower() == "mscprocessingevent")
             {
                 commonEvent.ProcessingType = "GENERAL";
             }

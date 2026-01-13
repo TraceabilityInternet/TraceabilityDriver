@@ -20,6 +20,21 @@ public class CommonEvent : CommonBaseModel
     public string? EventType { get; set; } = null;
 
     /// <summary>
+    /// The business step of the event. Only used for Core events or where more strongly typed events do not already provide a hardcoded business step.
+    /// </summary>
+    public string? BusinessStep { get; set; } = null;
+
+    /// <summary>
+    /// The disposition of the event.
+    /// </summary>
+    public string? Dispostion { get; set; } = null;
+
+    /// <summary>
+    /// The action of the event.
+    /// </summary>
+    public string? Action { get; set; } = null;
+
+    /// <summary>
     /// The time of the event.
     /// </summary>
     public DateTimeOffset? EventTime { get; set; } = null;
