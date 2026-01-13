@@ -259,128 +259,141 @@ public class EventsConverterService : IEventsConverterService
 
     public void ConvertTo_CoreAggregationEvent(CommonEvent commonEvent, EPCISDocument doc, EventAction action)
     {
-        AggregationEvent<EventILMD> aggregationEvent = new AggregationEvent<EventILMD>();
+        AggregationEvent<EventILMD> epcisEvent = new AggregationEvent<EventILMD>();
 
         // Event ID
-        aggregationEvent.EventID = commonEvent.GetEpcisEventId();
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
 
         // Event Time
-        aggregationEvent.EventTime = commonEvent.EventTime;
-        aggregationEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
 
         // Action
-        aggregationEvent.Action = action;
+        epcisEvent.Action = action;
 
         // Location
-        SetEventLocation(aggregationEvent, commonEvent.Location, doc);
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
         // Certificates
-        aggregationEvent.CertificationList = new CertificationList();
-        SetEventCertificates(aggregationEvent.CertificationList, commonEvent.Certificates);
+        epcisEvent.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
 
         // Products
         if (commonEvent.Products != null)
         {
             foreach (var product in commonEvent.Products)
             {
-                SetProduct(aggregationEvent, product, doc);
+                SetProduct(epcisEvent, product, doc);
             }
         }
 
-        doc.Events.Add(aggregationEvent);
+        doc.Events.Add(epcisEvent);
     }
 
     public void ConvertTo_CoreTransformationEvent(CommonEvent commonEvent, EPCISDocument doc)
     {
-        TransformationEvent<EventILMD> transformationEvent = new TransformationEvent<EventILMD>();
+        TransformationEvent<EventILMD> epcisEvent = new TransformationEvent<EventILMD>();
 
         // Event ID
-        transformationEvent.EventID = commonEvent.GetEpcisEventId();
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
 
         // Business Step
         if (!string.IsNullOrEmpty(commonEvent.BusinessStep))
         {
-            transformationEvent.BusinessStep = new Uri(commonEvent.BusinessStep);
+            epcisEvent.BusinessStep = new Uri(commonEvent.BusinessStep);
         }
 
         // Event Time
-        transformationEvent.EventTime = commonEvent.EventTime;
-        transformationEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
 
         // Location
-        SetEventLocation(transformationEvent, commonEvent.Location, doc);
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
         // Certificates
-        transformationEvent.CertificationList = new CertificationList();
-        SetEventCertificates(transformationEvent.CertificationList, commonEvent.Certificates);
+        epcisEvent.ILMD = new EventILMD();
+        epcisEvent.ILMD.CertificationList = new CertificationList();
+        SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
 
         // Products
         if (commonEvent.Products != null)
         {
             foreach (var product in commonEvent.Products)
             {
-                SetProduct(transformationEvent, product, doc);
+                SetProduct(epcisEvent, product, doc);
             }
         }
 
-        doc.Events.Add(transformationEvent);
+        doc.Events.Add(epcisEvent);
     }
 
 
     public void ConvertTo_CoreObjectEvent(CommonEvent commonEvent, EPCISDocument doc)
     {
-        ObjectEvent<EventILMD> objectEvent = new ObjectEvent<EventILMD>();
+        ObjectEvent<EventILMD> epcisEvent = new ObjectEvent<EventILMD>();
 
         // Event ID
-        objectEvent.EventID = commonEvent.GetEpcisEventId();
+        epcisEvent.EventID = commonEvent.GetEpcisEventId();
 
         // Business Step
         if (!string.IsNullOrEmpty(commonEvent.BusinessStep))
         {
-            objectEvent.BusinessStep = new Uri(commonEvent.BusinessStep);
+            epcisEvent.BusinessStep = new Uri(commonEvent.BusinessStep);
         }
 
         // Disposition
         if (!string.IsNullOrEmpty(commonEvent.Dispostion))
         {
-            objectEvent.Disposition = new Uri(commonEvent.Dispostion);
+            epcisEvent.Disposition = new Uri(commonEvent.Dispostion);
         }
 
+        // Action
+        epcisEvent.Action = Enum.Parse<EventAction>(commonEvent.Action ?? "OBSERVE", true);
+
         // Event Time
-        objectEvent.EventTime = commonEvent.EventTime;
-        objectEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
+        epcisEvent.EventTime = commonEvent.EventTime;
+        epcisEvent.EventTimeZoneOffset = TimeSpan.FromMinutes(0);
 
         // Location
-        SetEventLocation(objectEvent, commonEvent.Location, doc);
+        SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
         // Certificates
-        objectEvent.CertificationList = new CertificationList();
-        SetEventCertificates(objectEvent.CertificationList, commonEvent.Certificates);
+        if(epcisEvent.Action == EventAction.ADD)
+        {
+            epcisEvent.ILMD = new EventILMD();
+            epcisEvent.ILMD.CertificationList = new CertificationList();
+            SetEventCertificates(epcisEvent.ILMD.CertificationList, commonEvent.Certificates);
+        }
+        else
+        {
+            epcisEvent.CertificationList = new CertificationList();
+            SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+        }
 
         // Products
         if (commonEvent.Products != null)
         {
             foreach (var product in commonEvent.Products)
             {
-                SetProduct(objectEvent, product, doc);
+                SetProduct(epcisEvent, product, doc);
             }
         }
 
         // Source Location
         if (commonEvent.Source != null)
         {
-            objectEvent.SourceList = new List<EventSource>();
-            SetSourceList(objectEvent.SourceList, commonEvent.Source);
+            epcisEvent.SourceList = new List<EventSource>();
+            SetSourceList(epcisEvent.SourceList, commonEvent.Source);
         }
 
         // Destination Location
         if (commonEvent.Destination != null)
         {
-            objectEvent.DestinationList = new List<EventDestination>();
-            SetDestinationList(objectEvent.DestinationList, commonEvent.Destination);
+            epcisEvent.DestinationList = new List<EventDestination>();
+            SetDestinationList(epcisEvent.DestinationList, commonEvent.Destination);
         }
 
-        doc.Events.Add(objectEvent);
+        doc.Events.Add(epcisEvent);
     }
 
     public void ConvertTo_MSCStorageEvent(CommonEvent commonEvent, EPCISDocument doc)
