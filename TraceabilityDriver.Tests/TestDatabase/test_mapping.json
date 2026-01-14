@@ -1,0 +1,868 @@
+{
+  "Connections": {
+    "SOURCE_DB": {
+      "ConnectorType": "SqlServer",
+      "ConnectionString": "server=localhost;database=TraceabilityDriverTestDB;Integrated Security=SSPI;TrustServerCertificate=True;",
+      "Database": "TraceabilityDriverTestDB"
+    }
+  },
+  "Dictionaries": {
+    "FishingGearType": {
+      "GEAR1": "urn:gdst:gear:1.1",
+      "GEAR9_9": "urn:gdst:gear:9.9",
+      "GEAR8_9": "urn:gdst:gear:8.9"
+    },
+    "UomToEpcis": {
+      "KGM": "KGM",
+      "EA": "EA"
+    }
+  },
+  "Mappings": [
+    {
+      "Id": "GDST_FISHING",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_FISHING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.FishingActivity fa WHERE fa.FishingActivityId > @LastID",
+          "Selector": "SELECT fa.FishingActivityId AS idEventRecord, fa.EventTimeUtc AS eventTime, op.PartyCode AS operatorId, op.PartyName AS operatorName, v.RegistrationNumber AS vesselRegistration, v.VesselCode AS vesselCode, v.VesselName AS vesselName, v.FlagCountry AS vesselCountry, fa.CatchArea AS catchArea, fa.GearTypeCode AS gearTypeCode, fa.GpsAvailable AS gpsAvailable, cert.CertificateNumber AS fishingAuthCode, hp.CertificateNumber AS humanPolicyCode, l.LotCode AS lotNumber, cl.Quantity AS qty, cl.Uom AS uom, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.FishingActivity fa JOIN src.FishingTrip ft ON ft.FishingTripId = fa.FishingTripId JOIN src.Vessel v ON v.VesselId = ft.VesselId JOIN src.Party op ON op.PartyId = ft.OperatorPartyId JOIN src.FishingCatchLine cl ON cl.FishingActivityId = fa.FishingActivityId JOIN src.Lot l ON l.LotId = cl.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = l.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId LEFT JOIN src.Certificate cert ON cert.CertificateId = fa.FishingAuthCertId LEFT JOIN src.Certificate hp ON hp.CertificateId = fa.HumanPolicyCertId WHERE fa.FishingActivityId > @LastID ORDER BY fa.FishingActivityId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstfishingevent",
+            "EventTime": "$eventTime",
+            "HumanWelfarePolicy": "$humanPolicyCode",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+              "Name": "$operatorName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+              "Name": "$operatorName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!VLOC, $vesselCode)",
+              "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+              "RegistrationNumber": "$vesselRegistration",
+              "Name": "$vesselName",
+              "Country": "$vesselCountry"
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ],
+            "CatchInformation": {
+              "CatchArea": "$catchArea",
+              "GearType": "Dictionary($gearTypeCode, FishingGearType)",
+              "GPSAvailable": "$gpsAvailable"
+            },
+            "Certificates": {
+              "FishingAuthorization": {
+                "Identifier": "$fishingAuthCode"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanPolicyCode"
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_LANDING",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_LANDING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.Landing l WHERE l.LandingId > @LastID",
+          "Selector": "SELECT l.LandingId AS idEventRecord, l.EventTimeUtc AS eventTime, op.PartyCode AS operatorId, op.PartyName AS operatorName, v.VesselCode AS vesselCode, v.RegistrationNumber AS vesselRegistration, v.VesselName AS vesselName, v.FlagCountry AS vesselCountry, port.LocationCode AS portCode, port.LocationName AS portName, port.Country AS portCountry, hc.CertificateNumber AS harvestCert, hp.CertificateNumber AS humanPolicyCode, ll.Quantity AS qty, ll.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.Landing l JOIN src.Vessel v ON v.VesselId = l.VesselId JOIN src.Location port ON port.LocationId = l.PortLocationId LEFT JOIN src.Party op ON op.PartyId = COALESCE(l.InformationProviderPartyId, l.ProductOwnerPartyId) JOIN src.LandingLine ll ON ll.LandingId = l.LandingId JOIN src.Lot lot ON lot.LotId = ll.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId LEFT JOIN src.Certificate hc ON hc.CertificateId = l.HarvestCertId LEFT JOIN src.Certificate hp ON hp.CertificateId = l.HumanPolicyCertId WHERE l.LandingId > @LastID ORDER BY l.LandingId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstlandingevent",
+            "EventTime": "$eventTime",
+            "HumanWelfarePolicy": "$humanPolicyCode",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+              "Name": "$operatorName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+              "Name": "$operatorName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!PORT, $portCode)",
+              "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+              "RegistrationNumber": "$portCode",
+              "Name": "$portName",
+              "Country": "$portCountry"
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ],
+            "Certificates": {
+              "HarvestCertification": {
+                "Identifier": "$harvestCert"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanPolicyCode"
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_TRANSSHIPMENT",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_TRANSSHIPMENT",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.Transshipment t WHERE t.TransshipmentId > @LastID",
+          "Selector": "SELECT t.TransshipmentId AS idEventRecord, t.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, loc.LocationCode AS locCode, loc.LocationName AS locName, loc.Country AS locCountry, t.TransportType AS transportType, t.TransportNumber AS transportNumber, tl.Quantity AS qty, tl.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName, lu.Sscc AS sscc FROM src.Transshipment t LEFT JOIN src.Party ip ON ip.PartyId = t.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = t.ProductOwnerPartyId LEFT JOIN src.Location loc ON loc.LocationId = t.AtLocationId JOIN src.TransshipmentLine tl ON tl.TransshipmentId = t.TransshipmentId LEFT JOIN src.Lot lot ON lot.LotId = tl.LotId LEFT JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId LEFT JOIN src.LogisticUnit lu ON lu.LogisticUnitId = tl.LogisticUnitId WHERE t.TransshipmentId > @LastID ORDER BY t.TransshipmentId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdsttransshipmentevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "TransportType": "$transportType",
+            "TransportNumber": "$transportNumber",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "SSCC": "$sscc",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_PROCESSING",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_PROCESSING_OUTPUTS",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, pb.ProcessingTypeCode AS processingType, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, coc.CertificateNumber AS cocCert, hp.CertificateNumber AS humanPolicyCode, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId LEFT JOIN src.Certificate coc ON coc.CertificateId = pb.CocCertId LEFT JOIN src.Certificate hp ON hp.CertificateId = pb.HumanPolicyCertId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstprocessingevent",
+            "EventTime": "$eventTime",
+            "ProcessingType": "$processingType",
+            "HumanWelfarePolicy": "$humanPolicyCode",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocCert"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanPolicyCode"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Output",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_AGGREGATION_ADD",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_AGGREGATION_ADD",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.AggregationEvent ae WHERE ae.AggregationEventId > @LastID AND ae.EventType = 'ADD'",
+          "Selector": "SELECT ae.AggregationEventId AS idEventRecord, ae.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, loc.LocationCode AS locCode, loc.LocationName AS locName, loc.Country AS locCountry, parent.Sscc AS parentSscc, child.Sscc AS childSscc, lot.LotCode AS lotNumber, al.Quantity AS qty, al.Uom AS uom, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.AggregationEvent ae LEFT JOIN src.Party ip ON ip.PartyId = ae.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = ae.ProductOwnerPartyId LEFT JOIN src.Location loc ON loc.LocationId = ae.LocationId JOIN src.AggregationLine al ON al.AggregationEventId = ae.AggregationEventId JOIN src.LogisticUnit parent ON parent.LogisticUnitId = al.ParentLogisticUnitId LEFT JOIN src.LogisticUnit child ON child.LogisticUnitId = al.ChildLogisticUnitId LEFT JOIN src.Lot lot ON lot.LotId = al.ChildLotId LEFT JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE ae.AggregationEventId > @LastID AND ae.EventType = 'ADD' ORDER BY ae.AggregationEventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstaggregationevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!SSCC, $parentSscc)",
+                "ProductType": "!Parent",
+                "SSCC": "$parentSscc"
+              },
+              {
+                "ProductId": "GenerateIdentifier(!CHILD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Child",
+                "SSCC": "$childSscc",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_DISAGGREGATION_DELETE",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_DISAGGREGATION_DELETE",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.AggregationEvent ae WHERE ae.AggregationEventId > @LastID AND ae.EventType = 'DELETE'",
+          "Selector": "SELECT ae.AggregationEventId AS idEventRecord, ae.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, loc.LocationCode AS locCode, loc.LocationName AS locName, loc.Country AS locCountry, parent.Sscc AS parentSscc, child.Sscc AS childSscc, lot.LotCode AS lotNumber, al.Quantity AS qty, al.Uom AS uom, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.AggregationEvent ae LEFT JOIN src.Party ip ON ip.PartyId = ae.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = ae.ProductOwnerPartyId LEFT JOIN src.Location loc ON loc.LocationId = ae.LocationId JOIN src.AggregationLine al ON al.AggregationEventId = ae.AggregationEventId JOIN src.LogisticUnit parent ON parent.LogisticUnitId = al.ParentLogisticUnitId LEFT JOIN src.LogisticUnit child ON child.LogisticUnitId = al.ChildLogisticUnitId LEFT JOIN src.Lot lot ON lot.LotId = al.ChildLotId LEFT JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE ae.AggregationEventId > @LastID AND ae.EventType = 'DELETE' ORDER BY ae.AggregationEventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstdisaggregationevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!SSCC, $parentSscc)",
+                "ProductType": "!Parent",
+                "SSCC": "$parentSscc"
+              },
+              {
+                "ProductId": "GenerateIdentifier(!CHILD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Child",
+                "SSCC": "$childSscc",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Id": "GDST_COMMINGLING",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_COMMINGLING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.AggregationEvent ae WHERE ae.AggregationEventId > @LastID AND ae.EventType = 'COMMINGLE'",
+          "Selector": "SELECT ae.AggregationEventId AS idEventRecord, ae.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, loc.LocationCode AS locCode, loc.LocationName AS locName, loc.Country AS locCountry, parent.Sscc AS parentSscc, lot.LotCode AS lotNumber, al.Quantity AS qty, al.Uom AS uom, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.AggregationEvent ae LEFT JOIN src.Party ip ON ip.PartyId = ae.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = ae.ProductOwnerPartyId LEFT JOIN src.Location loc ON loc.LocationId = ae.LocationId JOIN src.AggregationLine al ON al.AggregationEventId = ae.AggregationEventId JOIN src.LogisticUnit parent ON parent.LogisticUnitId = al.ParentLogisticUnitId LEFT JOIN src.Lot lot ON lot.LotId = al.ChildLotId LEFT JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE ae.AggregationEventId > @LastID AND ae.EventType = 'COMMINGLE' ORDER BY ae.AggregationEventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstcomminglingevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!SSCC, $parentSscc)",
+                "ProductType": "!Output",
+                "SSCC": "$parentSscc"
+              },
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Input",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_SHIPPING",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_SHIPPING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.Shipment s WHERE s.ShipmentId > @LastID",
+          "Selector": "SELECT s.ShipmentId AS idEventRecord, s.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, sf.LocationCode AS shipFromCode, sf.LocationName AS shipFromName, sf.Country AS shipFromCountry, st.LocationCode AS shipToCode, st.LocationName AS shipToName, st.Country AS shipToCountry, s.TransportType AS transportType, s.TransportVehicleId AS transportVehicleId, s.TransportNumber AS transportNumber, s.TransportProviderId AS transportProviderId, lu.Sscc AS sscc, lot.LotCode AS lotNumber, sl.Quantity AS qty, sl.Uom AS uom, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.Shipment s JOIN src.Location sf ON sf.LocationId = s.ShipFromLocationId JOIN src.Location st ON st.LocationId = s.ShipToLocationId LEFT JOIN src.Party ip ON ip.PartyId = s.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = s.ProductOwnerPartyId JOIN src.ShipmentLine sl ON sl.ShipmentId = s.ShipmentId LEFT JOIN src.LogisticUnit lu ON lu.LogisticUnitId = sl.LogisticUnitId LEFT JOIN src.Lot lot ON lot.LotId = sl.LotId LEFT JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE s.ShipmentId > @LastID ORDER BY s.ShipmentId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstshippingevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $shipFromCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$shipFromCode",
+              "Name": "$shipFromName",
+              "Country": "$shipFromCountry"
+            },
+            "Source": {
+              "Location": {
+                "LocationId": "GenerateIdentifier(!LOC, $shipFromCode)",
+                "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                "RegistrationNumber": "$shipFromCode",
+                "Name": "$shipFromName",
+                "Country": "$shipFromCountry"
+              }
+            },
+            "Destination": {
+              "Location": {
+                "LocationId": "GenerateIdentifier(!LOC, $shipToCode)",
+                "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                "RegistrationNumber": "$shipToCode",
+                "Name": "$shipToName",
+                "Country": "$shipToCountry"
+              }
+            },
+            "TransportType": "$transportType",
+            "TransportVehicleID": "$transportVehicleId",
+            "TransportNumber": "$transportNumber",
+            "TransportProviderID": "$transportProviderId",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "SSCC": "$sscc",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_RECEIVE",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_RECEIVE",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.Receipt r WHERE r.ReceiptId > @LastID",
+          "Selector": "SELECT r.ReceiptId AS idEventRecord, r.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, ra.LocationCode AS receiveAtCode, ra.LocationName AS receiveAtName, ra.Country AS receiveAtCountry, sup.PartyCode AS supplierId, sup.PartyName AS supplierName, lu.Sscc AS sscc, lot.LotCode AS lotNumber, rl.Quantity AS qty, rl.Uom AS uom, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.Receipt r JOIN src.Location ra ON ra.LocationId = r.ReceiveAtLocationId LEFT JOIN src.Party sup ON sup.PartyId = r.SupplierPartyId LEFT JOIN src.Party ip ON ip.PartyId = r.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = r.ProductOwnerPartyId JOIN src.ReceiptLine rl ON rl.ReceiptId = r.ReceiptId LEFT JOIN src.LogisticUnit lu ON lu.LogisticUnitId = rl.LogisticUnitId LEFT JOIN src.Lot lot ON lot.LotId = rl.LotId LEFT JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE r.ReceiptId > @LastID ORDER BY r.ReceiptId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstreceiveevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $receiveAtCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$receiveAtCode",
+              "Name": "$receiveAtName",
+              "Country": "$receiveAtCountry"
+            },
+            "Source": {
+              "Party": {
+                "OwnerId": "GenerateIdentifier(!P, $supplierId)",
+                "Name": "$supplierName"
+              }
+            },
+            "Destination": {
+              "Location": {
+                "LocationId": "GenerateIdentifier(!LOC, $receiveAtCode)",
+                "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                "RegistrationNumber": "$receiveAtCode",
+                "Name": "$receiveAtName",
+                "Country": "$receiveAtCountry"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "SSCC": "$sscc",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_FARM_HARVEST",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_FARM_HARVEST",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstfarmharvestevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "AquacultureMethod": "!cage",
+            "ProductionMethod": "!aquaculture",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Output",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_FARM_HARVEST_OBJECT",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_FARM_HARVEST_OBJECT",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST_OBJECT'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber, pd.Gtin AS gtin, pd.ShortDescription AS itemName, pd.ProductFormCode AS productForm, sp.ScientificName AS scientificName FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId JOIN src.ProductDefinition pd ON pd.ProductDefinitionId = lot.ProductDefinitionId LEFT JOIN src.Species sp ON sp.SpeciesId = pd.SpeciesId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FARM_HARVEST_OBJECT' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstfarmharvestobjectevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "AquacultureMethod": "!cage",
+            "ProductionMethod": "!aquaculture",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "GenerateIdentifier(!IDOP, gtin)",
+                  "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+                  "ShortDescription": "$itemName",
+                  "ProductForm": "$productForm",
+                  "ScientificName": "$scientificName"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_HATCHING",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_HATCHING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'HATCHING'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'HATCHING' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdsthatchingevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "BroodStockSource": "!unknown",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_FEEDMILL_OBJECT",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_FEEDMILL_OBJECT",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_OBJECT'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_OBJECT' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstfeedmillobjectevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "ProteinSource": "!unknown",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Reference",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "GDST_FEEDMILL_TRANSFORMATION",
+      "Selectors": [
+        {
+          "Id": "SEL_GDST_FEEDMILL_TRANSFORMATION",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM src.ProcessingBatch pb WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION'",
+          "Selector": "SELECT pb.ProcessingBatchId AS idEventRecord, pb.EventTimeUtc AS eventTime, ip.PartyCode AS infoProviderId, ip.PartyName AS infoProviderName, po.PartyCode AS ownerId, po.PartyName AS ownerName, fac.LocationCode AS locCode, fac.LocationName AS locName, fac.Country AS locCountry, o.Quantity AS qty, o.Uom AS uom, lot.LotCode AS lotNumber FROM src.ProcessingBatch pb JOIN src.Location fac ON fac.LocationId = pb.FacilityLocationId LEFT JOIN src.Party ip ON ip.PartyId = pb.InformationProviderPartyId LEFT JOIN src.Party po ON po.PartyId = pb.ProductOwnerPartyId JOIN src.ProcessingOutput o ON o.ProcessingBatchId = pb.ProcessingBatchId JOIN src.Lot lot ON lot.LotId = o.LotId WHERE pb.ProcessingBatchId > @LastID AND pb.ProcessingTypeCode = 'FEEDMILL_TRANSFORMATION' ORDER BY pb.ProcessingBatchId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!gdstfeedmilltransformationevent",
+            "EventTime": "$eventTime",
+            "InformationProvider": {
+              "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
+              "Name": "$infoProviderName"
+            },
+            "ProductOwner": {
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "Name": "$ownerName"
+            },
+            "Location": {
+              "LocationId": "GenerateIdentifier(!LOC, $locCode)",
+              "OwnerId": "GenerateIdentifier(!P, $ownerId)",
+              "RegistrationNumber": "$locCode",
+              "Name": "$locName",
+              "Country": "$locCountry"
+            },
+            "ProteinSource": "!unknown",
+            "Products": [
+              {
+                "ProductId": "GenerateIdentifier(!PROD, $idEventRecord, $lotNumber)",
+                "ProductType": "!Output",
+                "LotNumber": "$lotNumber",
+                "Quantity": "$qty",
+                "UoM": "Dictionary($uom, UomToEpcis)"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

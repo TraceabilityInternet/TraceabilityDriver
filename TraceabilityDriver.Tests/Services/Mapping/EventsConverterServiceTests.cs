@@ -567,6 +567,163 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         }
 
         [Test]
+        public void ConvertTo_CoreShippingEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidShippingEvent("core-shipping-1", "coreobjectevent");
+
+            // Act
+            _service.ConvertTo_CoreObjectEvent(commonEvent, _document);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<ObjectEvent<EventILMD>>());
+            var shippingEvent = _document.Events[0] as ObjectEvent<EventILMD>;
+            Assert.That(shippingEvent, Is.Not.Null);
+            Assert.That(shippingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(shippingEvent.SourceList, Is.Not.Null);
+            Assert.That(shippingEvent.SourceList, Has.Count.EqualTo(2));
+            Assert.That(shippingEvent.DestinationList, Is.Not.Null);
+            Assert.That(shippingEvent.DestinationList, Has.Count.EqualTo(2));
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
+        public void ConvertTo_CoreReceiveEvent_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidReceiveEvent("core-receive-1", "coreobjectevent");
+
+            // Act
+            _service.ConvertTo_CoreObjectEvent(commonEvent, _document);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<ObjectEvent<EventILMD>>());
+            var receiveEvent = _document.Events[0] as ObjectEvent<EventILMD>;
+            Assert.That(receiveEvent, Is.Not.Null);
+            Assert.That(receiveEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(receiveEvent.SourceList, Is.Not.Null);
+            Assert.That(receiveEvent.SourceList, Has.Count.EqualTo(2));
+            Assert.That(receiveEvent.DestinationList, Is.Not.Null);
+            Assert.That(receiveEvent.DestinationList, Has.Count.EqualTo(2));
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
+        public void ConvertTo_CoreTransformation_CreatesValidEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidProcessingEvent("core-processing-1", "coretransformationevent");
+
+            // Act
+            _service.ConvertTo_CoreTransformationEvent(commonEvent, _document);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<TransformationEvent<EventILMD>>());
+            var processingEvent = _document.Events[0] as TransformationEvent<EventILMD>;
+            Assert.That(processingEvent, Is.Not.Null);
+            Assert.That(processingEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(processingEvent.EventID, Is.EqualTo(commonEvent.GetEpcisEventId()));
+            Assert.That(processingEvent.Outputs, Is.Not.Empty);
+            Assert.That(processingEvent.Inputs, Is.Not.Empty);
+            Assert.That(processingEvent.ILMD, Is.Not.Null);
+            Assert.That(processingEvent.ILMD.CertificationList.Certificates, Is.Not.Empty);
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
+        public void ConvertTo_CoreCObjectEvent_CreatesValidCommissioningEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidCommissioningEvent("core-commissioning-1");
+            
+            // Act
+            _service.ConvertTo_CoreObjectEvent(commonEvent, _document);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<ObjectEvent<EventILMD>>());
+            var commissioningEvent = _document.Events[0] as ObjectEvent<EventILMD>;
+            Assert.That(commissioningEvent, Is.Not.Null);
+            Assert.That(commissioningEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(commissioningEvent.EventID, Is.EqualTo(commonEvent.GetEpcisEventId()));
+            Assert.That(commissioningEvent.ILMD, Is.Not.Null);
+            Assert.That(commissioningEvent.ILMD.CertificationList.Certificates, Is.Not.Empty);
+            Assert.That(commissioningEvent.Action, Is.EqualTo(EventAction.ADD));
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
+        public void ConvertTo_CoreObjectEvent_CreatesValidDecommissioningEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidDecommissioningEvent("core-decommissioning-1");
+
+            // Act
+            _service.ConvertTo_CoreObjectEvent(commonEvent, _document);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<ObjectEvent<EventILMD>>());
+            var decommissioningEvent = _document.Events[0] as ObjectEvent<EventILMD>;
+            Assert.That(decommissioningEvent, Is.Not.Null);
+            Assert.That(decommissioningEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(decommissioningEvent.EventID, Is.EqualTo(commonEvent.GetEpcisEventId()));
+            Assert.That(decommissioningEvent.CertificationList, Is.Not.Null);
+            Assert.That(decommissioningEvent.CertificationList.Certificates, Is.Not.Empty);
+            Assert.That(decommissioningEvent.Action, Is.EqualTo(EventAction.DELETE));
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
+        public void ConvertTo_CoreAggregationEvent_CreatesValidAggregationEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidAggregationEvent("core-aggregation-1", "coreaggregationevent");
+
+            // Act
+            _service.ConvertTo_CoreAggregationEvent(commonEvent, _document, EventAction.ADD);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<AggregationEvent<EventILMD>>());
+            var aggregationEvent = _document.Events[0] as AggregationEvent<EventILMD>;
+            Assert.That(aggregationEvent, Is.Not.Null);
+            Assert.That(aggregationEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(aggregationEvent.EventID, Is.EqualTo(commonEvent.GetEpcisEventId()));
+            Assert.That(aggregationEvent.Action, Is.EqualTo(EventAction.ADD));
+            Assert.That(aggregationEvent.ParentID, Is.Not.Null.Or.Empty);
+            Assert.That(aggregationEvent.Children, Is.Not.Empty);
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
+        public void ConvertTo_CoreDisaggregationEvent_CreatesValidAggregationEvent()
+        {
+            // Arrange
+            var commonEvent = CreateValidAggregationEvent("core-aggregation-1", "coreaggregationevent");
+
+            // Act
+            _service.ConvertTo_CoreAggregationEvent(commonEvent, _document, EventAction.ADD);
+
+            // Assert
+            Assert.That(_document.Events, Has.Count.EqualTo(1));
+            Assert.That(_document.Events[0], Is.TypeOf<AggregationEvent<EventILMD>>());
+            var aggregationEvent = _document.Events[0] as AggregationEvent<EventILMD>;
+            Assert.That(aggregationEvent, Is.Not.Null);
+            Assert.That(aggregationEvent.EventTime, Is.EqualTo(commonEvent.EventTime));
+            Assert.That(aggregationEvent.EventID, Is.EqualTo(commonEvent.GetEpcisEventId()));
+            Assert.That(aggregationEvent.Action, Is.EqualTo(EventAction.ADD));
+            Assert.That(aggregationEvent.ParentID, Is.Not.Null.Or.Empty);
+            Assert.That(aggregationEvent.Children, Is.Not.Empty);
+
+            string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
+        }
+
+        [Test]
         public void ConvertTo_MSCShippingEvent_CreatesValidEvent()
         {
             // Arrange
@@ -1070,6 +1227,12 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             commonEvent.EventType = "coreobjectevent";
             commonEvent.Products = new() { CreateValidReferenceProduct() };
             commonEvent.Action = "ADD";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
             return commonEvent;
         }
 
@@ -1079,6 +1242,12 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             commonEvent.EventType = "coreobjectevent";
             commonEvent.Products = new() { CreateValidReferenceProduct() };
             commonEvent.Action = "DELETE";
+            commonEvent.Certificates = new CommonCertificates
+            {
+                ChainOfCustodyCertification = new CommonCertificate { Identifier = "coc123" },
+                HumanPolicyCertificate = new CommonCertificate { Identifier = "human123" },
+                HarvestCertification = new CommonCertificate { Identifier = "harvest123" }
+            };
             return commonEvent;
         }
 
