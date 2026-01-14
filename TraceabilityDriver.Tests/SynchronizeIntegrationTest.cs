@@ -2,11 +2,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Reflection;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services.Mapping;
 using TraceabilityDriver.Services.Mapping.Functions;
+using TraceabilityDriver.Tests.TestDatabase;
 
 namespace TraceabilityDriver.Tests
 {
@@ -25,6 +27,12 @@ namespace TraceabilityDriver.Tests
             _mockMappingSource = new Mock<IMappingSource>();
             _loggerProvider = new TestLoggerProvider();
 
+            // build mappings from embedded resource
+            var mappings = new List<TDMappingConfiguration>();
+            string json = ReadEmbeddedResource("TraceabilityDriver.Tests.TestDatabase.test_mapping.json");
+            var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json) ?? throw new InvalidOperationException($"The mapping file could not be deserialized.");
+            mappings.Add(mapping);
+
             // add default newtonsoft json converter for TDMappingConfiguration
             Newtonsoft.Json.JsonConvert.DefaultSettings = () => new Newtonsoft.Json.JsonSerializerSettings
             {
@@ -35,27 +43,21 @@ namespace TraceabilityDriver.Tests
             // does not exist, it should skip the tests.
             _mockMappingSource.Setup(x => x.GetMappings()).Returns(() =>
             {
-                var mappings = new List<TDMappingConfiguration>();
-                string? filePath = Environment.GetEnvironmentVariable("TD_MAPPINGS_FOLDER");
-                if (string.IsNullOrWhiteSpace(filePath))
-                {
-                    Assert.Ignore("The environment variable TD_MAPPINGS_FOLDER is not set.");
-                }
-                Directory.EnumerateFiles(filePath, "*.json").ToList().ForEach(f =>
-                {
-                    if (!File.Exists(f))
-                    {
-                        Assert.Ignore($"The mapping file {f} does not exist.");
-                    }
-
-                    var json = System.IO.File.ReadAllText(f);
-                    var mapping = Newtonsoft.Json.JsonConvert.DeserializeObject<TDMappingConfiguration>(json)
-                        ?? throw new InvalidOperationException($"The mapping file {f} could not be deserialized.");
-                    mappings.Add(mapping);
-                });
-
                 return mappings;
             });
+
+            // setup the test database
+            string buildCommand = ReadEmbeddedResource("TraceabilityDriver.Tests.TestDatabase.build.sql");
+            string seedCommand = ReadEmbeddedResource("TraceabilityDriver.Tests.TestDatabase.seed.sql");
+            TestDatabaseConfig dbConfig = new TestDatabaseConfig
+            {
+                ConnectionString = "server=localhost;database=TraceabilityDriverTestDB;Integrated Security=SSPI;TrustServerCertificate=True;",
+                DatabaseName = "TraceabilityDriverTestDB",
+                BuildCommand = buildCommand,
+                SeedCommand = seedCommand
+            };
+            TestMSSQLDatabase testDB = new TestMSSQLDatabase(dbConfig);
+            testDB.SetupDatabase();
 
             // Create IConfiguration from appsettings.Tests.json
             var configuration = new ConfigurationBuilder()
@@ -102,7 +104,7 @@ namespace TraceabilityDriver.Tests
             Dispose();
         }
 
-        //[Test]
+        [Test]
         public async Task IntegrateTest_SynchronizeService()
         {
             // Arrange
@@ -124,6 +126,15 @@ namespace TraceabilityDriver.Tests
             {
                 disposable.Dispose();
             }
+        }
+
+        private string ReadEmbeddedResource(string resourceName)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Resource '{resourceName}' not found.");
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
         }
     }
 }

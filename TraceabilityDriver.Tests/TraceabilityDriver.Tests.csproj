@@ -26,9 +26,19 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Remove="Data\TestEventsDatabase.bak" />
+    <None Remove="TestDatabase\build.sql" />
+    <None Remove="TestDatabase\seed.sql" />
+    <None Remove="TestDatabase\test_mapping.json" />
     <Content Include="Data\TestEventsDatabase.bak">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="TestDatabase\build.sql">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestDatabase\seed.sql">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestDatabase\test_mapping.json" />
     <None Include="appsettings.Tests.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
