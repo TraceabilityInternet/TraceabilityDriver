@@ -468,7 +468,7 @@ The common event model is defined by the following fields:
   - **`Name`** The name of the product owner.
 - **`Location`** The location where the event occurred.
   - **`LocationId`** The unique identifier for the location.
-  - **`OwnerId`** The unique identifier for the location�s owner.
+  - **`OwnerId`** The unique identifier for the location's owner.
   - **`RegistrationNumber`** The registration number of the location.
   - **`Name`** The name of the location.
   - **`Country`** The country of the location.
@@ -506,7 +506,7 @@ The common event model is defined by the following fields:
     - **`Name`** The name of the source party.
   - **`Location`** The location of the source party.
     - **`LocationId`** The unique identifier for the source location.
-    - **`OwnerId`** The unique identifier for the location�s owner.
+    - **`OwnerId`** The unique identifier for the location's owner.
     - **`RegistrationNumber`** The registration number of the source location.
     - **`Name`** The name of the source location.
     - **`Country`** The country of the source location.
@@ -516,7 +516,7 @@ The common event model is defined by the following fields:
     - **`Name`** The name of the destination party.
   - **`Location`** The location of the destination party.
     - **`LocationId`** The unique identifier for the destination location.
-    - **`OwnerId`** The unique identifier for the location�s owner.
+    - **`OwnerId`** The unique identifier for the location's owner.
     - **`RegistrationNumber`** The registration number of the destination location.
     - **`Name`** The name of the destination location.
     - **`Country`** The country of the destination location.
