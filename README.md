@@ -3,10 +3,10 @@
 # What Is The Traceability Driver?
 
 The Traceability Driver is a free, open-source tool that lowers the cost of making your supply chain traceability data interoperable. 
-It installs alongside your existing software as a standalone (no changes to your current systems) reads data from your existing database, translates it into 
-a standardized format, and exposes it through an API that parterns, auditors, and certifiers can query.
+It installs alongside your existing software as a standalone module without any changes to your current systems, reads data from your existing database, translates it into 
+a standardized format, and exposes it through an API that partners, auditors, and certifiers can query.
 
-The Driver is **commodity-agnostic**: the same mapping engine works for any supply chain, such as seafood, meat, leather, and beyond. You define how your data is read, 
+The Driver is **commodity-agnostic**: the same mapping engine works for any supply chain, such as beef, leather, seafood, and beyond. You define how your data is read, 
 and the Driver handles the transation.
 
 ## Key features
@@ -14,9 +14,9 @@ and the Driver handles the transation.
 - **Commodity-agnostic**: one engine for any product or industry; you control the  mapping, the engine stays neutral about what is being traced.
 - **Non-intrusive**: runs beside your existing system with no changes to your  source database or application.
 - **Open source and free**: no licensing costs.
-- **Standards support**: outputs GDST events and master data (built on the industry-neutral GS1 EPCIS foundation), with optional MSC (Marine Stewardship
-  Council) extensions.
-- **Configurable storage**: stores traceability data in a separate cache, using MongoDB by default or SQL Server, MySQL, or PostgreSQL.
+- **Standards support**: outputs industry-neutral GS1 EPCIS events, with optional GDST (Global Dialogue on Seafood Traceability) and MSC (Marine Stewardship Council) extensions.
+- **Configurable storage**: stores traceability data in a separate cache, using MongoDB by default or MSSQL Server.
+- **Extensible Adapters**: pre-built adapters for syncing with MSSQL Server, MySQL, or PostGreSQL server. Additional adapaters are easy to implment with the `ITDConnector` interface.
 - **Automatic synchronization**: keeps the cache up to date by syncing from your database on a schedule.
 - **Flexible authentication**: secure the API with OAuth (JWT) or API keys, or run with no authentication.
 - **Built-in dashboard**: monitor sync status, view stats and errors, and run the GDST capability test.
@@ -24,20 +24,20 @@ and the Driver handles the transation.
 # How Does It Work?
 
 The Driver follows a simple three-stage flow: it **reads** records from your existing database, **maps** them into standardized events and master data, and **stores** the
-result in a separate database, the Traceability Data Cache, which your partners can query through the GDST Communication Protocol.
+result in a separate database, the Traceability Data Cache, which your partners can query through the Global Traceability Framework Communication Protocol based on EPCIS.
 
 ![](./img/screenshot_diagram01.png)
 
 ## Traceability Data Cache
 
-The Traceability Data Cache is where the standardized traceability data is stored, and it is the source for all API queries. It uses MongoDB by default, but can be configured
-to use SQL Server, MySQL, or PostgreSQL instead.
+The Traceability Data Cache is where the standardized traceability data is stored, and it is the source for all API queries. The cache uses MongoDB by default, but can be configured
+to use MSSQL Server.
 
 > Support for other database types can be added by implementing the `IDatabaseService` interface.
 
 ## Synchronization
 
-The Driver keeps the cache up to date by syncing from your database over a database connection. The process runs on a loop:
+The Driver keeps the cache up to date by syncing from your database using an `ITDConnector` database connection. The process runs on a loop:
 
 1. On startup, synchronization begins automatically.
 2. The Driver loads every mapping in the local `Mappings` folder.
@@ -90,7 +90,7 @@ Shows the last 10 errors that occurred during synchronization.
 
 # Installation
 
-The driver can be installed as a release or Docker image.
+The driver can be installed as a Docker image.
 
 ## Docker Installation
 
@@ -115,17 +115,6 @@ handles SSL and HTTPS redirection.** Otherwise, a certificate for the Driver mus
 - ASPNETCORE_Kestrel__Certificates__Default__Password=<certificate-password>
 - ASPNETCORE_Kestrel__Certificates__Default__Path=/<path-to-your-certificate-file>/aspnetapp.pfx
 ```
-
-## Release Installation
-
-Download the latest release from the official GitHub releases page. The Driver runs as a standalone module and can be hosted on Windows or Linux servers.
-
-1. 1. Download the latest release.
-2. Install it on a Windows or Linux server.
-3. Configure it by editing the `appsettings.json` file.
-4. Create mappings for the events you want to extract from your database, and place them in the `Mappings` folder.
-5. Start the Driver and let it synchronize the data.
-6. Navigate to its root URL to view the current sync, previous syncs, and the data stored in the `Traceability Data Cache`.
 
 # Configuration
 
@@ -479,7 +468,7 @@ The common event model is defined by the following fields:
   - **`Name`** The name of the product owner.
 - **`Location`** The location where the event occurred.
   - **`LocationId`** The unique identifier for the location.
-  - **`OwnerId`** The unique identifier for the location’s owner.
+  - **`OwnerId`** The unique identifier for the locationï¿½s owner.
   - **`RegistrationNumber`** The registration number of the location.
   - **`Name`** The name of the location.
   - **`Country`** The country of the location.
@@ -503,7 +492,7 @@ The common event model is defined by the following fields:
     - **`ProductDefinitionId`** The unique identifier for the product definition.
       - Should be a GTIN in EPCIS URN format when available.
       - If not a GTIN, a GTIN will be generated using the `ProductDefinitionId` and `OwnerId`.
-    - **`OwnerId`** The unique identifier of the product definition’s owner.
+    - **`OwnerId`** The unique identifier of the product definitionï¿½s owner.
     - **`ShortDescription`** A short textual description of the product.
     - **`ProductForm`** The physical form of the product (e.g., whole, fillet, frozen).
     - **`ScientificName`** The scientific name of the species.
@@ -517,7 +506,7 @@ The common event model is defined by the following fields:
     - **`Name`** The name of the source party.
   - **`Location`** The location of the source party.
     - **`LocationId`** The unique identifier for the source location.
-    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`OwnerId`** The unique identifier for the locationï¿½s owner.
     - **`RegistrationNumber`** The registration number of the source location.
     - **`Name`** The name of the source location.
     - **`Country`** The country of the source location.
@@ -527,7 +516,7 @@ The common event model is defined by the following fields:
     - **`Name`** The name of the destination party.
   - **`Location`** The location of the destination party.
     - **`LocationId`** The unique identifier for the destination location.
-    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`OwnerId`** The unique identifier for the locationï¿½s owner.
     - **`RegistrationNumber`** The registration number of the destination location.
     - **`Name`** The name of the destination location.
     - **`Country`** The country of the destination location.
@@ -556,6 +545,25 @@ It is important that the `EventId` is unique for each event such that events are
 The `EventType` field is used to define the type of event that is being mapped. The event type must be one of the following values:
 
 Valid Event Types:
+- Core Traceability
+    - coreobjectevent
+        - Covers shipping, receiving, commissioning, and decommissioning event types based on the 
+        `businessstep` and `action`
+            - shipping
+                - business step: `shipping`
+                - event action:  `OBSERVE`
+            - receiving
+                - business step: `receiving`
+                - event action:  `OBSERVE`
+            - commissioning
+                - business step: `commissioning`
+                - event action:  `ADD`
+            - decommissioning
+                - business step: `decommissioning`
+                - event action:  `DELETE`
+    - coretransformationevent
+    - coreaggregationevent
+    - coredisaggregationevent
 - GDST
     - gdstaggregationevent
     - gdstdisaggregationevent
