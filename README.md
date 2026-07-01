@@ -1,45 +1,63 @@
 ![](./img/logo.jpg)
 
-The Traceability Driver is a free open-source software tool that can be used to help reduce the costs of making a traceability solution interoperable. 
-It is a standalone module that can be installed into an existing software system to expose traceability data using the GDST module.
+# What Is The Traceability Driver?
 
-# How does it work?
-The Traceability Driver works by mapping data in an existing database into GDST events and master data.
-The GDST events and master data are then saved into a seperate database called the GDST Data Cache.
-The GDST Data Cache can then be queried using the GDST Communication Protocol.
+The Traceability Driver is a free, open-source tool that lowers the cost of making your supply chain traceability data interoperable. 
+It installs alongside your existing software as a standalone module without any changes to your current systems, reads data from your existing database, translates it into 
+a standardized format, and exposes it through an API that partners, auditors, and certifiers can query.
+
+The Driver is **commodity-agnostic**: the same mapping engine works for any supply chain, such as beef, leather, seafood, and beyond. You define how your data is read, 
+and the Driver handles the transation.
+
+## Key features
+
+- **Commodity-agnostic**: one engine for any product or industry; you control the  mapping, the engine stays neutral about what is being traced.
+- **Non-intrusive**: runs beside your existing system with no changes to your  source database or application.
+- **Open source and free**: no licensing costs.
+- **Standards support**: outputs industry-neutral GS1 EPCIS events, with optional GDST (Global Dialogue on Seafood Traceability) and MSC (Marine Stewardship Council) extensions.
+- **Configurable storage**: stores traceability data in a separate cache, using MongoDB by default or MSSQL Server.
+- **Extensible Adapters**: pre-built adapters for syncing with MSSQL Server, MySQL, or PostGreSQL server. Additional adapaters are easy to implment with the `ITDConnector` interface.
+- **Automatic synchronization**: keeps the cache up to date by syncing from your database on a schedule.
+- **Flexible authentication**: secure the API with OAuth (JWT) or API keys, or run with no authentication.
+- **Built-in dashboard**: monitor sync status, view stats and errors, and run the GDST capability test.
+
+# How Does It Work?
+
+The Driver follows a simple three-stage flow: it **reads** records from your existing database, **maps** them into standardized events and master data, and **stores** the
+result in a separate database, the Traceability Data Cache, which your partners can query through the Global Traceability Framework Communication Protocol based on EPCIS.
 
 ![](./img/screenshot_diagram01.png)
 
-## GDST Data Cache
-The **GDST Data Cache** is where the traceability is stored.
-It serves as the data source for API queries. 
-By default, the GDST Data Cache built using MongoDB, but it can be configured to use other databases such as SQL Server, MySQL, or PostgreSQL.
+## Traceability Data Cache
 
-> The Traceability Drvier can be be extended for use with other database types by re-implementing the `IDatabaseService` interface.
+The Traceability Data Cache is where the standardized traceability data is stored, and it is the source for all API queries. The cache uses MongoDB by default, but can be configured
+to use MSSQL Server.
+
+> Support for other database types can be added by implementing the `IDatabaseService` interface.
 
 ## Synchronization
-Synchronizing the data between the existing software system and the Traceability Driver is done by using a database connection. 
-Every minute, the Traceability Driver will sync up to 10,000 records from the database. Memory variables are used to keep track of where the last sync left off.
 
-The synchronization process involves the  following steps:
-- Upon start up, the synchronization will execute automatically.
-- The synchronization will load all mappings found in the local `Mappings` folder of the executing directory.
-- The synchronization will execute each mapping in the order that they are found in the `Mappings` folder.
-- The traceability data is stored into the `GDST Data Cache`.
-- The Traceability Driver will wait 1 minute before attempting to synchronize again.
+The Driver keeps the cache up to date by syncing from your database using an `ITDConnector` database connection. The process runs on a loop:
+
+1. On startup, synchronization begins automatically.
+2. The Driver loads every mapping in the local `Mappings` folder.
+3. It runs each mapping in the order the files appear in the folder.
+4. The resulting data is written to the cache.
+5. The Driver waits one minute, then begins the next cycle.
 
 ![](./img/screenshot_diagram02.png)
 
-> Important to know that currently it will only read up to 10,000 records from each selector statement. 
-You must use the memory variables to remember where it last left off and then continue from there.
+> Each selector reads at most 10,000 records per cycle, so larger tables are processed across multiple cycles. Memory variables record where the last cycle stopped so the
+next one continues from that point, these are covered in detail under Mappings.
 
 # Dashboard
-There is a dashboard landing page that can be viewed that gives some visual insight to the current state, stats, errors.
-The GDST capability test can also be executed from the dashboard.
+
+The Driver includes a dashboard landing page that gives a visual overview of the current sync state, basic stats, and recent errors. You can also run the GDST
+capability test directly from the dashboard.
 
 ![](./img/screenshot_dashboard01.png)
 
-The password for the dashboard is configured in the `appsettings.json` or an environment variable. The default password is `changeme`.
+The dashboard is protected by a password, set in `appsettings.json` or through an environment variable. The default is `changeme`.
 
 ```json
 "Authentication": {
@@ -47,33 +65,37 @@ The password for the dashboard is configured in the `appsettings.json` or an env
 }
 ```
 
-> This password only grants access to the dashboard and nothing else. Authentication for API access is configured separately.
+> This password only grants access to the dashboard. API access is authenticated separately (see Authorization).
 
 **Login Page**
 ![](./img/screenshot_login01.png)
 
 ## Current Sync
-Here the user is able to see the status of anything currently syncing.
+
+Shows the status of any synchronization currently in progress.
 
 ![](./img/screenshot_currentsync01.png)
 
 ## Database Report
-Here you can see some basic stats such as the number of events, master data, and syncs.
+
+Shows basic stats, such as the number of events, master data records, and syncs.
 
 ![](./img/screenshot_currentsync01.png)
 
 ## Errors
-Here you can see the last 10 errors that have occurred during the sync process.
+
+Shows the last 10 errors that occurred during synchronization.
 
 ![](./img/screenshot_currenterrors01.png)
 
 # Installation
-The driver can be installed as a release or docker image.
+
+The driver can be installed as a Docker image.
 
 ## Docker Installation
+
 The base image of the Traceability Driver does not contain any mappings.
-To configure the driver for your environment, you will need to create a docker file that uses the 
-Traceability Driver base image and copies your mapping files to the app/Mappings folder in the container.
+To configure the driver for your environment, you will need to create a **Dockerfile** that uses the Driver base image and copies your mapping files to the app/Mappings folder in the container.
 
 ```dockerfile
 # Use the public image as the base
@@ -85,40 +107,33 @@ COPY relative/path/to/your/mappings/folder/ /app/Mappings/
 # The entrypoint/command from the base image will run automatically unless overridden
 ```
 
-**The docker installation of the Traceability Driver is intended to be deployed behind a reverse proxy that 
-handles SSL and HTTPS redirection.** Otherwise, a certificate for the Traceability Driver must be created and mounted to the container along with the relevant environment variables.
+**The Docker installation of the Driver is intended to be deployed behind a reverse proxy that 
+handles SSL and HTTPS redirection.** Otherwise, a certificate for the Driver must be created and mounted to the container along with the relevant environment variables.
 
 ```yaml
-- ASPNETCORE_URLS = https://+:443;http://+:80
+- ASPNETCORE_URLS=https://+:443;http://+:80
 - ASPNETCORE_Kestrel__Certificates__Default__Password=<certificate-password>
-- ASPNETCORE_Kestrel__Certificates__Default__Path =/<path-to-your-certificate-file>/aspnetapp.pfx
+- ASPNETCORE_Kestrel__Certificates__Default__Path=/<path-to-your-certificate-file>/aspnetapp.pfx
 ```
 
-## Release Installation
-Go to the official releases page of the GitHub and download the latest release of the Traceability Driver. The Traceability Driver is a standalone module that can be installed into an existing software system and hosted on Windows or Linux servers.
-
-1. Download the latest release of the Traceability Driver.
-1. Install the Traceability Driver on a Windows or Linux server.
-1. Configure the Traceability Driver by editing the `appsettings.json` file.
-1. Create the mappings for the events that are being extracted from the database and place those in the `Mappings` folder.
-1. Start the Traceability Driver and let it synchronize the data.
-1. Navigate to the root URL of the Traceability Driver to see information about the current sync, previous syncs, and data that has been stored in the `GDST Data Cache`.
-
 # Configuration
-The Traceability Driver is configured using environment variables.
-These environment variables can be configured within a docker compose file for local development or in a cloud environment where the container is deployed.
+
+The Driver is configured using environment variables.
+These environment variables can be configured within a Docker Compose file for local development or in a cloud environment where the container is deployed.
 
 ## Local Development
-A docker compose file is recommended for local development.
 
-When using a docker compose file, the TD_MAPPINGS_FOLDER environment variable must be set to the location of the mappings folder on the host machine. 
-A corresponding mount point must be set in the docker compose file to mount the mappings folder into the container.
+A Docker Compose file is recommended for local development.
+
+When using a Docker Compose file, the TD_MAPPINGS_FOLDER environment variable must be set to the location of the mappings folder on the host machine. 
+A corresponding mount point must be set in the Docker Compose file to mount the mappings folder into the container.
 ```yaml
 volumes:
     - ${TD_MAPPINGS_FOLDER}:/app/Mappings
 ```
 
 ### Docker Compose File Examples
+
 **Mongo, no Auth**
 ```yaml
 services:
@@ -150,7 +165,7 @@ services:
         - MongoDB__ConnectionString=<your-connectionstring>
         - MongoDB__DatabaseName=TraceabilityDriverTests
         - DISABLE_HTTPS_REDIRECTION=TRUE
-        - Authentication__APIKey__HeaderName=X-API-KEY
+        - Authentication__APIKey__HeaderName=X-API-Key
         - Authentication__APIKey__ValidKeys__0=test
         - Authentication__APIKey__ValidKeys__1=test_2
         ports:
@@ -173,7 +188,7 @@ services:
         - MongoDB__DatabaseName=TraceabilityDriverTests
         - DISABLE_HTTPS_REDIRECTION=TRUE
         - Authentication__JWT__Audience=<your-audience>
-        - Authentication__JWT__Authority=<your authority>
+        - Authentication__JWT__Authority=<your-authority>
         - Authentication__JWT__MetadataAddress=<your-metadata-address>
         ports:
             - "80:8080"
@@ -201,10 +216,13 @@ services:
 ```
 
 ## Configuration Variables
+
 ### Mongo
-The Traceability Driver uses MongoDB as the default database for the GDST Data Cache.
+
+The Traceability Driver uses MongoDB as the default database for the Traceability Data Cache.
 To configure the MongoDB connection, you need to configure the connection string.
 Additionally, the database name and collection names can be configured.
+
 ```json
 "MongoDB": {
     "ConnectionString": "<your-connection-string>",
@@ -217,27 +235,32 @@ Additionally, the database name and collection names can be configured.
 ```
 
 ### SQL Server
-The Traceability Driver can also be configured to use SQL Server as the database for the GDST Data Cache.
+
+The Driver can also be configured to use SQL Server as the database for the Traceability Data Cache.
 To configure the SQL Server connection, you need to configure the connection string.
+
 ```json
 "SqlServer": {
-    "ConnectionString": "<your-connection-string>",
+    "ConnectionString": "<your-connection-string>"
 }
 ```
 
-> The Traceability Driver will default to using MongoDB if a MongoDB connection string is provided.
+> The Driver will default to using MongoDB if a MongoDB connection string is provided.
 To use SQL Server, you must only provide a SQL Server connection string and not a MongoDB connection string.
 
 ### URL
+
 Defines the URL where the API will be hosted. This must be configured correctly or the GDST Capability Test will fail.
 
 **Example URL Configuration**
+
 ```json
 "URL": "http://localhost:5000"
 ```
 
 ### GDST Capability Test
-The Traceability Driver supports executing the capability test from the Traceability Driver portal. 
+
+The Driver supports executing the capability test from the Traceability Driver portal. 
 In order to do this, you must configure the `GDST Capability Test` section with the following fields:
 
 - **Url** - The URL of the GDST Capability Test.
@@ -246,6 +269,7 @@ In order to do this, you must configure the `GDST Capability Test` section with 
 - **PGLN** - The PGLN of the solution that is being tested.
 
 **Example GDST Capability Test Configuration**
+
 ```json
 "GDST": {
     "CapabilityTest": {
@@ -257,9 +281,9 @@ In order to do this, you must configure the `GDST Capability Test` section with 
 },
 ```
 
-> You need to reach out to [info@thegdst.org](info@thegdst.org) to get your credentials for executing the capability test.
+> You need to reach out to [info@thegdst.org](mailto:info@thegdst.org) to get your credentials for executing the capability test.
 
-After configuration, follow these steps to execute the capability test from inside the Traceability Driver portal:
+After configuration, follow these steps to execute the capability test from inside the Driver portal:
 
 **Start Capability Test**
 ![](./img/screenshot_captest_start01.png)
@@ -273,22 +297,24 @@ After configuration, follow these steps to execute the capability test from insi
 **Capability Test Success**
 ![](./img/screenshot_captest_success01.png)
 
-> The Traceability Driver has the capability to execute the capability test from the portal. 
-This is useful for testing that the Traceability Driver is interoperable with other GDST capable systems. 
-However, this does not indicate that traceability data is being synchronized correctly or that the traceability data is complete with all the GDST CTEs and KDEs.
+> The Driver can run the capability test directly from the portal, which is useful for confirming interoperability with other GDST-capable systems. Note, 
+however, that this does not mean your data is being synchronized correctly, or that it includes all the GDST CTEs and KDEs.
 
 ### MSC (Marine Stewardship Council) Extensions
-The Traceability Driver supports mapping to the CTE and KDE extensions in the OpenTraceability.MSC extension library.
-To enable mapping to MSC CTEs and KDEs, you need to set the `EnableMSC` configuration option to `true` in the `appsettings.json` file.
+
+The Driver supports mapping to the MSC CTE and KDE extensions provided by the `OpenTraceability.MSC` library. To enable these mappings, set the `EnableMSC` option
+to `true` in the `appsettings.json` file.
+
 ```json
 "EnableMSC": true
 ```
 
 ### Identifiers
-The Traceability Driver is capable of automatically generating traceability identifiers such as the EPC, GTIN, PGLN, and/or GLN. 
-A critical part of generating these identifiers has to do with the domain that is generating them as is outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).
 
-In order to configure this, you need to define the `Traceability:IdentifierDomain` in the `appsettings.json` file. The `Traceability:IdentifierDomain` are used to generate the identifiers for the traceability data.
+The Driver can automatically generate traceability identifiers such as EPC, GTIN, PGLN, and GLN. A key factor in producing these identifiers is the domain that issues
+them, as outlined in the [GDST URN specification](https://www.iana.org/assignments/urn-formal/gdst).
+
+In order to configure this, you need to define the `Traceability:IdentifierDomain` in the `appsettings.json` file. The `Traceability:IdentifierDomain` is used to generate the identifiers for the traceability data.
 
 ```json
 "Traceability": {
@@ -299,20 +325,23 @@ In order to configure this, you need to define the `Traceability:IdentifierDomai
 The domain should be the domain site of the organization that is generating the traceability data. This domain is used to generate the URN for the traceability data.
 
 ### Authorization
+
 The Traceability Driver allows for three modes of authentication:
 - **OAuth (JWT) Authentication** - Allows for configuring OAuth authentication to the API using self-signed tokens.
 - **API Key Authentication** - Allows for configuring API key authentication to the API which is required by GDST 1.2 communication protocol.
 - **No Authentication** - If neither an API Key or OAuth authentication is present in the configuration, then no authentication is required to access the API.
 
 #### OAuth (JWT) Authentication
+
 The OAuth (JWT) authentication is used to authenticate the API using self-signed tokens. The authentication is configured in the `appsettings.json` file of the installation.
 
-- **Token Issuer** - The token issuer is the OAuth provider that is used to authenticate the API.
+- **Token Issuer (Authority)** - The token issuer is the OAuth provider that is used to authenticate the API.
 - **Audience** - The audience is the intended audience of the token.
 - **Metadata Address** - The metadata address is the JWKS discovery endpoint that is used to validate the token.
 - **Require HTTPS Metadata** - This is used to require HTTPS for the metadata address.
 
 **Example OAuth (JWT) Configuration**
+
 ```json
 "Authentication": {
     "JWT": {
@@ -325,9 +354,11 @@ The OAuth (JWT) authentication is used to authenticate the API using self-signed
 ```
 
 #### API Key Authentication
+
 API Key authentication is used to grant access to the controllers and the API keys are defined in the `appsettings.json` file.
 
 **Example API Key Configuration**
+
 ```json
 "Authentication": {
     "APIKey": {
@@ -341,12 +372,13 @@ API Key authentication is used to grant access to the controllers and the API ke
 ```
 
 ## Mappings
+
 The Traceability Driver targets individual events from the database and maps them into the Common Event Model.
 Mapping files are used to define how to connect to the source database, how to query for the relevant data, and how to map the data to GDST CTEs and KDEs.
 
 Mappings are defined in the `Mappings` folder of the installation.
-> The base image of the traceability driver does not have any mappings. 
-You must either build a new docker image from the base image and copy the mappings to the `Mappings` folder of the base image or otherwise mount your mappings folder to the `Mappings` folder of the base image.
+> The base image of the Driver does not have any mappings. 
+You must either build a new Docker image from the base image and copy the mappings to the `Mappings` folder of the base image or otherwise mount your mappings folder to the `Mappings` folder of the base image.
 
 Each event type that is being extracted, transformed, and loaded into the GDST module should have its own mapping file.
 The mapping is defined by using the following fields:
@@ -356,6 +388,7 @@ The mapping is defined by using the following fields:
 - `EventMapping` - The mapping of the data from the database into the Common Event Model.
 
 ### Mapping Selectors
+
 The mapping selectors are used to select the data from the database. The selectors are defined by using the following fields:
 
 - `Id` - A unique identifier for the selector.
@@ -366,9 +399,10 @@ The mapping selectors are used to select the data from the database. The selecto
 
 One or more selectors can be defined for each event mapping such that the event's information is pieced together from multiple tables in the database or even multiple tables from multiple databases.
 
-When using multiple selectors, values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be priororized for the event over the value found in future selectors for the same event.
+When using multiple selectors, values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be prioritized for the event over the value found in future selectors for the same event.
 
 **Example Selector**
+
 ```json
 {
     "Id": "SAMPLE_EventSelector",
@@ -380,14 +414,15 @@ When using multiple selectors, values are kept in order of priority, such that i
 ```
 
 #### Selector Memory
+
 The `Memory` field is used to capture information from the database and store it to be accessed by the next sync cycle. This can be used to store information that is needed to be accessed by the next selector in the mapping such as where we last left off when syncing.
 
 - `LastID` - This is the name of the memory variable that is stored.
     - `DefaultValue` - The default value for the memory variable.
     - `Field` - The field that is stored in the memory variable from the selector results.
-    - `Type` - The data type of the memory variable which can be `Int32`, `Int64`, `String`, `DateTime`, or `Boolean`.
+    - `DataType` - The data type of the memory variable which can be `Int32`, `Int64`, `String`, `DateTime`, or `Boolean`.
 
-The field value stored is always the value from the field from the last row processed in the previoused sync.
+The field value stored is always the value from the field from the last row processed previous sync.
 
 ```json
 "Memory": {
@@ -402,11 +437,13 @@ The field value stored is always the value from the field from the last row proc
 For example, the `LastID` memory variable is used to store the maximum `idEventRecord` value from the selector results. This value is then used in the next selector to determine where to start the next synchronization cycle.
 
 ### Event Mapping
+
 The event mapping is a JSON object that uses a Common Event Model with mapping fields that are used to map the data from the database into the Common Event Model.
 
 The field values are defined in a way such that they can be used to extract values from the database and map them into the Common Event Model.
 
 #### Mapping Field Values
+
 The mapping field values are defined by using the following syntax:
 
 - **Static Values** - Static values are defined by using the `!` character followed by the value.
@@ -414,6 +451,7 @@ The mapping field values are defined by using the following syntax:
 - **Functions** - Functions are defined by using the function name and the parameters. The function name is followed by the parameters in parentheses.
 
 #### Common Event Model
+
 The **`CommonEvent`** model defines the standard representation of an event within the Traceability Driver. It provides a normalized structure for mapping event data from diverse traceability systems.
 
 The common event model is defined by the following fields:
@@ -430,7 +468,7 @@ The common event model is defined by the following fields:
   - **`Name`** The name of the product owner.
 - **`Location`** The location where the event occurred.
   - **`LocationId`** The unique identifier for the location.
-  - **`OwnerId`** The unique identifier for the location’s owner.
+  - **`OwnerId`** The unique identifier for the location's owner.
   - **`RegistrationNumber`** The registration number of the location.
   - **`Name`** The name of the location.
   - **`Country`** The country of the location.
@@ -454,7 +492,7 @@ The common event model is defined by the following fields:
     - **`ProductDefinitionId`** The unique identifier for the product definition.
       - Should be a GTIN in EPCIS URN format when available.
       - If not a GTIN, a GTIN will be generated using the `ProductDefinitionId` and `OwnerId`.
-    - **`OwnerId`** The unique identifier of the product definition’s owner.
+    - **`OwnerId`** The unique identifier of the product definitionï¿½s owner.
     - **`ShortDescription`** A short textual description of the product.
     - **`ProductForm`** The physical form of the product (e.g., whole, fillet, frozen).
     - **`ScientificName`** The scientific name of the species.
@@ -468,7 +506,7 @@ The common event model is defined by the following fields:
     - **`Name`** The name of the source party.
   - **`Location`** The location of the source party.
     - **`LocationId`** The unique identifier for the source location.
-    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`OwnerId`** The unique identifier for the location's owner.
     - **`RegistrationNumber`** The registration number of the source location.
     - **`Name`** The name of the source location.
     - **`Country`** The country of the source location.
@@ -478,7 +516,7 @@ The common event model is defined by the following fields:
     - **`Name`** The name of the destination party.
   - **`Location`** The location of the destination party.
     - **`LocationId`** The unique identifier for the destination location.
-    - **`OwnerId`** The unique identifier for the location’s owner.
+    - **`OwnerId`** The unique identifier for the location's owner.
     - **`RegistrationNumber`** The registration number of the destination location.
     - **`Name`** The name of the destination location.
     - **`Country`** The country of the destination location.
@@ -493,18 +531,39 @@ The common event model is defined by the following fields:
 - **`ProductionMethod`** The production method associated with the product or species (e.g., aquaculture, wild-caught).
 
 #### Event ID
+
 The `EventId` field is used as a unique identifier for the event such that events are merged together on common `EventId` values. When saving to the database, the `EventId` is used as the primary key for the event.
 
 For instance:
-- If an existing event is found with the same `EventId`, the event is updated with the new values when saving into the `GDST Data Cache`.
-- If the same or multiple selector(s) returns two rows with the same `EventId`, the event is merged together into a single event with the same `EventId`. Values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be priororized for the event over the value found in future selectors for the same event.
+- If an existing event is found with the same `EventId`, the event is updated with the new values when saving into the `Traceability Data Cache`.
+- If the same or multiple selector(s) returns two rows with the same `EventId`, the event is merged together into a single event with the same `EventId`. Values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be prioritized for the event over the value found in future selectors for the same event.
 
-It is important that the `EventId` is unique for each event such that events are not duplicated in the `GDST Data Cache`.
+It is important that the `EventId` is unique for each event such that events are not duplicated in the `Traceability Data Cache`.
 
 ### Event Type
+
 The `EventType` field is used to define the type of event that is being mapped. The event type must be one of the following values:
 
 Valid Event Types:
+- Core Traceability
+    - coreobjectevent
+        - Covers shipping, receiving, commissioning, and decommissioning event types based on the 
+        `businessstep` and `action`
+            - shipping
+                - business step: `shipping`
+                - event action:  `OBSERVE`
+            - receiving
+                - business step: `receiving`
+                - event action:  `OBSERVE`
+            - commissioning
+                - business step: `commissioning`
+                - event action:  `ADD`
+            - decommissioning
+                - business step: `decommissioning`
+                - event action:  `DELETE`
+    - coretransformationevent
+    - coreaggregationevent
+    - coredisaggregationevent
 - GDST
     - gdstaggregationevent
     - gdstdisaggregationevent
@@ -587,12 +646,13 @@ Valid Event Types:
                 ]
             }
         ],
-    "Dictionaries": { ... }",
-    "Connections": { ... }"
+    "Dictionaries": { ... },
+    "Connections": { ... }
 }
 ```
 
 ### Event Mapping Functions
+
 The event mapping functions are used to transform the data from the database into the Common Event Model. The functions are defined by using the following syntax:
 
 - **GenerateIdentifier** - Generates a unique identifier for the field.
@@ -600,6 +660,7 @@ The event mapping functions are used to transform the data from the database int
 - **Dictionary** - Transforms the value of the field using a dictionary.
 
 #### Generate Identifier
+
 The `GenerateIdentifier` function is used to create unique identifiers for various elements in the traceability system. It takes multiple parameters and creates a standardized identifier by:
 
 1. Stripping all non-alphanumeric characters from each parameter value
@@ -628,6 +689,7 @@ In these examples:
 The function ensures that all identifiers follow a consistent format by removing special characters that might cause issues in data processing or storage.
 
 #### Join
+
 The `Join` function concatenates multiple field values together using a specified separator. This is particularly useful for combining multiple database fields into a single value, such as creating a full name from first name and last name fields.
 
 **Syntax:**
@@ -653,9 +715,11 @@ In this example:
 The Join function is particularly useful for creating human-readable display names or for combining multiple fields into a standardized format.
 
 #### Dictionaries
+
 The dictionaries are used to transform the values of the fields using a dictionary. The dictionary is defined in the configuration file and then referenced in the mapping file.
 
 ##### Dictionary Configuration
+
 Dictionaries are configured in the `Dictionaries` section in the mapping configuration file. Each dictionary is a key-value pair collection where the key is the value from the database and the value is what it should be transformed into.
 
 **Example Dictionary Configuration**
@@ -674,6 +738,7 @@ Dictionaries are configured in the `Dictionaries` section in the mapping configu
 ```
 
 ##### Using the Dictionary Function
+
 The dictionary function is used in the mapping file to transform values from the database using the configured dictionaries. The function takes two parameters:
 1. The value to look up in the dictionary
 2. The name of the dictionary to use for the lookup
@@ -681,6 +746,7 @@ The dictionary function is used in the mapping file to transform values from the
 If the value is found in the specified dictionary, the function returns the corresponding transformed value. If the value is not found, the function returns null.
 
 **Example Usage**
+
 ```json
 "CatchInformation": {
   "CatchArea": "!urn:example:area:01",

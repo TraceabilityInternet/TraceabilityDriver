@@ -10,3 +10,5 @@
 **/mappings/**
 /TraceabilityDriver/appsettings.Development.json
 /TraceabilityDriver/BuildInstructions.md
+
+**.lscache
