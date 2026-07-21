@@ -1,6 +1,4 @@
-using CsvHelper.Configuration.Attributes;
 using Microsoft.Data.SqlClient;
-using MySql.Data.MySqlClient;
 using System.Data;
 using TraceabilityDriver.Models.Mapping;
 
