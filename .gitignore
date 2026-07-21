@@ -11,4 +11,4 @@
 /TraceabilityDriver/appsettings.Development.json
 /TraceabilityDriver/BuildInstructions.md
 
-**/*.lscache
+**.lscache
