@@ -88,17 +88,15 @@ namespace TraceabilityDriver.Services
                     PartyPGLNs = new List<string>()
                 };
 
-                // Add trading party PGLNs if it's a GDST event
-                if (evt is IGDSTEvent gdstEvent)
+                // Add trading party PGLNs if it's a GDST event. The product owner only exists on
+                // events implementing IGDSTProductOwnerEvent in the GDST 2.0 model.
+                if (evt is IGDSTProductOwnerEvent productOwnerEvent && productOwnerEvent.ProductOwner != null)
                 {
-                    if (gdstEvent.ProductOwner != null)
-                    {
-                        eventDoc.PartyPGLNs.Add(gdstEvent.ProductOwner.ToString());
-                    }
-                    if (gdstEvent.InformationProvider != null)
-                    {
-                        eventDoc.PartyPGLNs.Add(gdstEvent.InformationProvider.ToString());
-                    }
+                    eventDoc.PartyPGLNs.Add(productOwnerEvent.ProductOwner.ToString());
+                }
+                if (evt is IGDSTEvent gdstEvent && gdstEvent.InformationProvider != null)
+                {
+                    eventDoc.PartyPGLNs.Add(gdstEvent.InformationProvider.ToString());
                 }
 
                 // Add source and destination PGLNs/GLNs

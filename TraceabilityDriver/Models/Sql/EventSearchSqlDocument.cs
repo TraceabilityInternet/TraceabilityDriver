@@ -74,17 +74,15 @@ namespace TraceabilityDriver.Models.Sql
                 List<string> locationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>();
                 List<string> partyPGLNs = new List<string>();
 
-                // Add trading party PGLNs if it's a GDST event
-                if (evt is IGDSTEvent gdstEvent)
+                // Add trading party PGLNs if it's a GDST event. The product owner only exists on
+                // events implementing IGDSTProductOwnerEvent in the GDST 2.0 model.
+                if (evt is IGDSTProductOwnerEvent productOwnerEvent && productOwnerEvent.ProductOwner != null)
                 {
-                    if (gdstEvent.ProductOwner != null)
-                    {
-                        partyPGLNs.Add(gdstEvent.ProductOwner.ToString());
-                    }
-                    if (gdstEvent.InformationProvider != null)
-                    {
-                        partyPGLNs.Add(gdstEvent.InformationProvider.ToString());
-                    }
+                    partyPGLNs.Add(productOwnerEvent.ProductOwner.ToString());
+                }
+                if (evt is IGDSTEvent gdstEvent && gdstEvent.InformationProvider != null)
+                {
+                    partyPGLNs.Add(gdstEvent.InformationProvider.ToString());
                 }
 
                 // Add source and destination PGLNs/GLNs

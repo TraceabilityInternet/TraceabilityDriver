@@ -35,7 +35,6 @@ namespace TraceabilityDriver.Controllers
             return Ok(new List<DigitalLink>() { link });
         }
 
-        [Route("gtin/{gtin}/ser/{serial}")]
         [Route("01/{gtin}/21/{serial}")]
         [HttpGet]
         public IActionResult InstanceEPC(string gtin, string serial, [FromQuery] string linkType)
@@ -54,7 +53,6 @@ namespace TraceabilityDriver.Controllers
 
         [HttpGet]
         [Route("01/{gtin}/10/{lot}")]
-        [Route("gtin/{gtin}/lot/{lot}")]
         public IActionResult ClassEPC(string gtin, string lot, [FromQuery] string linkType)
         {
             if (ReturnError == true) return new BadRequestResult();
@@ -70,7 +68,6 @@ namespace TraceabilityDriver.Controllers
         }
 
         [HttpGet]
-        [Route("sscc/{sscc}")]
         [Route("00/{sscc}")]
         public IActionResult SSCC(string sscc, [FromQuery] string linkType)
         {
@@ -87,7 +84,6 @@ namespace TraceabilityDriver.Controllers
         }
 
         [HttpGet]
-        [Route("gtin/{gtin}")]
         [Route("01/{gtin}")]
         public IActionResult GTIN(string gtin, [FromQuery] string linkType)
         {
@@ -104,7 +100,6 @@ namespace TraceabilityDriver.Controllers
         }
 
         [HttpGet]
-        [Route("gln/{gln}")]
         [Route("414/{gln}")]
         public IActionResult GLN(string gln, [FromQuery] string linkType)
         {
@@ -121,7 +116,6 @@ namespace TraceabilityDriver.Controllers
         }
 
         [HttpGet]
-        [Route("party/{pgln}")]
         [Route("417/{pgln}")]
         public IActionResult PGLN(string pgln, [FromQuery] string linkType)
         {

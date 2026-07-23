@@ -472,6 +472,7 @@ The common event model is defined by the following fields:
   - **`RegistrationNumber`** The registration number of the location.
   - **`Name`** The name of the location.
   - **`Country`** The country of the location.
+  - **`LocationClassification`** A comma-delimited list of GDST location classification values (`vessel` or `land facility`).
 - **`Certificates`** Certificates associated with the event.
   - **`FishingAuthorization`**
     - **`Identifier`** The identifier of the fishing authorization certificate.
@@ -496,6 +497,7 @@ The common event model is defined by the following fields:
     - **`ShortDescription`** A short textual description of the product.
     - **`ProductForm`** The physical form of the product (e.g., whole, fillet, frozen).
     - **`ScientificName`** The scientific name of the species.
+    - **`ProductClassification`** A comma-delimited list of GDST product classification values (e.g., `wildCaught` or `seafood, processed`).
 - **`CatchInformation`** The catch information related to the event.
   - **`CatchArea`** The catch area of the event.
   - **`GearType`** The gear type used during the catch.
@@ -529,6 +531,7 @@ The common event model is defined by the following fields:
 - **`TransportNumber`** The voyage, flight, or trip number associated with the transport.
 - **`TransportProviderID`** The identifier of the carrier or transport provider.
 - **`ProductionMethod`** The production method associated with the product or species (e.g., aquaculture, wild-caught).
+- **`UnloadingPort`** The port where the products are unloaded during shipping/receiving events.
 
 #### Event ID
 
@@ -545,45 +548,32 @@ It is important that the `EventId` is unique for each event such that events are
 The `EventType` field is used to define the type of event that is being mapped. The event type must be one of the following values:
 
 Valid Event Types:
-- Core Traceability
-    - coreobjectevent
-        - Covers shipping, receiving, commissioning, and decommissioning event types based on the 
-        `businessstep` and `action`
-            - shipping
-                - business step: `shipping`
-                - event action:  `OBSERVE`
-            - receiving
-                - business step: `receiving`
-                - event action:  `OBSERVE`
-            - commissioning
-                - business step: `commissioning`
-                - event action:  `ADD`
-            - decommissioning
-                - business step: `decommissioning`
-                - event action:  `DELETE`
-    - coretransformationevent
-    - coreaggregationevent
-    - coredisaggregationevent
 - GDST
-    - gdstaggregationevent
-    - gdstdisaggregationevent
-    - gdstcomminglingevent
-    - gdstlandingevent
-    - gdsttransshipmentevent
-    - gdstprocessingevent
-    - gdstfishingevent
-    - gdstshippingevent
-    - gdstreceiveevent
-    - gdstfarmharvestevent
-    - gdstfarmharvestobjectevent
-    - gdsthatchingevent
-    - gdstfeedmillobjectevent
-    - gdstfeedmilltransformationevent
+    - aggregationevent
+    - disaggregationevent
+    - commissioningevent
+    - decommissioningevent
+    - shippingevent
+    - receivingevent
+    - transformationevent
 - MSC
     - mscprocessingevent
     - mscshippingevent
     - mscreceiveevent
     - mscstorageevent
+
+The GDST event types produce the generic GDST 2.0 events. The business meaning of an event
+(fishing, landing, processing, etc.) is derived from the product and location classifications
+rather than the event type:
+
+- **`ProductDefinition.ProductClassification`** A comma-delimited list of GDST product
+  classification values for the trade item (e.g. `wildCaught`, `developing`, `feed`, `mature`,
+  or `seafood, processed` for a processed seafood output).
+- **`Location.LocationClassification`** A comma-delimited list of GDST location classification
+  values for the location (`vessel` or `land facility`).
+
+For example, a fishing event is a `commissioningevent` whose product is classified `wildCaught`
+at a location classified `vessel`.
 
 #### Example Mapping
 ```
@@ -599,7 +589,7 @@ Valid Event Types:
                         "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
                         "EventMapping": {
                             "EventId": "$idEventRecord",
-                            "EventType": "!gdstfishingevent",
+                            "EventType": "!commissioningevent",
                             "EventTime": "$eventStart",
                             "InformationProvider": {
                                 "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
@@ -614,7 +604,8 @@ Valid Event Types:
                                 "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
                                 "RegistrationNumber": "$vehicleId",
                                 "Name": "$vehicleName",
-                                "Country": "$vehicleCountry"
+                                "Country": "$vehicleCountry",
+                                "LocationClassification": "!vessel"
                             },
                             "Products": [
                                 {
@@ -627,7 +618,8 @@ Valid Event Types:
                                         "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
                                         "ShortDescription": "$itemName",
                                         "ProductForm": "!RAW",
-                                        "ScientificName": "$itemScientificName"
+                                        "ScientificName": "$itemScientificName",
+                                        "ProductClassification": "!wildCaught"
                                     }
                                 }
                             ],

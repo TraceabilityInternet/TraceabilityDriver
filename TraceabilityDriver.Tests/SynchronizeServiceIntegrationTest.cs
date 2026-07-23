@@ -176,42 +176,26 @@ namespace TraceabilityDriver.Tests
             Assert.That(doc.Events, Is.Not.Null);
             Assert.That(doc.Events, Is.Not.Empty);
             
+            // The GDST 2.0 model collapses the semantic 1.2 events into the generic event set, so
+            // the mappings produce one of each generic type; the business meaning is carried by the
+            // product/location classifications on the master data.
             GDSTAggregationEvent? aggEvent = doc.Events.OfType<GDSTAggregationEvent>().FirstOrDefault();
             Assert.That(aggEvent, Is.Not.Null, "Expected at least one GDSTAggregationEvent in the response.");
 
             GDSTDisaggregationEvent? disaggEvent = doc.Events.OfType<GDSTDisaggregationEvent>().FirstOrDefault();
             Assert.That(disaggEvent, Is.Not.Null, "Expected at least one GDSTDisaggregationEvent in the response.");
 
-            GDSTComminglingEvent? comminglingEvent = doc.Events.OfType<GDSTComminglingEvent>().FirstOrDefault();
-            Assert.That(comminglingEvent, Is.Not.Null, "Expected at least one GDSTComminglingEvent in the response.");
-
-            GDSTLandingEvent? landingEvent = doc.Events.OfType<GDSTLandingEvent>().FirstOrDefault();
-            Assert.That(landingEvent, Is.Not.Null, "Expected at least one GDSTLandingEvent in the response.");
-
-            GDSTTransshipmentEvent? transshipmentEvent = doc.Events.OfType<GDSTTransshipmentEvent>().FirstOrDefault();
-            Assert.That(transshipmentEvent, Is.Not.Null, "Expected at least one GDSTTransshipmentEvent in the response.");
-
-            GDSTProcessingEvent? processingEvent = doc.Events.OfType<GDSTProcessingEvent>().FirstOrDefault();
-            Assert.That(processingEvent, Is.Not.Null, "Expected at least one GDSTProcessingEvent in the response.");
-
-            GDSTFishingEvent? fishingEvent = doc.Events.OfType<GDSTFishingEvent>().FirstOrDefault();
-            Assert.That(fishingEvent, Is.Not.Null, "Expected at least one GDSTFishingEvent in the response.");
+            GDSTCommissionEvent? commissionEvent = doc.Events.OfType<GDSTCommissionEvent>().FirstOrDefault();
+            Assert.That(commissionEvent, Is.Not.Null, "Expected at least one GDSTCommissionEvent in the response.");
 
             GDSTShippingEvent? shippingEvent = doc.Events.OfType<GDSTShippingEvent>().FirstOrDefault();
             Assert.That(shippingEvent, Is.Not.Null, "Expected at least one GDSTShippingEvent in the response.");
 
-            GDSTReceiveEvent? receiveEvent = doc.Events.OfType<GDSTReceiveEvent>().FirstOrDefault();
-            Assert.That(receiveEvent, Is.Not.Null, "Expected at least one GDSTReceiveEvent in the response.");
+            GDSTReceivingEvent? receivingEvent = doc.Events.OfType<GDSTReceivingEvent>().FirstOrDefault();
+            Assert.That(receivingEvent, Is.Not.Null, "Expected at least one GDSTReceivingEvent in the response.");
 
-            GDSTFarmHarvestEvent? farmHarvestEvent = doc.Events.OfType<GDSTFarmHarvestEvent>().FirstOrDefault();
-            Assert.That(farmHarvestEvent, Is.Not.Null, "Expected at least one GDSTFarmHarvestEvent in the response.");
-
-            // NOTE: GDSTFarmHarvestObjectEvent, GDSTHatchingEvent, and GDSTFeedmillObjectEvent are ObjectEvents that
-            // are failing schema validation in the OpenTraceability library (they serialize as TransformationEvent).
-            // Skipping these assertions until we make sure this behavior is correct or not.
-
-            GDSTFeedmillTransformationEvent? feedmillTransformationEvent = doc.Events.OfType<GDSTFeedmillTransformationEvent>().FirstOrDefault();
-            Assert.That(feedmillTransformationEvent, Is.Not.Null, "Expected at least one GDSTFeedmillTransformationEvent in the response.");
+            GDSTTransformationEvent? transformationEvent = doc.Events.OfType<GDSTTransformationEvent>().FirstOrDefault();
+            Assert.That(transformationEvent, Is.Not.Null, "Expected at least one GDSTTransformationEvent in the response.");
         }
 
         private static bool ShouldSkip()

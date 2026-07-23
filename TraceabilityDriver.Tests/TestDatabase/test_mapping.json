@@ -35,7 +35,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstfishingevent",
+            "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "HumanWelfarePolicy": "$humanPolicyCode",
             "InformationProvider": {
@@ -51,7 +51,8 @@
               "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
               "RegistrationNumber": "$vesselRegistration",
               "Name": "$vesselName",
-              "Country": "$vesselCountry"
+              "Country": "$vesselCountry",
+              "LocationClassification": "!vessel"
             },
             "Products": [
               {
@@ -65,7 +66,8 @@
                   "OwnerId": "GenerateIdentifier(!IDOP, $operatorId)",
                   "ShortDescription": "$itemName",
                   "ProductForm": "$productForm",
-                  "ScientificName": "$scientificName"
+                  "ScientificName": "$scientificName",
+                  "ProductClassification": "!wildCaught"
                 }
               }
             ],
@@ -104,7 +106,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstlandingevent",
+            "EventType": "!receivingevent",
             "EventTime": "$eventTime",
             "HumanWelfarePolicy": "$humanPolicyCode",
             "InformationProvider": {
@@ -168,7 +170,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdsttransshipmentevent",
+            "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -226,7 +228,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstprocessingevent",
+            "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "ProcessingType": "$processingType",
             "HumanWelfarePolicy": "$humanPolicyCode",
@@ -291,7 +293,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstaggregationevent",
+            "EventType": "!aggregationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -352,7 +354,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstdisaggregationevent",
+            "EventType": "!disaggregationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -412,7 +414,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstcomminglingevent",
+            "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -472,7 +474,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstshippingevent",
+            "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -550,7 +552,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstreceiveevent",
+            "EventType": "!receivingevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -621,7 +623,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstfarmharvestevent",
+            "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -678,7 +680,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstfarmharvestobjectevent",
+            "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -735,7 +737,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdsthatchingevent",
+            "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -784,7 +786,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstfeedmillobjectevent",
+            "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",
@@ -833,7 +835,7 @@
           },
           "EventMapping": {
             "EventId": "$idEventRecord",
-            "EventType": "!gdstfeedmilltransformationevent",
+            "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
               "OwnerId": "GenerateIdentifier(!P, $infoProviderId)",

@@ -94,6 +94,11 @@ public class CommonEvent : CommonBaseModel
     public string? ProductionMethod { get; set; } = null;
 
     /// <summary>
+    /// The port where the products are unloaded during shipping/receiving events.
+    /// </summary>
+    public string? UnloadingPort { get; set; } = null;
+
+    /// <summary>
     /// Merges property values from the source onto the target
     /// only if that property value has no value and the source
     /// has a value.
@@ -165,6 +170,12 @@ public class CommonEvent : CommonBaseModel
         if (this.ProductionMethod== null && source.ProductionMethod != null)
         {
             this.ProductionMethod = source.ProductionMethod;
+        }
+
+        // Unloading Port
+        if (this.UnloadingPort == null && source.UnloadingPort != null)
+        {
+            this.UnloadingPort = source.UnloadingPort;
         }
 
         // Source List

@@ -31,6 +31,11 @@ public class CommonLocation : CommonBaseModel
     public Country? Country { get; set; } = null;
 
     /// <summary>
+    /// A comma-delimited list of GDST location classification values for the location (e.g. "vessel" or "land facility").
+    /// </summary>
+    public string? LocationClassification { get; set; } = null;
+
+    /// <summary>
     /// Merges the location onto this one. Properties are only merged if they are null.
     /// </summary>
     /// <param name="other">The other location.</param>
@@ -54,6 +59,11 @@ public class CommonLocation : CommonBaseModel
         if (this.Country == null && other.Country != null)
         {
             this.Country = other.Country;
+        }
+
+        if (this.LocationClassification == null && other.LocationClassification != null)
+        {
+            this.LocationClassification = other.LocationClassification;
         }
     }
 

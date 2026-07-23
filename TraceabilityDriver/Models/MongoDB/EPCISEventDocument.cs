@@ -56,17 +56,15 @@ namespace TraceabilityDriver.Models.MongoDB
             LocationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>();
             PartyPGLNs = new List<string>();
 
-            // Add trading party PGLNs if it's a GDST event
-            if (evt is IGDSTEvent gdstEvent)
+            // Add trading party PGLNs if it's a GDST event. The product owner only exists on
+            // events implementing IGDSTProductOwnerEvent in the GDST 2.0 model.
+            if (evt is IGDSTProductOwnerEvent productOwnerEvent && productOwnerEvent.ProductOwner != null)
             {
-                if (gdstEvent.ProductOwner != null)
-                {
-                    PartyPGLNs.Add(gdstEvent.ProductOwner.ToString());
-                }
-                if (gdstEvent.InformationProvider != null)
-                {
-                    PartyPGLNs.Add(gdstEvent.InformationProvider.ToString());
-                }
+                PartyPGLNs.Add(productOwnerEvent.ProductOwner.ToString());
+            }
+            if (evt is IGDSTEvent gdstEvent && gdstEvent.InformationProvider != null)
+            {
+                PartyPGLNs.Add(gdstEvent.InformationProvider.ToString());
             }
 
             // Add source and destination PGLNs/GLNs

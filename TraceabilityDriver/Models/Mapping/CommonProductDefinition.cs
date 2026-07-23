@@ -31,6 +31,11 @@ public class CommonProductDefinition : CommonBaseModel
     public string? ScientificName { get; set; } = null;
 
     /// <summary>
+    /// A comma-delimited list of GDST product classification values for the product (e.g. "wildCaught" or "seafood, processed").
+    /// </summary>
+    public string? ProductClassification { get; set; } = null;
+
+    /// <summary>
     /// Combines the current product definition with another product instance by merging the properties. Only properties that are null are merged.
     /// </summary>
     /// <param name="other">The product definition instance to merge with the current one.</param>
@@ -51,6 +56,10 @@ public class CommonProductDefinition : CommonBaseModel
         if (this.ScientificName == null && other.ScientificName != null)
         {
             this.ScientificName = other.ScientificName;
+        }
+        if (this.ProductClassification == null && other.ProductClassification != null)
+        {
+            this.ProductClassification = other.ProductClassification;
         }
     }
 
