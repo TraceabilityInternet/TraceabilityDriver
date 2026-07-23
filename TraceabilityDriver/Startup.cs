@@ -73,6 +73,7 @@ namespace TraceabilityDriver
             }
 
             // SERVICES
+            services.AddScoped<IDigitalLinkService, DigitalLinkService>();
             services.AddScoped<ISynchronizeService, SynchronizeService>();
             services.AddScoped<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
             services.AddHostedService<HostedSyncService>();
