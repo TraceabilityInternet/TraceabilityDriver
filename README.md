@@ -371,6 +371,57 @@ API Key authentication is used to grant access to the controllers and the API ke
 }
 ```
 
+#### Traceback API Key Authentication
+
+The traceback endpoints (`POST /traceback` and the traceback history queries) use their **own** key set, separate from the query API keys above. A query key can never trigger a traceback, and a traceback key can never query the EPCIS/master data endpoints. If no traceback keys are configured, the traceback endpoints return `401` until keys are added.
+
+**Example Traceback API Key Configuration**
+
+```json
+"Authentication": {
+    "TracebackAPIKey": {
+        "HeaderName": "X-API-Key",
+        "ValidKeys": [
+          "traceback-key-abc123"
+        ]
+    }
+}
+```
+
+## Tracebacks
+
+A traceback pulls traceability data from an external GDST/EPCIS server into the local data cache. Send `POST /traceback` (authenticated with a traceback API key) with the EPCs to trace:
+
+```json
+{
+    "epcs": [ "urn:epc:id:sgtin:..." ],
+    "resolverUrl": "https://external-server.com/digitallink",
+    "apiKey": "external-server-key"
+}
+```
+
+`resolverUrl` and `apiKey` may be omitted when deployment defaults are configured:
+
+```json
+"Traceback": {
+    "ResolverUrl": "https://external-server.com/digitallink",
+    "APIKey": "external-server-key",
+    "ResolverVersion": "1.2.0"
+}
+```
+
+`ResolverVersion` is the GS1 Digital Link Resolver standard version of the external server: `"1.2.0"` (linkset, default) or `"1.1.2"` (legacy flat array).
+
+Every run is recorded, along with a ledger of every event and master data element it created or updated:
+
+- `GET /traceback?top=100&skip=0` — traceback history, newest first.
+- `GET /traceback/{id}` — a single traceback record with counts and errors.
+- `GET /traceback/{id}/items` — the ledger of resources that run created/updated.
+
+The driver only ingests into its own data cache and records what was ingested — it never writes to your internal database. Use the ledger to sync ingested data back into your own systems if you wish. Ingestion is idempotent: repeating a traceback over the same products updates the cached resources in place instead of duplicating them.
+
+> **Note:** database schema updates are applied automatically at startup via EF Core migrations (SQL Server backend). Databases created by older versions are baselined and upgraded in place on first startup.
+
 ## Mappings
 
 The Traceability Driver targets individual events from the database and maps them into the Common Event Model.

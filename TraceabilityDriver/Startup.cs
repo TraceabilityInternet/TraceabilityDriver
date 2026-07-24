@@ -6,6 +6,7 @@ using Serilog;
 using System.Runtime.InteropServices;
 using TraceabilityDriver.Models.GDST;
 using TraceabilityDriver.Models.Mapping;
+using TraceabilityDriver.Models.Traceback;
 using TraceabilityDriver.Pages;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Authentication;
@@ -76,10 +77,13 @@ namespace TraceabilityDriver
             services.AddScoped<IDigitalLinkService, DigitalLinkService>();
             services.AddScoped<ISynchronizeService, SynchronizeService>();
             services.AddScoped<IGDSTCapabilityTestService, GDSTCapabilityTestService>();
+            services.AddScoped<ITracebackService, TracebackService>();
+            services.AddScoped<IIngestionService, IngestionService>();
             services.AddHostedService<HostedSyncService>();
 
             // OPTIONS
             services.Configure<GDSTCapabilityTestSettings>(Configuration.GetSection("GDST:CapabilityTest"));
+            services.Configure<TracebackSettings>(Configuration.GetSection("Traceback"));
 
             // CONNECTORS
             services.AddSingleton<ITDConnectorFactory, TDConnectorFactory>();
@@ -151,15 +155,28 @@ namespace TraceabilityDriver
             // API KEY AUTHENTICATION
             if (Configuration.GetSection("Authentication:APIKey").Exists())
             {
-                services.AddSingleton<IApiKeyStore, InMemoryApiKeyStore>();
-
                 policies.Add("ApiKey");
 
                 authenticationSchemeBuilder.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", options =>
                 {
                     var authConfig = Configuration.GetSection("Authentication:APIKey");
-                    string headerName = authConfig["HeaderName"] ?? "X-API-Key";
-                    options.HeaderName = headerName;
+                    options.HeaderName = authConfig["HeaderName"] ?? "X-API-Key";
+                    options.ValidKeys = authConfig.GetSection("ValidKeys").Get<List<string>>() ?? new List<string>();
+                });
+            }
+
+            // TRACEBACK API KEY AUTHENTICATION
+            // The traceback endpoints use their own key set so a query key can never trigger ingestion. The scheme
+            // is registered whenever any real authentication is configured; with no keys configured the traceback
+            // endpoints simply return 401, which is the safe default for a write path.
+            bool anyRealAuth = policies.Any();
+            if (anyRealAuth)
+            {
+                authenticationSchemeBuilder.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("TracebackApiKey", options =>
+                {
+                    var authConfig = Configuration.GetSection("Authentication:TracebackAPIKey");
+                    options.HeaderName = authConfig["HeaderName"] ?? "X-API-Key";
+                    options.ValidKeys = authConfig.GetSection("ValidKeys").Get<List<string>>() ?? new List<string>();
                 });
             }
 
@@ -169,12 +186,18 @@ namespace TraceabilityDriver
                 authenticationSchemeBuilder.AddScheme<AuthenticationSchemeOptions, AlwaysAuthenticatedHandler>("AlwaysAuthenticated", null);
             }
 
-            // Set default authentication scheme (optional)
+            // The default policy covers the query endpoints and deliberately excludes the traceback scheme; the
+            // traceback endpoints use the named policy so only traceback keys can reach them.
+            string tracebackScheme = anyRealAuth ? "TracebackApiKey" : "AlwaysAuthenticated";
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder(policies.ToArray())
                     .RequireAuthenticatedUser()
                     .Build();
+
+                options.AddPolicy("TracebackApiKey", new AuthorizationPolicyBuilder(tracebackScheme)
+                    .RequireAuthenticatedUser()
+                    .Build());
             });
         }
 

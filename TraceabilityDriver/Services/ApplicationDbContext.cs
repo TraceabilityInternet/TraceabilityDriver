@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Text.Json;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
+using TraceabilityDriver.Models.Traceback;
 
 namespace TraceabilityDriver.Services
 {
@@ -22,6 +23,10 @@ namespace TraceabilityDriver.Services
         public DbSet<SyncHistoryItem> SyncHistory { get; set; }
 
         public DbSet<LogModelSql> Logs { get; set; }
+
+        public DbSet<TracebackRecord> Tracebacks { get; set; }
+
+        public DbSet<TracebackItem> TracebackItems { get; set; }
 
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
@@ -96,6 +101,32 @@ namespace TraceabilityDriver.Services
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, _jsonOptions),
                     v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, _jsonOptions) ?? new());
+
+            // String lists on the traceback record are stored as JSON, following the SyncHistoryItem.Memory pattern.
+            var stringListConverter = new ValueConverter<List<string>, string>(
+                v => JsonSerializer.Serialize(v, _jsonOptions),
+                v => JsonSerializer.Deserialize<List<string>>(v, _jsonOptions) ?? new());
+
+            modelBuilder.Entity<TracebackRecord>(entity =>
+            {
+                entity.ToTable("Tracebacks");
+                entity.Property(x => x.Id).HasMaxLength(50);
+                entity.Property(x => x.Status).HasConversion<string>().HasMaxLength(50);
+                entity.Property(x => x.RequestedEpcs).HasConversion(stringListConverter);
+                entity.Property(x => x.Errors).HasConversion(stringListConverter);
+                entity.HasIndex(x => x.StartTime).HasDatabaseName("IX_Tracebacks_StartTime");
+            });
+
+            modelBuilder.Entity<TracebackItem>(entity =>
+            {
+                entity.ToTable("TracebackItems");
+                entity.Property(x => x.Id).HasMaxLength(50);
+                entity.Property(x => x.TracebackId).HasMaxLength(50);
+                entity.Property(x => x.ItemType).HasConversion<string>().HasMaxLength(50);
+                entity.Property(x => x.ItemId).HasMaxLength(450);
+                entity.HasIndex(x => new { x.TracebackId, x.ItemType, x.ItemId }).IsUnique(true).HasDatabaseName("IX_TracebackItems_Traceback_Type_Item");
+                entity.HasIndex(x => x.TracebackId).HasDatabaseName("IX_TracebackItems_TracebackId");
+            });
         }
     }
 }

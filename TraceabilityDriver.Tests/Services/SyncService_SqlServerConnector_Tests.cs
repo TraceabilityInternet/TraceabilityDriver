@@ -238,11 +238,11 @@ namespace TraceabilityDriver.Tests.Services
 
             mockDatabaseService
                 .Setup(d => d.StoreEventsAsync(It.IsAny<List<OpenTraceability.Interfaces.IEvent>>()))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(new DatabaseStoreResult());
 
             mockDatabaseService
                 .Setup(d => d.StoreMasterDataAsync(It.IsAny<List<OpenTraceability.Interfaces.IVocabularyElement>>()))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(new DatabaseStoreResult());
 
             var synchronizeService = new SynchronizeService(
                 mockLogger.Object,

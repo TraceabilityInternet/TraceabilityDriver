@@ -8,6 +8,7 @@ using OpenTraceability.Queries;
 using System.Collections.Concurrent;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
+using TraceabilityDriver.Models.Traceback;
 
 namespace TraceabilityDriver.Services
 {
@@ -25,22 +26,52 @@ namespace TraceabilityDriver.Services
             _contextFactory = contextFactory;
         }
 
+        /// <summary>
+        /// The migration id of the initial schema snapshot, used to baseline databases created before migrations were adopted.
+        /// </summary>
+        private const string InitialSchemaMigrationId = "20260723205038_InitialSchema";
+
+        /// <summary>
+        /// SQL that stamps a pre-migrations database as already having the initial schema. Databases created by the old
+        /// EnsureCreated path have the tables but no migrations history, so without this stamp MigrateAsync would try to
+        /// re-create tables that already exist. The statement is a no-op on fresh databases and on databases that already
+        /// have a migrations history.
+        /// </summary>
+        private const string BaselineSql = @"
+IF OBJECT_ID(N'[EPCISEvents]', N'U') IS NOT NULL AND OBJECT_ID(N'[__EFMigrationsHistory]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES (N'" + InitialSchemaMigrationId + @"', N'10.0.10');
+END";
+
+        /// <summary>
+        /// Brings the database schema up to date by applying any pending EF Core migrations.
+        /// </summary>
+        /// <remarks>
+        /// The data cache is durable now that tracebacks pull external data into it, so the schema is evolved with
+        /// migrations instead of being dropped and recreated. Databases created before migrations were adopted are
+        /// baselined first (see <see cref="BaselineSql"/>), then migrated forward. Safe to run on every startup.
+        /// </remarks>
         public async Task InitializeDatabase()
         {
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
 
-                // Check if the database exists
-                if (await context.Database.EnsureCreatedAsync())
+                // Baseline databases that predate migrations before applying anything. The check requires a live
+                // database; when none exists yet, MigrateAsync below creates it from scratch.
+                if (await context.Database.CanConnectAsync())
                 {
-                    _logger.LogInformation("Database created successfully.");
-                }
-                else
-                {
-                    _logger.LogInformation("Database already exists.");
+                    await context.Database.ExecuteSqlRawAsync(BaselineSql);
                 }
 
+                await context.Database.MigrateAsync();
+
+                _logger.LogInformation("Database schema is up to date.");
             }
             catch (Exception ex)
             {
@@ -49,8 +80,11 @@ namespace TraceabilityDriver.Services
             }
         }
 
-        public async Task StoreEventsAsync(List<IEvent> events)
+        public async Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events)
         {
+            ConcurrentBag<string> createdIds = new ConcurrentBag<string>();
+            ConcurrentBag<string> updatedIds = new ConcurrentBag<string>();
+
             List<List<IEvent>> batches = events.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
             await Parallel.ForEachAsync(batches, async (batch, ct) =>
             {
@@ -69,10 +103,12 @@ namespace TraceabilityDriver.Services
                             // Preserve the _id field from the existing document
                             doc.ID = existingEvent.ID;
                             context.Entry(existingEvent).CurrentValues.SetValues(doc);
+                            updatedIds.Add(evt.EventID.ToString());
                         }
                         else
                         {
                             context.EPCISEvents.Add(doc);
+                            createdIds.Add(evt.EventID.ToString());
                         }
                     }
 
@@ -91,10 +127,14 @@ namespace TraceabilityDriver.Services
                     await context.SaveChangesAsync();
                 }
             });
+
+            return new DatabaseStoreResult { CreatedIds = createdIds.ToList(), UpdatedIds = updatedIds.ToList() };
         }
 
-        public async Task StoreMasterDataAsync(List<IVocabularyElement> masterData)
+        public async Task<DatabaseStoreResult> StoreMasterDataAsync(List<IVocabularyElement> masterData)
         {
+            DatabaseStoreResult result = new DatabaseStoreResult();
+
             using var context = await _contextFactory.CreateDbContextAsync();
             foreach (var element in masterData)
             {
@@ -112,6 +152,7 @@ namespace TraceabilityDriver.Services
                 {
                     // Insert new master data
                     await context.AddAsync(masterDataDoc);
+                    result.CreatedIds.Add(element.ID);
                 }
                 else
                 {
@@ -120,10 +161,13 @@ namespace TraceabilityDriver.Services
 
                     // Replace existing master data
                     context.Entry(existingMasterData).CurrentValues.SetValues(masterDataDoc);
+                    result.UpdatedIds.Add(element.ID);
                 }
             }
 
             await context.SaveChangesAsync();
+
+            return result;
         }
 
         public async Task StoreSyncHistory(SyncHistoryItem syncHistory)
@@ -131,6 +175,72 @@ namespace TraceabilityDriver.Services
             using var context = await _contextFactory.CreateDbContextAsync();
             await context.SyncHistory.AddAsync(syncHistory);
             await context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task StoreTracebackAsync(TracebackRecord traceback)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var existingRecord = await context.Tracebacks.FirstOrDefaultAsync(x => x.Id == traceback.Id);
+            if (existingRecord == null)
+            {
+                await context.Tracebacks.AddAsync(traceback);
+            }
+            else
+            {
+                context.Entry(existingRecord).CurrentValues.SetValues(traceback);
+
+                // SetValues only copies scalar columns; the JSON-converted list properties must be assigned explicitly.
+                existingRecord.RequestedEpcs = traceback.RequestedEpcs;
+                existingRecord.Errors = traceback.Errors;
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task StoreTracebackItemsAsync(List<TracebackItem> items)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            foreach (var item in items)
+            {
+                // Upsert by the natural key so retried ledger writes never create duplicate entries.
+                var existingItem = await context.TracebackItems.FirstOrDefaultAsync(x => x.TracebackId == item.TracebackId && x.ItemType == item.ItemType && x.ItemId == item.ItemId);
+                if (existingItem == null)
+                {
+                    await context.TracebackItems.AddAsync(item);
+                }
+                else
+                {
+                    item.Id = existingItem.Id;
+                    context.Entry(existingItem).CurrentValues.SetValues(item);
+                }
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<TracebackRecord>> GetTracebacksAsync(int top = 100, int skip = 0)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Tracebacks.OrderByDescending(x => x.StartTime).Skip(skip).Take(top).ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<TracebackRecord?> GetTracebackAsync(string id)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Tracebacks.FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<TracebackItem>> GetTracebackItemsAsync(string tracebackId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.TracebackItems.Where(x => x.TracebackId == tracebackId).ToListAsync();
         }
 
         public async Task<EPCISQueryDocument> QueryEvents(EPCISQueryParameters options)
@@ -322,7 +432,10 @@ namespace TraceabilityDriver.Services
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
                 await context.Database.EnsureDeletedAsync();
-                await context.Database.EnsureCreatedAsync();
+
+                // Rebuild through the migration pipeline so a cleared database matches exactly what
+                // a freshly migrated one looks like, including the migrations history.
+                await context.Database.MigrateAsync();
             }
             catch (Exception ex)
             {

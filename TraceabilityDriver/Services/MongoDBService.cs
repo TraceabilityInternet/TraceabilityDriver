@@ -8,6 +8,7 @@ using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using System.Collections.Concurrent;
 using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.Traceback;
 
 namespace TraceabilityDriver.Services
 {
@@ -20,6 +21,8 @@ namespace TraceabilityDriver.Services
         private readonly IMongoCollection<MasterDataDocument> _masterDataCollection;
         private readonly IMongoCollection<SyncHistoryItem> _syncHistoryCollection;
         private readonly IMongoCollection<LogModel> _logCollection;
+        private readonly IMongoCollection<TracebackRecord> _tracebacksCollection;
+        private readonly IMongoCollection<TracebackItem> _tracebackItemsCollection;
         private readonly IEPCISQueryDocumentMapper _jsonMapper;
         private readonly IEPCISQueryDocumentMapper _xmlMapper;
 
@@ -38,6 +41,8 @@ namespace TraceabilityDriver.Services
             _masterDataCollection = database.GetCollection<MasterDataDocument>(configuration["MongoDB:MasterDataCollectionName"]);
             _syncHistoryCollection = database.GetCollection<SyncHistoryItem>(configuration["MongoDB:SyncHistoryCollectionName"]);
             _logCollection = database.GetCollection<LogModel>(configuration["MongoDB:LogCollectionName"]);
+            _tracebacksCollection = database.GetCollection<TracebackRecord>(configuration["MongoDB:TracebacksCollectionName"] ?? "tracebacks");
+            _tracebackItemsCollection = database.GetCollection<TracebackItem>(configuration["MongoDB:TracebackItemsCollectionName"] ?? "tracebackitems");
 
             _jsonMapper = OpenTraceabilityMappers.EPCISQueryDocument.JSON;
             _xmlMapper = OpenTraceabilityMappers.EPCISQueryDocument.XML;
@@ -63,9 +68,11 @@ namespace TraceabilityDriver.Services
         /// ones.
         /// </summary>
         /// <param name="events">A collection of event objects to be serialized and stored in the database.</param>
-        /// <returns>A task representing the asynchronous operation of storing the events.</returns>
-        public async Task StoreEventsAsync(List<IEvent> events)
+        /// <returns>The event ids that were inserted versus updated.</returns>
+        public async Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events)
         {
+            DatabaseStoreResult result = new DatabaseStoreResult();
+
             // Store events
             foreach (var evt in events)
             {
@@ -141,6 +148,7 @@ namespace TraceabilityDriver.Services
                 {
                     // Insert new event
                     await _eventsCollection.InsertOneAsync(eventDoc);
+                    result.CreatedIds.Add(eventDoc.EventId);
                 }
                 else
                 {
@@ -149,17 +157,22 @@ namespace TraceabilityDriver.Services
 
                     // Replace existing event
                     await _eventsCollection.ReplaceOneAsync(filter, eventDoc);
+                    result.UpdatedIds.Add(eventDoc.EventId);
                 }
             }
+
+            return result;
         }
 
         /// <summary>
         /// Stores a list of vocabulary elements in a database, either inserting new entries or updating existing ones.
         /// </summary>
         /// <param name="masterData">A collection of vocabulary elements to be stored or updated in the database.</param>
-        /// <returns>This method does not return a value.</returns>
-        public async Task StoreMasterDataAsync(List<IVocabularyElement> masterData)
+        /// <returns>The element ids that were inserted versus updated.</returns>
+        public async Task<DatabaseStoreResult> StoreMasterDataAsync(List<IVocabularyElement> masterData)
         {
+            DatabaseStoreResult result = new DatabaseStoreResult();
+
             // Store master data
             foreach (var element in masterData)
             {
@@ -179,6 +192,7 @@ namespace TraceabilityDriver.Services
                 {
                     // Insert new master data
                     await _masterDataCollection.InsertOneAsync(masterDataDoc);
+                    result.CreatedIds.Add(element.ID);
                 }
                 else
                 {
@@ -187,8 +201,11 @@ namespace TraceabilityDriver.Services
 
                     // Replace existing master data
                     await _masterDataCollection.ReplaceOneAsync(filter, masterDataDoc);
+                    result.UpdatedIds.Add(element.ID);
                 }
             }
+
+            return result;
         }
 
         /// <summary>
@@ -199,6 +216,53 @@ namespace TraceabilityDriver.Services
         public async Task StoreSyncHistory(SyncHistoryItem syncHistory)
         {
             await _syncHistoryCollection.InsertOneAsync(syncHistory);
+        }
+
+        /// <inheritdoc/>
+        public async Task StoreTracebackAsync(TracebackRecord traceback)
+        {
+            var filter = Builders<TracebackRecord>.Filter.Eq(t => t.Id, traceback.Id);
+            await _tracebacksCollection.ReplaceOneAsync(filter, traceback, new ReplaceOptions { IsUpsert = true });
+        }
+
+        /// <inheritdoc/>
+        public async Task StoreTracebackItemsAsync(List<TracebackItem> items)
+        {
+            foreach (var item in items)
+            {
+                // Upsert by the natural key so retried ledger writes never create duplicate entries.
+                var filterBuilder = Builders<TracebackItem>.Filter;
+                var filter = filterBuilder.Eq(i => i.TracebackId, item.TracebackId) & filterBuilder.Eq(i => i.ItemType, item.ItemType) & filterBuilder.Eq(i => i.ItemId, item.ItemId);
+
+                var existingItem = await _tracebackItemsCollection.Find(filter).FirstOrDefaultAsync();
+                if (existingItem != null)
+                {
+                    item.Id = existingItem.Id;
+                }
+
+                await _tracebackItemsCollection.ReplaceOneAsync(filter, item, new ReplaceOptions { IsUpsert = true });
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<TracebackRecord>> GetTracebacksAsync(int top = 100, int skip = 0)
+        {
+            var sort = Builders<TracebackRecord>.Sort.Descending(t => t.StartTime);
+            return await _tracebacksCollection.Find(new BsonDocument()).Sort(sort).Skip(skip).Limit(top).ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<TracebackRecord?> GetTracebackAsync(string id)
+        {
+            var filter = Builders<TracebackRecord>.Filter.Eq(t => t.Id, id);
+            return await _tracebacksCollection.Find(filter).FirstOrDefaultAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<TracebackItem>> GetTracebackItemsAsync(string tracebackId)
+        {
+            var filter = Builders<TracebackItem>.Filter.Eq(i => i.TracebackId, tracebackId);
+            return await _tracebackItemsCollection.Find(filter).ToListAsync();
         }
 
         /// <summary>
@@ -420,6 +484,8 @@ namespace TraceabilityDriver.Services
             await _masterDataCollection.DeleteManyAsync(new BsonDocument());
             await _syncHistoryCollection.DeleteManyAsync(new BsonDocument());
             await _logCollection.DeleteManyAsync(new BsonDocument());
+            await _tracebacksCollection.DeleteManyAsync(new BsonDocument());
+            await _tracebackItemsCollection.DeleteManyAsync(new BsonDocument());
         }
 
         /// <summary>
@@ -465,6 +531,21 @@ namespace TraceabilityDriver.Services
             await _syncHistoryCollection.Indexes.CreateOneAsync(
                 new CreateIndexModel<SyncHistoryItem>(
                     Builders<SyncHistoryItem>.IndexKeys.Ascending(s => s.EndTime)));
+
+            // Add start time index to the tracebacks collection for the newest-first listing.
+            await _tracebacksCollection.Indexes.CreateOneAsync(
+                new CreateIndexModel<TracebackRecord>(
+                    Builders<TracebackRecord>.IndexKeys.Descending(t => t.StartTime)));
+
+            // The unique compound index is what makes ledger writes idempotent under retries.
+            await _tracebackItemsCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<TracebackItem>>
+            {
+                new CreateIndexModel<TracebackItem>(
+                    Builders<TracebackItem>.IndexKeys.Ascending(i => i.TracebackId).Ascending(i => i.ItemType).Ascending(i => i.ItemId),
+                    new CreateIndexOptions { Unique = true }),
+                new CreateIndexModel<TracebackItem>(
+                    Builders<TracebackItem>.IndexKeys.Ascending(i => i.TracebackId))
+            });
         }
     }
 } 
