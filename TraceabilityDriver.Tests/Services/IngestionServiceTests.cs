@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Moq;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
@@ -47,8 +46,7 @@ namespace TraceabilityDriver.Tests.Services
             _mockDbService.Setup(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>())).Returns(Task.CompletedTask);
             _mockDbService.Setup(x => x.StoreTracebackItemsAsync(It.IsAny<List<TracebackItem>>())).Returns(Task.CompletedTask);
 
-            TracebackSettings settings = new TracebackSettings { ResolverUrl = "https://configured-resolver.example.com/" };
-            _ingestionService = new IngestionService(_mockTracebackService.Object, _mockDbService.Object, Options.Create(settings), NullLogger<IngestionService>.Instance);
+            _ingestionService = new IngestionService(_mockTracebackService.Object, _mockDbService.Object, NullLogger<IngestionService>.Instance);
         }
 
         /// <summary>
@@ -72,7 +70,7 @@ namespace TraceabilityDriver.Tests.Services
             List<TracebackItem> storedItems = new List<TracebackItem>();
             _mockDbService.Setup(x => x.StoreTracebackItemsAsync(It.IsAny<List<TracebackItem>>())).Callback((List<TracebackItem> items) => storedItems.AddRange(items)).Returns(Task.CompletedTask);
 
-            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
 
             // Act
             TracebackRecord record = await _ingestionService.IngestTracebackAsync(request, CancellationToken.None);
@@ -106,7 +104,7 @@ namespace TraceabilityDriver.Tests.Services
 
             _mockTracebackService.Setup(x => x.TracebackAsync(It.IsAny<List<string>>(), It.IsAny<DigitalLinkQueryOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync(fetchResult);
 
-            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
 
             // Act
             TracebackRecord record = await _ingestionService.IngestTracebackAsync(request, CancellationToken.None);
@@ -125,7 +123,7 @@ namespace TraceabilityDriver.Tests.Services
             // Arrange
             _mockTracebackService.Setup(x => x.TracebackAsync(It.IsAny<List<string>>(), It.IsAny<DigitalLinkQueryOptions>(), It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("The external server is unreachable."));
 
-            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
 
             // Act
             TracebackRecord record = await _ingestionService.IngestTracebackAsync(request, CancellationToken.None);
@@ -152,25 +150,24 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
-        /// With no resolver URL in the request or configuration, the request must be rejected before anything is stored.
+        /// A request without a resolver URL must be rejected before anything is stored.
         /// </summary>
         [Test]
-        public void IngestTracebackAsync_NoResolverUrlAnywhere_ThrowsArgumentException()
+        public void IngestTracebackAsync_NoResolverUrl_ThrowsArgumentException()
         {
             // Arrange
-            IngestionService serviceWithoutDefaults = new IngestionService(_mockTracebackService.Object, _mockDbService.Object, Options.Create(new TracebackSettings()), NullLogger<IngestionService>.Instance);
             TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
 
             // Act & Assert
-            Assert.ThrowsAsync<ArgumentException>(() => serviceWithoutDefaults.IngestTracebackAsync(request, CancellationToken.None));
+            Assert.ThrowsAsync<ArgumentException>(() => _ingestionService.IngestTracebackAsync(request, CancellationToken.None));
             _mockDbService.Verify(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>()), Times.Never);
         }
 
         /// <summary>
-        /// A resolver URL in the request must take precedence over the configured default.
+        /// The request's resolver URL and the fixed 1.2.0 resolver version must flow into the query options.
         /// </summary>
         [Test]
-        public async Task IngestTracebackAsync_RequestResolverUrl_OverridesConfiguredDefault()
+        public async Task IngestTracebackAsync_RequestResolverUrl_PassedToQueryOptions()
         {
             // Arrange
             DigitalLinkQueryOptions? capturedOptions = null;
@@ -190,6 +187,7 @@ namespace TraceabilityDriver.Tests.Services
             // Assert
             Assert.That(capturedOptions, Is.Not.Null);
             Assert.That(capturedOptions!.URL!.ToString(), Is.EqualTo("https://request-resolver.example.com/"));
+            Assert.That(capturedOptions.ResolverVersion, Is.EqualTo(ResolverVersion.ResolverStandard_1_2_0), "The resolver version is fixed to the 1.2.0 standard.");
             Assert.That(record.ResolverUrl, Is.EqualTo("https://request-resolver.example.com/"));
         }
     }

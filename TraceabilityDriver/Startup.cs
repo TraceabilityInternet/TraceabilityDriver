@@ -6,7 +6,6 @@ using Serilog;
 using System.Runtime.InteropServices;
 using TraceabilityDriver.Models.GDST;
 using TraceabilityDriver.Models.Mapping;
-using TraceabilityDriver.Models.Traceback;
 using TraceabilityDriver.Pages;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Authentication;
@@ -83,7 +82,6 @@ namespace TraceabilityDriver
 
             // OPTIONS
             services.Configure<GDSTCapabilityTestSettings>(Configuration.GetSection("GDST:CapabilityTest"));
-            services.Configure<TracebackSettings>(Configuration.GetSection("Traceback"));
 
             // CONNECTORS
             services.AddSingleton<ITDConnectorFactory, TDConnectorFactory>();

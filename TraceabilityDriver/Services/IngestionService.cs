@@ -1,5 +1,4 @@
 using Extensions;
-using Microsoft.Extensions.Options;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
@@ -18,7 +17,6 @@ namespace TraceabilityDriver.Services
 
         private readonly ITracebackService _tracebackService;
         private readonly IDatabaseService _databaseService;
-        private readonly TracebackSettings _settings;
         private readonly ILogger<IngestionService> _logger;
 
         /// <summary>
@@ -26,13 +24,11 @@ namespace TraceabilityDriver.Services
         /// </summary>
         /// <param name="tracebackService">The service that executes tracebacks against the external server.</param>
         /// <param name="databaseService">The traceability data cache.</param>
-        /// <param name="settings">The configured traceback defaults.</param>
         /// <param name="logger">The logger used for ingestion diagnostics.</param>
-        public IngestionService(ITracebackService tracebackService, IDatabaseService databaseService, IOptions<TracebackSettings> settings, ILogger<IngestionService> logger)
+        public IngestionService(ITracebackService tracebackService, IDatabaseService databaseService, ILogger<IngestionService> logger)
         {
             _tracebackService = tracebackService ?? throw new ArgumentNullException(nameof(tracebackService));
             _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
-            _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -48,19 +44,19 @@ namespace TraceabilityDriver.Services
                 throw new ArgumentException("At least one EPC is required to run a traceback.", nameof(request));
             }
 
-            string? resolverUrl = !string.IsNullOrWhiteSpace(request.ResolverUrl) ? request.ResolverUrl : _settings.ResolverUrl;
+            string? resolverUrl = request.ResolverUrl;
             if (string.IsNullOrWhiteSpace(resolverUrl) || !Uri.TryCreate(resolverUrl, UriKind.Absolute, out Uri? resolverUri))
             {
-                throw new ArgumentException("No valid resolver URL was provided in the request or configured under Traceback:ResolverUrl.", nameof(request));
+                throw new ArgumentException("No valid resolver URL was provided in the request.", nameof(request));
             }
 
             DigitalLinkQueryOptions resolverOptions = new DigitalLinkQueryOptions
             {
                 URL = resolverUri,
-                APIKey = !string.IsNullOrWhiteSpace(request.ApiKey) ? request.ApiKey : _settings.APIKey,
+                APIKey = request.ApiKey,
                 Format = EPCISDataFormat.JSON,
                 Version = EPCISVersion.V2,
-                ResolverVersion = _settings.ResolverVersion == "1.1.2" ? ResolverVersion.ResolverStandard_1_1_2 : ResolverVersion.ResolverStandard_1_2_0
+                ResolverVersion = ResolverVersion.ResolverStandard_1_2_0
             };
 
             // Open the record before fetching so an interrupted run still leaves an inspectable InProgress record.

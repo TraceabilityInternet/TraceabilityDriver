@@ -400,17 +400,7 @@ A traceback pulls traceability data from an external GDST/EPCIS server into the 
 }
 ```
 
-`resolverUrl` and `apiKey` may be omitted when deployment defaults are configured:
-
-```json
-"Traceback": {
-    "ResolverUrl": "https://external-server.com/digitallink",
-    "APIKey": "external-server-key",
-    "ResolverVersion": "1.2.0"
-}
-```
-
-`ResolverVersion` is the GS1 Digital Link Resolver standard version of the external server: `"1.2.0"` (linkset, default) or `"1.1.2"` (legacy flat array).
+`resolverUrl` is required; `apiKey` is optional and sent to the external server when supplied. The external server must implement version 1.2.0 of the GS1 Digital Link Resolver standard (linkset responses).
 
 Every run is recorded, along with a ledger of every event and master data element it created or updated:
 

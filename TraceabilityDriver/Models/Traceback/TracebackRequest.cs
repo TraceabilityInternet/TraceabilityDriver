@@ -11,12 +11,12 @@ namespace TraceabilityDriver.Models.Traceback
         public List<string> Epcs { get; set; } = new List<string>();
 
         /// <summary>
-        /// The digital link resolver URL of the external traceability server. Overrides the configured Traceback:ResolverUrl when supplied.
+        /// The digital link resolver URL of the external traceability server. Required.
         /// </summary>
         public string? ResolverUrl { get; set; }
 
         /// <summary>
-        /// The API key to send to the external traceability server. Overrides the configured Traceback:APIKey when supplied.
+        /// The API key sent to the external traceability server when supplied. Optional.
         /// </summary>
         public string? ApiKey { get; set; }
     }
