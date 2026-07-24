@@ -100,7 +100,7 @@
             StateHasChanged();
 
             // Execute the capability test
-            _results = await CapabilityTestService.TestFirstMileWildAsync();
+            _results = await CapabilityTestService.RunTest();
 
             _testState = TestState.Completed;
         }

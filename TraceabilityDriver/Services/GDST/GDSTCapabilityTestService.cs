@@ -37,7 +37,7 @@ namespace TraceabilityDriver.Services.GDST
             _config = config;
         }
 
-        public async Task<GDSTCapabilityTestResults> TestFirstMileWildAsync()
+        public async Task<GDSTCapabilityTestResults> RunTest()
         {
             try
             {
@@ -91,7 +91,7 @@ namespace TraceabilityDriver.Services.GDST
                 Url = digitalLinkURL,
                 Pgln = _settings.Value.PGLN,
                 GdstVersion = 20,
-                SolutionProviderEPCs = new List<string>() { "urn:gdst:example.org:product:lot:class:processor.2u.v1-0122-2022" }
+                SolutionProviderEPCs = new List<string>() { "urn:epc:id:sscc:08600031303.solution1" }
             };
 
             using var client = _httpClientFactory.CreateClient();

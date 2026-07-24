@@ -5,6 +5,6 @@ namespace TraceabilityDriver.Services.GDST
 {
     public interface IGDSTCapabilityTestService
     {
-        Task<GDSTCapabilityTestResults> TestFirstMileWildAsync();
+        Task<GDSTCapabilityTestResults> RunTest();
     }
 }
