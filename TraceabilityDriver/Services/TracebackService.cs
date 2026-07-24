@@ -66,7 +66,8 @@ namespace TraceabilityDriver.Services
                         URL = epcisUrl,
                         APIKey = resolverOptions.APIKey,
                         Format = resolverOptions.Format,
-                        Version = resolverOptions.Version
+                        Version = resolverOptions.Version,
+                        Headers = resolverOptions.Headers
                     };
 
                     EPCISQueryResults results = await EPCISTraceabilityResolver.Traceback(queryOptions, epc, client);
