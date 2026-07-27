@@ -115,24 +115,125 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
-        /// A throwing fetch must not propagate; the run is recorded as Failed with an end time and the error message.
+        /// A throwing fetch must persist the run as Failed and rethrow so a queue backend can retry the job.
         /// </summary>
         [Test]
-        public async Task IngestTracebackAsync_FetchThrows_RecordsFailedRun()
+        public void IngestTracebackAsync_FetchThrows_MarksRecordFailedAndRethrows()
         {
             // Arrange
             _mockTracebackService.Setup(x => x.TracebackAsync(It.IsAny<List<string>>(), It.IsAny<DigitalLinkQueryOptions>(), It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("The external server is unreachable."));
 
+            List<TracebackRecord> storedRecords = new List<TracebackRecord>();
+            _mockDbService.Setup(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>())).Callback((TracebackRecord r) => storedRecords.Add(r)).Returns(Task.CompletedTask);
+
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
+
+            // Act & Assert
+            Assert.ThrowsAsync<HttpRequestException>(() => _ingestionService.IngestTracebackAsync(request, CancellationToken.None));
+
+            // The record is stored when opened and again when finalized, and the failure must be captured on it.
+            Assert.That(storedRecords, Has.Count.EqualTo(2));
+            TracebackRecord finalRecord = storedRecords[1];
+            Assert.That(finalRecord.Status, Is.EqualTo(TracebackStatus.Failed));
+            Assert.That(finalRecord.EndTime, Is.Not.Null);
+            Assert.That(finalRecord.Errors, Has.Some.Contains("unreachable"));
+        }
+
+        /// <summary>
+        /// The queued path must execute against the pre-created record id, opening it as InProgress and finalizing it.
+        /// </summary>
+        [Test]
+        public async Task IngestTracebackAsync_WithPrecreatedId_FinalizesSameRecordId()
+        {
+            // Arrange
+            string tracebackId = "507f1f77bcf86cd799439011";
+            _mockTracebackService.Setup(x => x.TracebackAsync(It.IsAny<List<string>>(), It.IsAny<DigitalLinkQueryOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync(new TracebackFetchResult());
+
+            List<TracebackRecord> storedRecords = new List<TracebackRecord>();
+            List<TracebackStatus> storedStatuses = new List<TracebackStatus>();
+            _mockDbService.Setup(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>())).Callback((TracebackRecord r) => { storedRecords.Add(r); storedStatuses.Add(r.Status); }).Returns(Task.CompletedTask);
+
             TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
 
             // Act
-            TracebackRecord record = await _ingestionService.IngestTracebackAsync(request, CancellationToken.None);
+            TracebackRecord record = await _ingestionService.IngestTracebackAsync(tracebackId, request, CancellationToken.None);
 
             // Assert
-            Assert.That(record.Status, Is.EqualTo(TracebackStatus.Failed));
-            Assert.That(record.EndTime, Is.Not.Null);
-            Assert.That(record.Errors, Has.Some.Contains("unreachable"));
-            _mockDbService.Verify(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>()), Times.Exactly(2));
+            Assert.That(record.Id, Is.EqualTo(tracebackId), "The run must upsert the pre-created record, not a new one.");
+            Assert.That(record.StartTime, Is.Not.Null);
+            Assert.That(record.Status, Is.EqualTo(TracebackStatus.Completed));
+
+            Assert.That(storedRecords, Has.Count.EqualTo(2));
+            Assert.That(storedRecords.All(r => r.Id == tracebackId), Is.True);
+            Assert.That(storedStatuses[0], Is.EqualTo(TracebackStatus.InProgress), "The first store must flip the queued record to InProgress.");
+        }
+
+        /// <summary>
+        /// The queued path must reject a blank record id before anything is stored.
+        /// </summary>
+        [Test]
+        public void IngestTracebackAsync_BlankId_ThrowsArgumentException()
+        {
+            // Arrange
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
+
+            // Act & Assert
+            Assert.ThrowsAsync<ArgumentException>(() => _ingestionService.IngestTracebackAsync("  ", request, CancellationToken.None));
+            _mockDbService.Verify(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Pre-creating a queued traceback must store a Queued record with no start time and never execute anything.
+        /// </summary>
+        [Test]
+        public async Task CreateQueuedTracebackAsync_ValidRequest_StoresQueuedRecord()
+        {
+            // Arrange
+            TracebackRecord? storedRecord = null;
+            _mockDbService.Setup(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>())).Callback((TracebackRecord r) => storedRecord = r).Returns(Task.CompletedTask);
+
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018", "  " }, ResolverUrl = "https://resolver.example.com/" };
+
+            // Act
+            TracebackRecord record = await _ingestionService.CreateQueuedTracebackAsync(request);
+
+            // Assert
+            Assert.That(record.Status, Is.EqualTo(TracebackStatus.Queued));
+            Assert.That(record.StartTime, Is.Null, "A queued record has not started running yet.");
+            Assert.That(record.ResolverUrl, Is.EqualTo("https://resolver.example.com/"));
+            Assert.That(record.RequestedEpcs, Is.EqualTo(new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }), "Blank EPCs must be filtered out.");
+            Assert.That(storedRecord, Is.SameAs(record));
+
+            _mockDbService.Verify(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>()), Times.Once);
+            _mockTracebackService.Verify(x => x.TracebackAsync(It.IsAny<List<string>>(), It.IsAny<DigitalLinkQueryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Pre-creating a queued traceback without EPCs must be rejected before anything is stored.
+        /// </summary>
+        [Test]
+        public void CreateQueuedTracebackAsync_NoEpcs_ThrowsArgumentException()
+        {
+            // Arrange
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "   " }, ResolverUrl = "https://resolver.example.com/" };
+
+            // Act & Assert
+            Assert.ThrowsAsync<ArgumentException>(() => _ingestionService.CreateQueuedTracebackAsync(request));
+            _mockDbService.Verify(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Pre-creating a queued traceback without a resolver URL must be rejected before anything is stored.
+        /// </summary>
+        [Test]
+        public void CreateQueuedTracebackAsync_NoResolverUrl_ThrowsArgumentException()
+        {
+            // Arrange
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
+
+            // Act & Assert
+            Assert.ThrowsAsync<ArgumentException>(() => _ingestionService.CreateQueuedTracebackAsync(request));
+            _mockDbService.Verify(x => x.StoreTracebackAsync(It.IsAny<TracebackRecord>()), Times.Never);
         }
 
         /// <summary>

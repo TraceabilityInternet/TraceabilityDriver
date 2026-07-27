@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Runtime.InteropServices;
+using TraceabilityDriver.Extensions;
 using TraceabilityDriver.Models.GDST;
 using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Pages;
@@ -70,6 +71,16 @@ namespace TraceabilityDriver
             else
             {
                 throw new Exception("No database connection string found. Please set either MONGO_CONNECTION_STRING or SQL_CONNECTION_STRING.");
+            }
+
+            // QUEUES - the traceback job queue shares the storage backend selected above.
+            if (!string.IsNullOrEmpty(mongoDbConnectionString))
+            {
+                services.AddMongoHangFireQueues(mongoDbConnectionString, Configuration["MongoDB:DatabaseName"]);
+            }
+            else
+            {
+                services.AddSqlServerHangFireQueues(sqlServerConnectionString);
             }
 
             // SERVICES

@@ -1,4 +1,5 @@
 using Extensions;
+using MongoDB.Bson;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
@@ -35,44 +36,56 @@ namespace TraceabilityDriver.Services
         /// <inheritdoc/>
         public async Task<TracebackRecord> IngestTracebackAsync(TracebackRequest request, CancellationToken cancellationToken)
         {
-            if (request == null) throw new ArgumentNullException(nameof(request));
+            return await IngestTracebackAsync(ObjectId.GenerateNewId().ToString(), request, cancellationToken);
+        }
 
-            // Validate before opening a record so bad requests never leave a trace in the database.
-            List<string> epcs = request.Epcs?.Where(e => !string.IsNullOrWhiteSpace(e)).ToList() ?? new List<string>();
-            if (epcs.Count == 0)
-            {
-                throw new ArgumentException("At least one EPC is required to run a traceback.", nameof(request));
-            }
+        /// <inheritdoc/>
+        public async Task<TracebackRecord> CreateQueuedTracebackAsync(TracebackRequest request)
+        {
+            // Validate before opening a record so bad requests fail here, at request time, and never
+            // leave a trace in the database or a job that fails silently in the queue.
+            ValidatedTracebackRequest validated = ValidateRequest(request);
 
-            string? resolverUrl = request.ResolverUrl;
-            if (string.IsNullOrWhiteSpace(resolverUrl) || !Uri.TryCreate(resolverUrl, UriKind.Absolute, out Uri? resolverUri))
-            {
-                throw new ArgumentException("No valid resolver URL was provided in the request.", nameof(request));
-            }
-
-            DigitalLinkQueryOptions resolverOptions = new DigitalLinkQueryOptions
-            {
-                URL = resolverUri,
-                APIKey = request.ApiKey,
-                Format = EPCISDataFormat.JSON,
-                Version = EPCISVersion.V2,
-                ResolverVersion = ResolverVersion.ResolverStandard_1_2_0
-            };
-
-            // Open the record before fetching so an interrupted run still leaves an inspectable InProgress record.
             TracebackRecord record = new TracebackRecord
             {
-                StartTime = DateTime.UtcNow,
-                ResolverUrl = resolverUrl,
-                RequestedEpcs = epcs
+                Status = TracebackStatus.Queued,
+                ResolverUrl = validated.ResolverUrl,
+                RequestedEpcs = validated.Epcs
             };
             await _databaseService.StoreTracebackAsync(record);
 
-            _logger.LogInformation("Traceback {TracebackId} started against {ResolverUrl} for {EpcCount} EPC(s).", record.Id, resolverUrl, epcs.Count);
+            _logger.LogInformation("Traceback {TracebackId} queued against {ResolverUrl} for {EpcCount} EPC(s).", record.Id, validated.ResolverUrl, validated.Epcs.Count);
+
+            return record;
+        }
+
+        /// <inheritdoc/>
+        public async Task<TracebackRecord> IngestTracebackAsync(string tracebackId, TracebackRequest request, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(tracebackId))
+            {
+                throw new ArgumentException("A traceback record id is required.", nameof(tracebackId));
+            }
+
+            ValidatedTracebackRequest validated = ValidateRequest(request);
+
+            // Open the record before fetching so an interrupted run still leaves an inspectable InProgress record.
+            // Storing is an upsert by id, so a pre-created Queued record flips to InProgress here.
+            TracebackRecord record = new TracebackRecord
+            {
+                Id = tracebackId,
+                StartTime = DateTime.UtcNow,
+                Status = TracebackStatus.InProgress,
+                ResolverUrl = validated.ResolverUrl,
+                RequestedEpcs = validated.Epcs
+            };
+            await _databaseService.StoreTracebackAsync(record);
+
+            _logger.LogInformation("Traceback {TracebackId} started against {ResolverUrl} for {EpcCount} EPC(s).", record.Id, validated.ResolverUrl, validated.Epcs.Count);
 
             try
             {
-                TracebackFetchResult fetchResult = await _tracebackService.TracebackAsync(epcs, resolverOptions, cancellationToken);
+                TracebackFetchResult fetchResult = await _tracebackService.TracebackAsync(validated.Epcs, validated.ResolverOptions, cancellationToken);
                 record.Errors.AddRange(fetchResult.Errors);
 
                 // Upsert everything into the cache, accumulating which ids were created versus updated.
@@ -105,10 +118,12 @@ namespace TraceabilityDriver.Services
             }
             catch (Exception ex)
             {
-                // The run is recorded as failed rather than thrown so the caller always gets the record back.
+                // Record the failure, then rethrow so the queue backend can retry the job. The finally block
+                // persists the Failed record, so the error is captured even if the retries eventually run out.
                 _logger.LogError(ex, "Traceback {TracebackId} failed.", record.Id);
                 record.Status = TracebackStatus.Failed;
                 record.Errors.Add(ex.Message);
+                throw;
             }
             finally
             {
@@ -117,6 +132,40 @@ namespace TraceabilityDriver.Services
             }
 
             return record;
+        }
+
+        /// <summary>
+        /// Validates the request and materializes the resolver options a traceback run needs.
+        /// </summary>
+        /// <param name="request">The traceback request to validate. Cannot be null.</param>
+        /// <returns>The cleaned EPC list, resolver URL, and resolver query options.</returns>
+        /// <exception cref="ArgumentException">Thrown when the request has no EPCs or no valid resolver URL.</exception>
+        private static ValidatedTracebackRequest ValidateRequest(TracebackRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
+            List<string> epcs = request.Epcs?.Where(e => !string.IsNullOrWhiteSpace(e)).ToList() ?? new List<string>();
+            if (epcs.Count == 0)
+            {
+                throw new ArgumentException("At least one EPC is required to run a traceback.", nameof(request));
+            }
+
+            string? resolverUrl = request.ResolverUrl;
+            if (string.IsNullOrWhiteSpace(resolverUrl) || !Uri.TryCreate(resolverUrl, UriKind.Absolute, out Uri? resolverUri))
+            {
+                throw new ArgumentException("No valid resolver URL was provided in the request.", nameof(request));
+            }
+
+            DigitalLinkQueryOptions resolverOptions = new DigitalLinkQueryOptions
+            {
+                URL = resolverUri,
+                APIKey = request.ApiKey,
+                Format = EPCISDataFormat.JSON,
+                Version = EPCISVersion.V2,
+                ResolverVersion = ResolverVersion.ResolverStandard_1_2_0
+            };
+
+            return new ValidatedTracebackRequest(epcs, resolverUrl, resolverOptions);
         }
 
         /// <summary>
@@ -133,5 +182,10 @@ namespace TraceabilityDriver.Services
 
             return items;
         }
+
+        /// <summary>
+        /// The validated pieces of a traceback request: the cleaned EPC list, the resolver URL, and the resolver query options.
+        /// </summary>
+        private sealed record ValidatedTracebackRequest(List<string> Epcs, string ResolverUrl, DigitalLinkQueryOptions ResolverOptions);
     }
 }

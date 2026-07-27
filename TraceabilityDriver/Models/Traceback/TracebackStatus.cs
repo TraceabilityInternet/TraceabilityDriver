@@ -23,6 +23,13 @@ namespace TraceabilityDriver.Models.Traceback
         /// <summary>
         /// The traceback aborted due to an unhandled failure before it could finish.
         /// </summary>
-        Failed
+        Failed,
+
+        /// <summary>
+        /// The traceback has been accepted and queued for background execution, and has not started running yet.
+        /// </summary>
+        // Note - Claude - 7/26/2026: Queued must remain the last member. MongoDB persists this enum as an int,
+        // so inserting a member earlier would silently reinterpret the status of existing records.
+        Queued
     }
 }

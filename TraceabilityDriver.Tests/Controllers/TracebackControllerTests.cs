@@ -5,6 +5,7 @@ using Moq;
 using TraceabilityDriver.Controllers;
 using TraceabilityDriver.Models.Traceback;
 using TraceabilityDriver.Services;
+using TraceabilityDriver.Services.Queues;
 
 namespace TraceabilityDriver.Tests.Controllers
 {
@@ -17,6 +18,7 @@ namespace TraceabilityDriver.Tests.Controllers
     {
         private Mock<IIngestionService> _mockIngestionService = null!;
         private Mock<IDatabaseService> _mockDbService = null!;
+        private Mock<ITracebackQueue> _mockTracebackQueue = null!;
         private TracebackController _controller = null!;
 
         [SetUp]
@@ -24,8 +26,9 @@ namespace TraceabilityDriver.Tests.Controllers
         {
             _mockIngestionService = new Mock<IIngestionService>();
             _mockDbService = new Mock<IDatabaseService>();
+            _mockTracebackQueue = new Mock<ITracebackQueue>();
 
-            _controller = new TracebackController(new Mock<ILogger<TracebackController>>().Object, _mockIngestionService.Object, _mockDbService.Object);
+            _controller = new TracebackController(new Mock<ILogger<TracebackController>>().Object, _mockIngestionService.Object, _mockDbService.Object, _mockTracebackQueue.Object);
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
@@ -33,16 +36,43 @@ namespace TraceabilityDriver.Tests.Controllers
         }
 
         /// <summary>
-        /// A valid request must run the ingestion and return the finalized record.
+        /// A default request must pre-create a queued record, enqueue the job, and return 202 with the record.
         /// </summary>
         [Test]
-        public async Task ExecuteTraceback_ValidRequest_ReturnsOkWithRecord()
+        public async Task ExecuteTraceback_DefaultRequest_QueuesJobAndReturnsAccepted()
+        {
+            // Arrange
+            TracebackRecord queued = new TracebackRecord { Status = TracebackStatus.Queued };
+            _mockIngestionService.Setup(x => x.CreateQueuedTracebackAsync(It.IsAny<TracebackRequest>())).ReturnsAsync(queued);
+
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
+
+            // Act
+            IActionResult result = await _controller.ExecuteTraceback(request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<AcceptedAtActionResult>());
+            AcceptedAtActionResult accepted = (AcceptedAtActionResult)result;
+            Assert.That(accepted.Value, Is.SameAs(queued));
+            Assert.That(accepted.ActionName, Is.EqualTo(nameof(TracebackController.GetTraceback)));
+            Assert.That(accepted.RouteValues!["id"], Is.EqualTo(queued.Id), "The record id is the public job id and must be the status route value.");
+
+            _mockTracebackQueue.Verify(x => x.EnqueueTracebackAsync(queued.Id, request), Times.Once);
+            _mockIngestionService.Verify(x => x.IngestTracebackAsync(It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockIngestionService.Verify(x => x.IngestTracebackAsync(It.IsAny<string>(), It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        /// <summary>
+        /// A synchronous request must run the ingestion inline and return the finalized record.
+        /// </summary>
+        [Test]
+        public async Task ExecuteTraceback_SynchronousRequest_ReturnsOkWithRecord()
         {
             // Arrange
             TracebackRecord record = new TracebackRecord { Status = TracebackStatus.Completed };
             _mockIngestionService.Setup(x => x.IngestTracebackAsync(It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(record);
 
-            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, Synchronous = true };
 
             // Act
             IActionResult result = await _controller.ExecuteTraceback(request);
@@ -51,10 +81,11 @@ namespace TraceabilityDriver.Tests.Controllers
             Assert.That(result, Is.InstanceOf<OkObjectResult>());
             Assert.That(((OkObjectResult)result).Value, Is.SameAs(record));
             _mockIngestionService.Verify(x => x.IngestTracebackAsync(request, It.IsAny<CancellationToken>()), Times.Once);
+            _mockTracebackQueue.Verify(x => x.EnqueueTracebackAsync(It.IsAny<string>(), It.IsAny<TracebackRequest>()), Times.Never);
         }
 
         /// <summary>
-        /// A request without EPCs must be rejected with 400 before the ingestion service is called.
+        /// A request without EPCs must be rejected with 400 before anything is created or queued.
         /// </summary>
         [Test]
         public async Task ExecuteTraceback_EmptyEpcs_ReturnsBadRequest()
@@ -68,10 +99,12 @@ namespace TraceabilityDriver.Tests.Controllers
             // Assert
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
             _mockIngestionService.Verify(x => x.IngestTracebackAsync(It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockIngestionService.Verify(x => x.CreateQueuedTracebackAsync(It.IsAny<TracebackRequest>()), Times.Never);
+            _mockTracebackQueue.Verify(x => x.EnqueueTracebackAsync(It.IsAny<string>(), It.IsAny<TracebackRequest>()), Times.Never);
         }
 
         /// <summary>
-        /// A validation failure inside the ingestion service (e.g. no resolver URL) must map to 400.
+        /// A validation failure inside the synchronous ingestion (e.g. no resolver URL) must map to 400.
         /// </summary>
         [Test]
         public async Task ExecuteTraceback_IngestionThrowsArgumentException_ReturnsBadRequest()
@@ -79,7 +112,7 @@ namespace TraceabilityDriver.Tests.Controllers
             // Arrange
             _mockIngestionService.Setup(x => x.IngestTracebackAsync(It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>())).ThrowsAsync(new ArgumentException("No valid resolver URL was provided."));
 
-            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, Synchronous = true };
 
             // Act
             IActionResult result = await _controller.ExecuteTraceback(request);
@@ -89,13 +122,13 @@ namespace TraceabilityDriver.Tests.Controllers
         }
 
         /// <summary>
-        /// An unexpected failure must map to a 500 problem response.
+        /// A validation failure while pre-creating the queued record must map to 400 and never enqueue.
         /// </summary>
         [Test]
-        public async Task ExecuteTraceback_IngestionThrowsUnexpectedException_ReturnsProblem()
+        public async Task ExecuteTraceback_CreateQueuedThrowsArgumentException_ReturnsBadRequest()
         {
             // Arrange
-            _mockIngestionService.Setup(x => x.IngestTracebackAsync(It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database down."));
+            _mockIngestionService.Setup(x => x.CreateQueuedTracebackAsync(It.IsAny<TracebackRequest>())).ThrowsAsync(new ArgumentException("No valid resolver URL was provided."));
 
             TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" } };
 
@@ -103,8 +136,50 @@ namespace TraceabilityDriver.Tests.Controllers
             IActionResult result = await _controller.ExecuteTraceback(request);
 
             // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+            _mockTracebackQueue.Verify(x => x.EnqueueTracebackAsync(It.IsAny<string>(), It.IsAny<TracebackRequest>()), Times.Never);
+        }
+
+        /// <summary>
+        /// An unexpected failure in the synchronous path must map to a 500 problem response.
+        /// </summary>
+        [Test]
+        public async Task ExecuteTraceback_IngestionThrowsUnexpectedException_ReturnsProblem()
+        {
+            // Arrange
+            _mockIngestionService.Setup(x => x.IngestTracebackAsync(It.IsAny<TracebackRequest>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("Database down."));
+
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, Synchronous = true };
+
+            // Act
+            IActionResult result = await _controller.ExecuteTraceback(request);
+
+            // Assert
             Assert.That(result, Is.InstanceOf<ObjectResult>());
             Assert.That(((ObjectResult)result).StatusCode, Is.EqualTo(500));
+        }
+
+        /// <summary>
+        /// When the enqueue itself fails, the pre-created record must be finalized as Failed so it is never stuck Queued.
+        /// </summary>
+        [Test]
+        public async Task ExecuteTraceback_EnqueueThrows_MarksRecordFailedAndReturnsProblem()
+        {
+            // Arrange
+            TracebackRecord queued = new TracebackRecord { Status = TracebackStatus.Queued };
+            _mockIngestionService.Setup(x => x.CreateQueuedTracebackAsync(It.IsAny<TracebackRequest>())).ReturnsAsync(queued);
+            _mockTracebackQueue.Setup(x => x.EnqueueTracebackAsync(It.IsAny<string>(), It.IsAny<TracebackRequest>())).ThrowsAsync(new Exception("The queue storage is unreachable."));
+
+            TracebackRequest request = new TracebackRequest { Epcs = new List<string> { "urn:epc:id:sgtin:0614141.107346.2018" }, ResolverUrl = "https://resolver.example.com/" };
+
+            // Act
+            IActionResult result = await _controller.ExecuteTraceback(request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<ObjectResult>());
+            Assert.That(((ObjectResult)result).StatusCode, Is.EqualTo(500));
+
+            _mockDbService.Verify(x => x.StoreTracebackAsync(It.Is<TracebackRecord>(r => r.Id == queued.Id && r.Status == TracebackStatus.Failed && r.EndTime != null && r.Errors.Count == 1)), Times.Once);
         }
 
         /// <summary>

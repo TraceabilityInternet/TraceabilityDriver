@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TraceabilityDriver.Models.Traceback;
 using TraceabilityDriver.Services;
+using TraceabilityDriver.Services.Queues;
 
 namespace TraceabilityDriver.Controllers
 {
@@ -20,6 +21,7 @@ namespace TraceabilityDriver.Controllers
         private readonly ILogger<TracebackController> _logger;
         private readonly IIngestionService _ingestionService;
         private readonly IDatabaseService _dbService;
+        private readonly ITracebackQueue _tracebackQueue;
 
         /// <summary>
         /// Creates a new traceback controller.
@@ -27,18 +29,27 @@ namespace TraceabilityDriver.Controllers
         /// <param name="logger">The logger used for request diagnostics.</param>
         /// <param name="ingestionService">The service that executes and records tracebacks.</param>
         /// <param name="dbService">The data cache, used to serve the traceback history.</param>
-        public TracebackController(ILogger<TracebackController> logger, IIngestionService ingestionService, IDatabaseService dbService)
+        /// <param name="tracebackQueue">The queue used for background traceback execution.</param>
+        public TracebackController(ILogger<TracebackController> logger, IIngestionService ingestionService, IDatabaseService dbService, ITracebackQueue tracebackQueue)
         {
             _logger = logger;
             _ingestionService = ingestionService;
             _dbService = dbService;
+            _tracebackQueue = tracebackQueue;
         }
 
         /// <summary>
         /// Executes a traceback and ingests the results into the data cache.
         /// </summary>
-        /// <param name="request">The EPCs to trace and optional overrides for the external server URL and API key.</param>
-        /// <returns>The finalized traceback record, including counts of created/updated resources and any errors.</returns>
+        /// <remarks>
+        /// By default the traceback is queued: the response is 202 Accepted with the queued record, whose
+        /// id is the job id and can be polled via GET /traceback/{id} until its status finishes. When the
+        /// request sets <see cref="TracebackRequest.Synchronous"/>, the traceback runs inline and the
+        /// response is the finalized record; an unhandled failure returns a 500 with the record persisted
+        /// as <see cref="TracebackStatus.Failed"/>.
+        /// </remarks>
+        /// <param name="request">The EPCs to trace, optional overrides for the external server URL and API key, and the execution mode.</param>
+        /// <returns>202 with the queued record by default; 200 with the finalized record when synchronous.</returns>
         [HttpPost]
         public async Task<IActionResult> ExecuteTraceback([FromBody] TracebackRequest request)
         {
@@ -49,8 +60,30 @@ namespace TraceabilityDriver.Controllers
                     return BadRequest("At least one EPC is required.");
                 }
 
-                TracebackRecord record = await _ingestionService.IngestTracebackAsync(request, HttpContext.RequestAborted);
-                return Ok(record);
+                if (request.Synchronous)
+                {
+                    TracebackRecord record = await _ingestionService.IngestTracebackAsync(request, HttpContext.RequestAborted);
+                    return Ok(record);
+                }
+
+                // Validation happens inside the create call, so a bad request 400s here instead of failing in the queue.
+                TracebackRecord queued = await _ingestionService.CreateQueuedTracebackAsync(request);
+
+                try
+                {
+                    await _tracebackQueue.EnqueueTracebackAsync(queued.Id, request);
+                }
+                catch (Exception ex)
+                {
+                    // Never leave a record Queued forever when the enqueue itself failed.
+                    queued.Status = TracebackStatus.Failed;
+                    queued.EndTime = DateTime.UtcNow;
+                    queued.Errors.Add($"Failed to enqueue the traceback: {ex.Message}");
+                    await _dbService.StoreTracebackAsync(queued);
+                    throw;
+                }
+
+                return AcceptedAtAction(nameof(GetTraceback), new { id = queued.Id }, queued);
             }
             catch (ArgumentException ex)
             {
