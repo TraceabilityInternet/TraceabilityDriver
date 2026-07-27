@@ -100,6 +100,9 @@ public class EventsConverterService : IEventsConverterService
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
+
         // ILMD
         SetILMD(epcisEvent.ILMD, commonEvent);
 
@@ -143,9 +146,11 @@ public class EventsConverterService : IEventsConverterService
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
+
         // Certificates
-        epcisEvent.CertificationList = new CertificationList();
-        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+        SetEventCertificates(epcisEvent, commonEvent.Certificates);
 
         // Products
         if (commonEvent.Products != null)
@@ -184,6 +189,12 @@ public class EventsConverterService : IEventsConverterService
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
+
+        // Certificates
+        SetEventCertificates(epcisEvent, commonEvent.Certificates);
+
         // Products
         if (commonEvent.Products != null)
         {
@@ -221,6 +232,12 @@ public class EventsConverterService : IEventsConverterService
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
+
+        // Certificates
+        SetEventCertificates(epcisEvent, commonEvent.Certificates);
+
         // Products
         if (commonEvent.Products != null)
         {
@@ -255,9 +272,11 @@ public class EventsConverterService : IEventsConverterService
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
+
         // Certificates
-        epcisEvent.CertificationList = new CertificationList();
-        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+        SetEventCertificates(epcisEvent, commonEvent.Certificates);
 
         // Unloading Port
         epcisEvent.UnloadingPort = commonEvent.UnloadingPort;
@@ -304,9 +323,11 @@ public class EventsConverterService : IEventsConverterService
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
 
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
+
         // Certificates
-        epcisEvent.CertificationList = new CertificationList();
-        SetEventCertificates(epcisEvent.CertificationList, commonEvent.Certificates);
+        SetEventCertificates(epcisEvent, commonEvent.Certificates);
 
         // Human Welfare Policy
         epcisEvent.HumanWelfarePolicy = commonEvent.HumanWelfarePolicy;
@@ -359,6 +380,9 @@ public class EventsConverterService : IEventsConverterService
 
         // Location
         SetEventLocation(epcisEvent, commonEvent.Location, doc);
+
+        // Read Point / Disposition
+        SetReadPointAndDisposition(epcisEvent, commonEvent);
 
         // ILMD
         SetILMD(epcisEvent.ILMD, commonEvent);
@@ -636,13 +660,30 @@ public class EventsConverterService : IEventsConverterService
             {
                 CatchArea = commonEvent.CatchInformation.CatchArea,
                 GearType = commonEvent.CatchInformation.GearType,
-                GPSAvailability = commonEvent.CatchInformation.GPSAvailable
+                GPSAvailability = commonEvent.CatchInformation.GPSAvailable,
+                EconomicZone = commonEvent.CatchInformation.EconomicZone,
+                FIP = commonEvent.CatchInformation.FisheryImprovementProject,
+                RFMO = commonEvent.CatchInformation.RfmoArea,
+                SatelliteTrackingAuthority = commonEvent.CatchInformation.SatelliteTrackingAuthority,
+                SubNationalPermitArea = commonEvent.CatchInformation.SubnationalPermitArea,
+                VesselTripDate = commonEvent.CatchInformation.VesselTripDate
             });
         }
 
-        // Certificates
-        ilmd.CertificationList = new CertificationList();
-        SetEventCertificates(ilmd.CertificationList, commonEvent.Certificates);
+        // Certificates. The list is only assigned when at least one certificate exists so that
+        // events without certificates serialize without an empty certification list.
+        CertificationList certificationList = new CertificationList();
+        SetEventCertificates(certificationList, commonEvent.Certificates);
+        if (certificationList.Certificates.Any())
+        {
+            ilmd.CertificationList = certificationList;
+        }
+
+        // Country of Origin
+        if (commonEvent.CountryOfOrigin != null)
+        {
+            ilmd.CountryOfOrigin.Add(OpenTraceability.Utility.Countries.Parse(commonEvent.CountryOfOrigin));
+        }
 
         // Brood Stock Source
         if (commonEvent.BroodStockSource != null)
@@ -670,7 +711,26 @@ public class EventsConverterService : IEventsConverterService
     }
 
     /// <summary>
-    /// Converts the common event certificates into the certification list.
+    /// Builds the certification list from the common certificates and assigns it to the event
+    /// only when at least one certificate exists, so events without certificates serialize
+    /// without an empty certification list.
+    /// </summary>
+    /// <param name="epcisEvent">The event to assign the certification list to.</param>
+    /// <param name="certificates">The common event certificates to convert.</param>
+    public void SetEventCertificates(EventBase epcisEvent, CommonCertificates? certificates)
+    {
+        CertificationList certificationList = new CertificationList();
+        SetEventCertificates(certificationList, certificates);
+        if (certificationList.Certificates.Any())
+        {
+            epcisEvent.CertificationList = certificationList;
+        }
+    }
+
+    /// <summary>
+    /// Converts the common event certificates into the certification list. Certificate slots whose
+    /// fields are all null are skipped because the table mapping service instantiates intermediate
+    /// objects even when every mapped column is NULL.
     /// </summary>
     /// <param name="certificationList">The certification list to add the certificates to.</param>
     /// <param name="certificates">The common event certificates to convert.</param>
@@ -679,41 +739,58 @@ public class EventsConverterService : IEventsConverterService
         if (certificates != null)
         {
             certificationList.Certificates = certificationList.Certificates != null ? certificationList.Certificates : new List<OpenTraceability.Models.Common.Certificate>();
-            if (certificates.FishingAuthorization != null)
-            {
-                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
-                {
-                    CertificateType = "urn:gdst:certType:fishingAuth",
-                    Identification = certificates.FishingAuthorization.Identifier
-                });
-            }
 
-            if (certificates.ChainOfCustodyCertification != null)
-            {
-                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
-                {
-                    CertificateType = "urn:gdst:certType:harvestCoC",
-                    Identification = certificates.ChainOfCustodyCertification.Identifier
-                });
-            }
+            AddCertificate(certificationList, "urn:gdst:certType:fishingAuth", certificates.FishingAuthorization);
+            AddCertificate(certificationList, "urn:gdst:certType:harvestCoC", certificates.ChainOfCustodyCertification);
+            AddCertificate(certificationList, "urn:gdst:certType:humanPolicy", certificates.HumanPolicyCertificate);
+            AddCertificate(certificationList, "urn:gdst:certType:harvestCert", certificates.HarvestCertification);
+            AddCertificate(certificationList, "urn:gdst:certType:transshipmentAuth", certificates.TransshipmentAuthority);
+            AddCertificate(certificationList, "urn:gdst:certType:processorLicense", certificates.ProcessorLicense);
+            AddCertificate(certificationList, "urn:gdst:certType:landingAuth", certificates.LandingAuthorization);
+            AddCertificate(certificationList, "urn:gdst:certType:legalAuth", certificates.LegalAuthorization);
+        }
+    }
 
-            if (certificates.HumanPolicyCertificate != null)
-            {
-                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
-                {
-                    CertificateType = "urn:gdst:certType:humanPolicy",
-                    Identification = certificates.HumanPolicyCertificate.Identifier
-                });
-            }
+    /// <summary>
+    /// Adds a single certificate to the certification list when it carries any data.
+    /// </summary>
+    /// <param name="certificationList">The certification list to add the certificate to.</param>
+    /// <param name="certificateType">The GDST certificate type URN.</param>
+    /// <param name="certificate">The common certificate to convert, or null when the source data has none.</param>
+    private void AddCertificate(CertificationList certificationList, string certificateType, CommonCertificate? certificate)
+    {
+        if (certificate == null || certificate.IsEmpty())
+        {
+            return;
+        }
 
-            if (certificates.HarvestCertification != null)
-            {
-                certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
-                {
-                    CertificateType = "urn:gdst:certType:harvestCert",
-                    Identification = certificates.HarvestCertification.Identifier
-                });
-            }
+        certificationList.Certificates.Add(new OpenTraceability.Models.Common.Certificate()
+        {
+            CertificateType = certificateType,
+            Agency = certificate.Agency,
+            Standard = certificate.Standard,
+            Value = certificate.Value,
+            Identification = certificate.Identifier
+        });
+    }
+
+    /// <summary>
+    /// Sets the read point and disposition on the event when the source data supplies them. The
+    /// GDST event constructors hardcode dispositions only for commissioning, aggregation, and
+    /// packing events, so the remaining event types carry the disposition through the mapping.
+    /// </summary>
+    /// <param name="epcisEvent">The event to set the values on.</param>
+    /// <param name="commonEvent">The common event to read the values from.</param>
+    public void SetReadPointAndDisposition(IEvent epcisEvent, CommonEvent commonEvent)
+    {
+        if (commonEvent.ReadPoint != null)
+        {
+            epcisEvent.ReadPoint = new EventReadPoint() { ID = new Uri(commonEvent.ReadPoint) };
+        }
+
+        if (commonEvent.Dispostion != null)
+        {
+            epcisEvent.Disposition = new Uri(commonEvent.Dispostion, UriKind.RelativeOrAbsolute);
         }
     }
 
@@ -782,6 +859,7 @@ public class EventsConverterService : IEventsConverterService
         {
             TradingParty tradingParty = new TradingParty();
             tradingParty.PGLN = party.GetPGLN();
+            tradingParty.InformationProvider = tradingParty.PGLN;
             tradingParty.Name = new List<OpenTraceability.Models.Common.LanguageString>();
             tradingParty.Name.Add(new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = party.Name });
 
@@ -818,12 +896,50 @@ public class EventsConverterService : IEventsConverterService
             if (location.OwnerId != null)
             {
                 loc.OwningParty = location.GeneratePGLN(location.OwnerId);
+                loc.InformationProvider = loc.OwningParty;
             }
             if (location.Country != null)
             {
                 loc.Address.Country = location.Country;
             }
-            loc.VesselID = location.LocationId;
+
+            // Address
+            if (location.Address1 != null)
+            {
+                loc.Address.Address1 = new List<OpenTraceability.Models.Common.LanguageString>() { new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = location.Address1 } };
+            }
+            if (location.Address2 != null)
+            {
+                loc.Address.Address2 = new List<OpenTraceability.Models.Common.LanguageString>() { new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = location.Address2 } };
+            }
+            if (location.City != null)
+            {
+                loc.Address.City = new List<OpenTraceability.Models.Common.LanguageString>() { new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = location.City } };
+            }
+            if (location.State != null)
+            {
+                loc.Address.State = new List<OpenTraceability.Models.Common.LanguageString>() { new OpenTraceability.Models.Common.LanguageString() { Language = "en-US", Value = location.State } };
+            }
+            if (location.PostalCode != null)
+            {
+                loc.Address.PostalCode = location.PostalCode;
+            }
+
+            // Geo Location / Geo Fence
+            if (location.GeoLocation != null)
+            {
+                loc.GeoLocation = location.GeoLocation;
+            }
+            if (location.GeoFence != null)
+            {
+                loc.GeoFence = location.GeoFence;
+            }
+
+            // Vessel KDEs
+            loc.VesselID = location.VesselId;
+            loc.IMONumber = location.ImoNumber;
+            loc.VesselPublicRegistry = location.VesselPublicRegistry;
+            loc.VesselFlagState = location.VesselFlagState;
 
             // Location Classification
             AddClassifications(loc.LocationClassification, location.LocationClassification);
@@ -857,9 +973,15 @@ public class EventsConverterService : IEventsConverterService
             tradeItem.FisherySpeciesScientificName.Add(productDef.ScientificName);
         }
 
+        if (!string.IsNullOrWhiteSpace(productDef.SpeciesCode))
+        {
+            tradeItem.FisherySpeciesCode = new List<string>() { productDef.SpeciesCode };
+        }
+
         if (productDef.OwnerId != null)
         {
             tradeItem.OwningParty = productDef.GeneratePGLN(productDef.OwnerId);
+            tradeItem.InformationProvider = tradeItem.OwningParty;
         }
 
         // Product Classification

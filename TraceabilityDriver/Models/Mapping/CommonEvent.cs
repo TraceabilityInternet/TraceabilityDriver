@@ -35,6 +35,16 @@ public class CommonEvent : CommonBaseModel
     public string? Action { get; set; } = null;
 
     /// <summary>
+    /// The read point of the event, e.g. a geo URI such as "geo:37.7749,-122.4194".
+    /// </summary>
+    public string? ReadPoint { get; set; } = null;
+
+    /// <summary>
+    /// The ISO country code for the ILMD country of origin KDE.
+    /// </summary>
+    public string? CountryOfOrigin { get; set; } = null;
+
+    /// <summary>
     /// The time of the event.
     /// </summary>
     public DateTimeOffset? EventTime { get; set; } = null;
@@ -110,6 +120,24 @@ public class CommonEvent : CommonBaseModel
         if (this.EventTime == null && source.EventTime != null)
         {
             this.EventTime = source.EventTime;
+        }
+
+        // Disposition
+        if (this.Dispostion == null && source.Dispostion != null)
+        {
+            this.Dispostion = source.Dispostion;
+        }
+
+        // Read Point
+        if (this.ReadPoint == null && source.ReadPoint != null)
+        {
+            this.ReadPoint = source.ReadPoint;
+        }
+
+        // Country of Origin
+        if (this.CountryOfOrigin == null && source.CountryOfOrigin != null)
+        {
+            this.CountryOfOrigin = source.CountryOfOrigin;
         }
 
         // Brood stock Source

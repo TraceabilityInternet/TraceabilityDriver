@@ -36,6 +36,11 @@ public class CommonProductDefinition : CommonBaseModel
     public string? ProductClassification { get; set; } = null;
 
     /// <summary>
+    /// The FAO 3-alpha species code of the product (e.g. "YFT").
+    /// </summary>
+    public string? SpeciesCode { get; set; } = null;
+
+    /// <summary>
     /// Combines the current product definition with another product instance by merging the properties. Only properties that are null are merged.
     /// </summary>
     /// <param name="other">The product definition instance to merge with the current one.</param>
@@ -60,6 +65,10 @@ public class CommonProductDefinition : CommonBaseModel
         if (this.ProductClassification == null && other.ProductClassification != null)
         {
             this.ProductClassification = other.ProductClassification;
+        }
+        if (this.SpeciesCode == null && other.SpeciesCode != null)
+        {
+            this.SpeciesCode = other.SpeciesCode;
         }
     }
 

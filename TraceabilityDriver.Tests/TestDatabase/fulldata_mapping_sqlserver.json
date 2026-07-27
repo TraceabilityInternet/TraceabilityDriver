@@ -1,0 +1,939 @@
+{
+  "Connections": {
+    "SOURCE_DB": {
+      "ConnectorType": "SqlServer",
+      "ConnectionString": "server=localhost;database=TraceabilityDriverFullDataTestDB;Integrated Security=SSPI;TrustServerCertificate=True;",
+      "Database": "TraceabilityDriverFullDataTestDB"
+    }
+  },
+  "Dictionaries": {},
+  "Mappings": [
+    {
+      "Id": "FULLDATA_COMMISSION_FISHING",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_COMMISSION_FISHING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'commissioningevent' AND e.HasCatchInfo = 1 AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.HumanWelfarePolicy AS humanWelfarePolicy, e.ProductionMethod AS productionMethod, e.CatchArea AS catchArea, e.EconomicZone AS economicZone, e.GearType AS gearType, e.Fip AS fip, e.GpsAvailable AS gpsAvailable, e.RfmoArea AS rfmoArea, e.SatelliteTrackingAuthority AS satelliteTrackingAuthority, e.SubnationalPermitArea AS subnationalPermitArea, e.VesselTripDate AS vesselTripDate, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, po.PartyPgln AS poPgln, po.PartyName AS poName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, e.Quantity AS qty, e.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass, cHarv.Agency AS harvAgency, cHarv.Standard AS harvStandard, cHarv.CertValue AS harvValue, cHarv.Identification AS harvIdent, cHuman.Agency AS humanAgency, cHuman.Standard AS humanStandard, cHuman.CertValue AS humanValue, cHuman.Identification AS humanIdent, cFish.Agency AS fishAgency, cFish.Standard AS fishStandard, cFish.CertValue AS fishValue, cFish.Identification AS fishIdent FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Party po ON po.PartyPgln = e.ProductOwnerPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = e.ProductGtin LEFT JOIN fulldata.EventCertificate ecHarv ON ecHarv.EventId = e.EventId AND ecHarv.CertType = 'harvestCert' LEFT JOIN fulldata.Certificate cHarv ON cHarv.CertType = ecHarv.CertType LEFT JOIN fulldata.EventCertificate ecHuman ON ecHuman.EventId = e.EventId AND ecHuman.CertType = 'humanPolicy' LEFT JOIN fulldata.Certificate cHuman ON cHuman.CertType = ecHuman.CertType LEFT JOIN fulldata.EventCertificate ecFish ON ecFish.EventId = e.EventId AND ecFish.CertType = 'fishingAuth' LEFT JOIN fulldata.Certificate cFish ON cFish.CertType = ecFish.CertType WHERE e.EventKind = 'commissioningevent' AND e.HasCatchInfo = 1 AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!commissioningevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "HumanWelfarePolicy": "$humanWelfarePolicy",
+            "ProductionMethod": "$productionMethod",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "ProductOwner": {
+              "OwnerId": "$poPgln",
+              "Name": "$poName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "CatchInformation": {
+              "CatchArea": "$catchArea",
+              "EconomicZone": "$economicZone",
+              "GearType": "$gearType",
+              "FisheryImprovementProject": "$fip",
+              "GPSAvailable": "$gpsAvailable",
+              "RfmoArea": "$rfmoArea",
+              "SatelliteTrackingAuthority": "$satelliteTrackingAuthority",
+              "SubnationalPermitArea": "$subnationalPermitArea",
+              "VesselTripDate": "$vesselTripDate"
+            },
+            "Certificates": {
+              "HarvestCertification": {
+                "Identifier": "$harvIdent",
+                "Agency": "$harvAgency",
+                "Standard": "$harvStandard",
+                "Value": "$harvValue"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanIdent",
+                "Agency": "$humanAgency",
+                "Standard": "$humanStandard",
+                "Value": "$humanValue"
+              },
+              "FishingAuthorization": {
+                "Identifier": "$fishIdent",
+                "Agency": "$fishAgency",
+                "Standard": "$fishStandard",
+                "Value": "$fishValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_COMMISSION",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_COMMISSION",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'commissioningevent' AND e.HasCatchInfo = 0 AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.HumanWelfarePolicy AS humanWelfarePolicy, e.ProductionMethod AS productionMethod, e.BroodstockSource AS broodstockSource, e.CountryOfOrigin AS countryOfOrigin, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, po.PartyPgln AS poPgln, po.PartyName AS poName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, e.Quantity AS qty, e.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass, cHarv.Agency AS harvAgency, cHarv.Standard AS harvStandard, cHarv.CertValue AS harvValue, cHarv.Identification AS harvIdent, cHuman.Agency AS humanAgency, cHuman.Standard AS humanStandard, cHuman.CertValue AS humanValue, cHuman.Identification AS humanIdent, cLegal.Agency AS legalAgency, cLegal.Standard AS legalStandard, cLegal.CertValue AS legalValue, cLegal.Identification AS legalIdent FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Party po ON po.PartyPgln = e.ProductOwnerPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = e.ProductGtin LEFT JOIN fulldata.EventCertificate ecHarv ON ecHarv.EventId = e.EventId AND ecHarv.CertType = 'harvestCert' LEFT JOIN fulldata.Certificate cHarv ON cHarv.CertType = ecHarv.CertType LEFT JOIN fulldata.EventCertificate ecHuman ON ecHuman.EventId = e.EventId AND ecHuman.CertType = 'humanPolicy' LEFT JOIN fulldata.Certificate cHuman ON cHuman.CertType = ecHuman.CertType LEFT JOIN fulldata.EventCertificate ecLegal ON ecLegal.EventId = e.EventId AND ecLegal.CertType = 'legalAuth' LEFT JOIN fulldata.Certificate cLegal ON cLegal.CertType = ecLegal.CertType WHERE e.EventKind = 'commissioningevent' AND e.HasCatchInfo = 0 AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!commissioningevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "HumanWelfarePolicy": "$humanWelfarePolicy",
+            "ProductionMethod": "$productionMethod",
+            "BroodStockSource": "$broodstockSource",
+            "CountryOfOrigin": "$countryOfOrigin",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "ProductOwner": {
+              "OwnerId": "$poPgln",
+              "Name": "$poName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Certificates": {
+              "HarvestCertification": {
+                "Identifier": "$harvIdent",
+                "Agency": "$harvAgency",
+                "Standard": "$harvStandard",
+                "Value": "$harvValue"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanIdent",
+                "Agency": "$humanAgency",
+                "Standard": "$humanStandard",
+                "Value": "$humanValue"
+              },
+              "LegalAuthorization": {
+                "Identifier": "$legalIdent",
+                "Agency": "$legalAgency",
+                "Standard": "$legalStandard",
+                "Value": "$legalValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_SHIPPING",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_SHIPPING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'shippingevent' AND e.IsSscc = 0 AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.Disposition AS disposition, e.UnloadingPort AS unloadingPort, e.SourceLocationGln AS srcLocGln, e.SourcePartyPgln AS srcPartyPgln, e.DestLocationGln AS dstLocGln, e.DestPartyPgln AS dstPartyPgln, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, e.Quantity AS qty, e.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent, cHuman.Agency AS humanAgency, cHuman.Standard AS humanStandard, cHuman.CertValue AS humanValue, cHuman.Identification AS humanIdent, cTrans.Agency AS transAgency, cTrans.Standard AS transStandard, cTrans.CertValue AS transValue, cTrans.Identification AS transIdent FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = e.ProductGtin LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType LEFT JOIN fulldata.EventCertificate ecHuman ON ecHuman.EventId = e.EventId AND ecHuman.CertType = 'humanPolicy' LEFT JOIN fulldata.Certificate cHuman ON cHuman.CertType = ecHuman.CertType LEFT JOIN fulldata.EventCertificate ecTrans ON ecTrans.EventId = e.EventId AND ecTrans.CertType = 'transshipmentAuth' LEFT JOIN fulldata.Certificate cTrans ON cTrans.CertType = ecTrans.CertType WHERE e.EventKind = 'shippingevent' AND e.IsSscc = 0 AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!shippingevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "Dispostion": "$disposition",
+            "UnloadingPort": "$unloadingPort",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Source": {
+              "Party": {
+                "OwnerId": "$srcPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$srcLocGln"
+              }
+            },
+            "Destination": {
+              "Party": {
+                "OwnerId": "$dstPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$dstLocGln"
+              }
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanIdent",
+                "Agency": "$humanAgency",
+                "Standard": "$humanStandard",
+                "Value": "$humanValue"
+              },
+              "TransshipmentAuthority": {
+                "Identifier": "$transIdent",
+                "Agency": "$transAgency",
+                "Standard": "$transStandard",
+                "Value": "$transValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_SHIPPING_SSCC",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_SHIPPING_SSCC",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'shippingevent' AND e.IsSscc = 1 AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.Disposition AS disposition, e.UnloadingPort AS unloadingPort, e.SourceLocationGln AS srcLocGln, e.SourcePartyPgln AS srcPartyPgln, e.DestLocationGln AS dstLocGln, e.DestPartyPgln AS dstPartyPgln, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType WHERE e.EventKind = 'shippingevent' AND e.IsSscc = 1 AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!shippingevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "Dispostion": "$disposition",
+            "UnloadingPort": "$unloadingPort",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Source": {
+              "Party": {
+                "OwnerId": "$srcPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$srcLocGln"
+              }
+            },
+            "Destination": {
+              "Party": {
+                "OwnerId": "$dstPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$dstLocGln"
+              }
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "SSCC": "$epc"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_RECEIVING",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_RECEIVING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'receivingevent' AND e.IsSscc = 0 AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.HumanWelfarePolicy AS humanWelfarePolicy, e.UnloadingPort AS unloadingPort, e.SourceLocationGln AS srcLocGln, e.SourcePartyPgln AS srcPartyPgln, e.DestLocationGln AS dstLocGln, e.DestPartyPgln AS dstPartyPgln, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, e.Quantity AS qty, e.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent, cHuman.Agency AS humanAgency, cHuman.Standard AS humanStandard, cHuman.CertValue AS humanValue, cHuman.Identification AS humanIdent, cTrans.Agency AS transAgency, cTrans.Standard AS transStandard, cTrans.CertValue AS transValue, cTrans.Identification AS transIdent, cHarv.Agency AS harvAgency, cHarv.Standard AS harvStandard, cHarv.CertValue AS harvValue, cHarv.Identification AS harvIdent, cLand.Agency AS landAgency, cLand.Standard AS landStandard, cLand.CertValue AS landValue, cLand.Identification AS landIdent FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = e.ProductGtin LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType LEFT JOIN fulldata.EventCertificate ecHuman ON ecHuman.EventId = e.EventId AND ecHuman.CertType = 'humanPolicy' LEFT JOIN fulldata.Certificate cHuman ON cHuman.CertType = ecHuman.CertType LEFT JOIN fulldata.EventCertificate ecTrans ON ecTrans.EventId = e.EventId AND ecTrans.CertType = 'transshipmentAuth' LEFT JOIN fulldata.Certificate cTrans ON cTrans.CertType = ecTrans.CertType LEFT JOIN fulldata.EventCertificate ecHarv ON ecHarv.EventId = e.EventId AND ecHarv.CertType = 'harvestCert' LEFT JOIN fulldata.Certificate cHarv ON cHarv.CertType = ecHarv.CertType LEFT JOIN fulldata.EventCertificate ecLand ON ecLand.EventId = e.EventId AND ecLand.CertType = 'landingAuth' LEFT JOIN fulldata.Certificate cLand ON cLand.CertType = ecLand.CertType WHERE e.EventKind = 'receivingevent' AND e.IsSscc = 0 AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!receivingevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "HumanWelfarePolicy": "$humanWelfarePolicy",
+            "UnloadingPort": "$unloadingPort",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Source": {
+              "Party": {
+                "OwnerId": "$srcPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$srcLocGln"
+              }
+            },
+            "Destination": {
+              "Party": {
+                "OwnerId": "$dstPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$dstLocGln"
+              }
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanIdent",
+                "Agency": "$humanAgency",
+                "Standard": "$humanStandard",
+                "Value": "$humanValue"
+              },
+              "TransshipmentAuthority": {
+                "Identifier": "$transIdent",
+                "Agency": "$transAgency",
+                "Standard": "$transStandard",
+                "Value": "$transValue"
+              },
+              "HarvestCertification": {
+                "Identifier": "$harvIdent",
+                "Agency": "$harvAgency",
+                "Standard": "$harvStandard",
+                "Value": "$harvValue"
+              },
+              "LandingAuthorization": {
+                "Identifier": "$landIdent",
+                "Agency": "$landAgency",
+                "Standard": "$landStandard",
+                "Value": "$landValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_RECEIVING_SSCC",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_RECEIVING_SSCC",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'receivingevent' AND e.IsSscc = 1 AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.HumanWelfarePolicy AS humanWelfarePolicy, e.UnloadingPort AS unloadingPort, e.SourceLocationGln AS srcLocGln, e.SourcePartyPgln AS srcPartyPgln, e.DestLocationGln AS dstLocGln, e.DestPartyPgln AS dstPartyPgln, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType WHERE e.EventKind = 'receivingevent' AND e.IsSscc = 1 AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!receivingevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "HumanWelfarePolicy": "$humanWelfarePolicy",
+            "UnloadingPort": "$unloadingPort",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Source": {
+              "Party": {
+                "OwnerId": "$srcPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$srcLocGln"
+              }
+            },
+            "Destination": {
+              "Party": {
+                "OwnerId": "$dstPartyPgln"
+              },
+              "Location": {
+                "LocationId": "$dstLocGln"
+              }
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "SSCC": "$epc"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_DESTROY",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_DESTROY",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.ObjectEvent e WHERE e.EventKind = 'decommissioningevent' AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.Disposition AS disposition, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, po.PartyPgln AS poPgln, po.PartyName AS poName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, e.Epc AS epc, e.Quantity AS qty, e.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass FROM fulldata.ObjectEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Party po ON po.PartyPgln = e.ProductOwnerPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = e.ProductGtin WHERE e.EventKind = 'decommissioningevent' AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!decommissioningevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "Dispostion": "$disposition",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "ProductOwner": {
+              "OwnerId": "$poPgln",
+              "Name": "$poName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Reference",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_TRANSFORM",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_TRANSFORM_OUTPUTS",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.TransformationEvent e JOIN fulldata.TransformationProduct tp ON tp.EventId = e.EventId AND tp.IoType = 'Output' WHERE e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.Disposition AS disposition, e.HumanWelfarePolicy AS humanWelfarePolicy, e.CountryOfOrigin AS countryOfOrigin, e.ProteinSource AS proteinSource, e.AquacultureMethod AS aquacultureMethod, e.ProductionMethod AS productionMethod, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, po.PartyPgln AS poPgln, po.PartyName AS poName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, tp.Epc AS epc, tp.Quantity AS qty, tp.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent, cProc.Agency AS procAgency, cProc.Standard AS procStandard, cProc.CertValue AS procValue, cProc.Identification AS procIdent, cHuman.Agency AS humanAgency, cHuman.Standard AS humanStandard, cHuman.CertValue AS humanValue, cHuman.Identification AS humanIdent, cHarv.Agency AS harvAgency, cHarv.Standard AS harvStandard, cHarv.CertValue AS harvValue, cHarv.Identification AS harvIdent, cLegal.Agency AS legalAgency, cLegal.Standard AS legalStandard, cLegal.CertValue AS legalValue, cLegal.Identification AS legalIdent FROM fulldata.TransformationEvent e JOIN fulldata.TransformationProduct tp ON tp.EventId = e.EventId AND tp.IoType = 'Output' JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Party po ON po.PartyPgln = e.ProductOwnerPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = tp.ProductGtin LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType LEFT JOIN fulldata.EventCertificate ecProc ON ecProc.EventId = e.EventId AND ecProc.CertType = 'processorLicense' LEFT JOIN fulldata.Certificate cProc ON cProc.CertType = ecProc.CertType LEFT JOIN fulldata.EventCertificate ecHuman ON ecHuman.EventId = e.EventId AND ecHuman.CertType = 'humanPolicy' LEFT JOIN fulldata.Certificate cHuman ON cHuman.CertType = ecHuman.CertType LEFT JOIN fulldata.EventCertificate ecHarv ON ecHarv.EventId = e.EventId AND ecHarv.CertType = 'harvestCert' LEFT JOIN fulldata.Certificate cHarv ON cHarv.CertType = ecHarv.CertType LEFT JOIN fulldata.EventCertificate ecLegal ON ecLegal.EventId = e.EventId AND ecLegal.CertType = 'legalAuth' LEFT JOIN fulldata.Certificate cLegal ON cLegal.CertType = ecLegal.CertType WHERE e.EventId > @LastID ORDER BY e.EventId ASC, tp.TransformationProductId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!transformationevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "Dispostion": "$disposition",
+            "HumanWelfarePolicy": "$humanWelfarePolicy",
+            "CountryOfOrigin": "$countryOfOrigin",
+            "ProteinSource": "$proteinSource",
+            "AquacultureMethod": "$aquacultureMethod",
+            "ProductionMethod": "$productionMethod",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "ProductOwner": {
+              "OwnerId": "$poPgln",
+              "Name": "$poName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              },
+              "ProcessorLicense": {
+                "Identifier": "$procIdent",
+                "Agency": "$procAgency",
+                "Standard": "$procStandard",
+                "Value": "$procValue"
+              },
+              "HumanPolicyCertificate": {
+                "Identifier": "$humanIdent",
+                "Agency": "$humanAgency",
+                "Standard": "$humanStandard",
+                "Value": "$humanValue"
+              },
+              "HarvestCertification": {
+                "Identifier": "$harvIdent",
+                "Agency": "$harvAgency",
+                "Standard": "$harvStandard",
+                "Value": "$harvValue"
+              },
+              "LegalAuthorization": {
+                "Identifier": "$legalIdent",
+                "Agency": "$legalAgency",
+                "Standard": "$legalStandard",
+                "Value": "$legalValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Output",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Id": "SEL_FULLDATA_TRANSFORM_INPUTS",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.TransformationEvent e JOIN fulldata.TransformationProduct tp ON tp.EventId = e.EventId AND tp.IoType = 'Input' WHERE e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, tp.Epc AS epc, tp.Quantity AS qty, tp.Uom AS uom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass FROM fulldata.TransformationEvent e JOIN fulldata.TransformationProduct tp ON tp.EventId = e.EventId AND tp.IoType = 'Input' JOIN fulldata.Product pd ON pd.ProductGtin = tp.ProductGtin WHERE e.EventId > @LastID ORDER BY e.EventId ASC, tp.TransformationProductId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!transformationevent",
+            "EventTime": "$eventTime",
+            "Products": [
+              {
+                "ProductId": "$epc",
+                "ProductType": "!Input",
+                "Quantity": "$qty",
+                "UoM": "$uom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_PACKING",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_PACKING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.AggregationEvent e JOIN fulldata.AggregationChild ac ON ac.EventId = e.EventId WHERE e.EventKind = 'aggregationevent' AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.Disposition AS disposition, e.ParentEpc AS parentEpc, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, po.PartyPgln AS poPgln, po.PartyName AS poName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, ac.Epc AS childEpc, ac.Quantity AS childQty, ac.Uom AS childUom, pd.ProductGtin AS prodGtin, pd.OwnerPgln AS prodOwnerPgln, pd.Description AS prodDesc, pd.ProductForm AS prodForm, pd.ScientificName AS prodSci, pd.SpeciesCode AS prodSpecies, pd.ProductClassification AS prodClass, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent FROM fulldata.AggregationEvent e JOIN fulldata.AggregationChild ac ON ac.EventId = e.EventId JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Party po ON po.PartyPgln = e.ProductOwnerPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln JOIN fulldata.Product pd ON pd.ProductGtin = ac.ProductGtin LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType WHERE e.EventKind = 'aggregationevent' AND e.EventId > @LastID ORDER BY e.EventId ASC, ac.AggregationChildId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!aggregationevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "Dispostion": "$disposition",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "ProductOwner": {
+              "OwnerId": "$poPgln",
+              "Name": "$poName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$parentEpc",
+                "ProductType": "!Parent",
+                "SSCC": "$parentEpc"
+              },
+              {
+                "ProductId": "$childEpc",
+                "ProductType": "!Child",
+                "Quantity": "$childQty",
+                "UoM": "$childUom",
+                "ProductDefinition": {
+                  "ProductDefinitionId": "$prodGtin",
+                  "OwnerId": "$prodOwnerPgln",
+                  "ShortDescription": "$prodDesc",
+                  "ProductForm": "$prodForm",
+                  "ScientificName": "$prodSci",
+                  "SpeciesCode": "$prodSpecies",
+                  "ProductClassification": "$prodClass"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "Id": "FULLDATA_UNPACKING",
+      "Selectors": [
+        {
+          "Id": "SEL_FULLDATA_UNPACKING",
+          "Database": "SOURCE_DB",
+          "Count": "SELECT COUNT(*) FROM fulldata.AggregationEvent e WHERE e.EventKind = 'disaggregationevent' AND e.EventId > @LastID",
+          "Selector": "SELECT e.EventId AS idEventRecord, e.EventTimeUtc AS eventTime, e.ReadPoint AS readPoint, e.Disposition AS disposition, e.ParentEpc AS parentEpc, ip.PartyPgln AS infoPgln, ip.PartyName AS infoName, po.PartyPgln AS poPgln, po.PartyName AS poName, loc.LocationGln AS locGln, loc.LocationName AS locName, loc.OwnerPgln AS locOwnerPgln, loc.LocationClassification AS locClass, loc.VesselId AS locVesselId, loc.ImoNumber AS locImo, loc.VesselPublicRegistry AS locRegistry, loc.VesselFlagState AS locFlag, loc.Street1 AS locStreet1, loc.Street2 AS locStreet2, loc.City AS locCity, loc.State AS locState, loc.PostalCode AS locPostal, loc.CountryCode AS locCountry, loc.GeoLocation AS locGeoLocation, loc.GeoFence AS locGeoFence, cCoc.Agency AS cocAgency, cCoc.Standard AS cocStandard, cCoc.CertValue AS cocValue, cCoc.Identification AS cocIdent FROM fulldata.AggregationEvent e JOIN fulldata.Party ip ON ip.PartyPgln = e.InfoProviderPgln JOIN fulldata.Party po ON po.PartyPgln = e.ProductOwnerPgln JOIN fulldata.Location loc ON loc.LocationGln = e.LocationGln LEFT JOIN fulldata.EventCertificate ecCoc ON ecCoc.EventId = e.EventId AND ecCoc.CertType = 'harvestCoC' LEFT JOIN fulldata.Certificate cCoc ON cCoc.CertType = ecCoc.CertType WHERE e.EventKind = 'disaggregationevent' AND e.EventId > @LastID ORDER BY e.EventId ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
+          "Memory": {
+            "LastID": {
+              "DefaultValue": "0",
+              "Field": "$idEventRecord",
+              "DataType": "Int64"
+            }
+          },
+          "EventMapping": {
+            "EventId": "$idEventRecord",
+            "EventType": "!disaggregationevent",
+            "EventTime": "$eventTime",
+            "ReadPoint": "$readPoint",
+            "Dispostion": "$disposition",
+            "InformationProvider": {
+              "OwnerId": "$infoPgln",
+              "Name": "$infoName"
+            },
+            "ProductOwner": {
+              "OwnerId": "$poPgln",
+              "Name": "$poName"
+            },
+            "Location": {
+              "LocationId": "$locGln",
+              "OwnerId": "$locOwnerPgln",
+              "Name": "$locName",
+              "LocationClassification": "$locClass",
+              "VesselId": "$locVesselId",
+              "ImoNumber": "$locImo",
+              "VesselPublicRegistry": "$locRegistry",
+              "VesselFlagState": "$locFlag",
+              "Address1": "$locStreet1",
+              "Address2": "$locStreet2",
+              "City": "$locCity",
+              "State": "$locState",
+              "PostalCode": "$locPostal",
+              "Country": "$locCountry",
+              "GeoLocation": "$locGeoLocation",
+              "GeoFence": "$locGeoFence"
+            },
+            "Certificates": {
+              "ChainOfCustodyCertification": {
+                "Identifier": "$cocIdent",
+                "Agency": "$cocAgency",
+                "Standard": "$cocStandard",
+                "Value": "$cocValue"
+              }
+            },
+            "Products": [
+              {
+                "ProductId": "$parentEpc",
+                "ProductType": "!Parent",
+                "SSCC": "$parentEpc"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

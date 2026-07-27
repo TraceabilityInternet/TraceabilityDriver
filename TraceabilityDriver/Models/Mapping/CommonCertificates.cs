@@ -29,6 +29,21 @@ public class CommonCertificates
     public CommonCertificate? TransshipmentAuthority { get; set; } = null;
 
     /// <summary>
+    /// The processor license for the certificates.
+    /// </summary>
+    public CommonCertificate? ProcessorLicense { get; set; } = null;
+
+    /// <summary>
+    /// The landing authorization for the certificates.
+    /// </summary>
+    public CommonCertificate? LandingAuthorization { get; set; } = null;
+
+    /// <summary>
+    /// The legal authorization for the certificates.
+    /// </summary>
+    public CommonCertificate? LegalAuthorization { get; set; } = null;
+
+    /// <summary>
     /// Merges common certificates into the current context.
     /// </summary>
     /// <param name="other">Contains the certificates to be merged into the existing set.</param>
@@ -77,6 +92,33 @@ public class CommonCertificates
         else if (this.TransshipmentAuthority != null && other.TransshipmentAuthority != null)
         {
             this.TransshipmentAuthority.Merge(other.TransshipmentAuthority);
+        }
+
+        if (this.ProcessorLicense == null && other.ProcessorLicense != null)
+        {
+            this.ProcessorLicense = other.ProcessorLicense;
+        }
+        else if (this.ProcessorLicense != null && other.ProcessorLicense != null)
+        {
+            this.ProcessorLicense.Merge(other.ProcessorLicense);
+        }
+
+        if (this.LandingAuthorization == null && other.LandingAuthorization != null)
+        {
+            this.LandingAuthorization = other.LandingAuthorization;
+        }
+        else if (this.LandingAuthorization != null && other.LandingAuthorization != null)
+        {
+            this.LandingAuthorization.Merge(other.LandingAuthorization);
+        }
+
+        if (this.LegalAuthorization == null && other.LegalAuthorization != null)
+        {
+            this.LegalAuthorization = other.LegalAuthorization;
+        }
+        else if (this.LegalAuthorization != null && other.LegalAuthorization != null)
+        {
+            this.LegalAuthorization.Merge(other.LegalAuthorization);
         }
     }
 }
