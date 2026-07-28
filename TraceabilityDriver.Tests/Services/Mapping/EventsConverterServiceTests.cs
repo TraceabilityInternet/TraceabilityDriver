@@ -79,7 +79,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var events = new List<CommonEvent>
             {
-                new CommonEvent { EventId = "invalid1", EventType = "commissioningevent" } // Missing products
+                new CommonEvent { EventKey = "invalid1", EventType = "commissioningevent" } // Missing products
             };
 
             // Act
@@ -106,7 +106,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             var events = new List<CommonEvent>
             {
                 new CommonEvent {
-                    EventId = "unsupported1",
+                    EventKey = "unsupported1",
                     EventType = "gdstfishingevent",
                     Products = new List<CommonProduct> { CreateValidReferenceProduct() }
                 }
@@ -174,7 +174,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         public void IsEventValid_WithNullProducts_ReturnsFalse()
         {
             // Arrange
-            var commonEvent = new CommonEvent { EventId = "event1", Products = null };
+            var commonEvent = new CommonEvent { EventKey = "event1", Products = null };
 
             // Act
             var result = _service.IsEventValid(commonEvent, out string error);
@@ -188,7 +188,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         public void IsEventValid_WithEmptyProducts_ReturnsFalse()
         {
             // Arrange
-            var commonEvent = new CommonEvent { EventId = "event1", Products = new List<CommonProduct>() };
+            var commonEvent = new CommonEvent { EventKey = "event1", Products = new List<CommonProduct>() };
 
             // Act
             var result = _service.IsEventValid(commonEvent, out string error);
@@ -204,7 +204,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var commonEvent = new CommonEvent
             {
-                EventId = "event1",
+                EventKey = "event1",
                 Products = new List<CommonProduct>
                 {
                     new CommonProduct
@@ -749,7 +749,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             return new CommonEvent
             {
-                EventId = eventId,
+                EventKey = eventId,
                 EventTime = DateTimeOffset.Now,
                 InformationProvider = new CommonParty { OwnerId = "provider1", Name = "Provider" },
                 ProductOwner = new CommonParty { OwnerId = "owner1", Name = "Owner" },

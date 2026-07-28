@@ -1,13 +1,15 @@
 ﻿using Extensions;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
+using Newtonsoft.Json;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using OpenTraceability.Utility;
 using System.Collections.Concurrent;
-using TraceabilityDriver.Models.MongoDB;
-using TraceabilityDriver.Models.Sql;
+using TraceabilityDriver.Models.DB;
+using TraceabilityDriver.Models.DB.Sql;
+using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Models.Traceback;
 
 namespace TraceabilityDriver.Services
@@ -19,11 +21,13 @@ namespace TraceabilityDriver.Services
     {
         private readonly ILogger<SqlServerService> _logger;
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly string? _deploymentVersion;
 
-        public SqlServerService(ILogger<SqlServerService> logger, IDbContextFactory<ApplicationDbContext> contextFactory)
+        public SqlServerService(ILogger<SqlServerService> logger, IDbContextFactory<ApplicationDbContext> contextFactory, IConfiguration configuration)
         {
             _logger = logger;
             _contextFactory = contextFactory;
+            _deploymentVersion = configuration["DEPLOYMENT_VERSION"];
         }
 
         /// <summary>
@@ -80,25 +84,43 @@ END";
             }
         }
 
-        public async Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events)
+        /// <inheritdoc/>
+        public async Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events, string deploymentVersion, IReadOnlyDictionary<string, CommonEvent> commonEventsByKey)
         {
             ConcurrentBag<string> createdIds = new ConcurrentBag<string>();
             ConcurrentBag<string> updatedIds = new ConcurrentBag<string>();
 
-            List<List<IEvent>> batches = events.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
+            // The incoming EventID carries the event key (set by the converter). Capture it, then replace
+            // the EventID with the real CBV 2.0 content hash before the event is serialized for storage.
+            List<(IEvent Event, string EventKey)> keyedEvents = new List<(IEvent, string)>();
+            foreach (IEvent evt in events)
+            {
+                string eventKey = evt.EventID.ToString();
+                evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
+                keyedEvents.Add((evt, eventKey));
+            }
+
+            List<List<(IEvent Event, string EventKey)>> batches = keyedEvents.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
             await Parallel.ForEachAsync(batches, async (batch, ct) =>
             {
                 using (var context = await _contextFactory.CreateDbContextAsync())
                 {
-                    // rather than check for events to update in the loop below,
-                    // we want to execute one large query to get all the events that will be updated rather than added
-                    List<string> storingEventIds = batch.Select(x => x.EventID.ToString()).ToList();
-                    var existingEvents = await context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId)).ToDictionaryAsync(x => x.EventId, y => y);
+                    // rather than check for events to update in the loop below, we want to execute one
+                    // large query to get all the events that will be updated rather than added. Synced
+                    // events are upserted by (event key, deployment version) because the event id is a
+                    // content hash that changes while the event is still accumulating source rows.
+                    List<string> storingEventKeys = batch.Select(x => x.EventKey).ToList();
+                    var existingEvents = await context.EPCISEvents.Where(x => x.EventKey != null && storingEventKeys.Contains(x.EventKey) && x.DeploymentVersion == deploymentVersion).ToDictionaryAsync(x => x.EventKey!, y => y);
 
-                    foreach (IEvent evt in batch)
+                    List<EventSearchSqlDocument> searchDocuments = new List<EventSearchSqlDocument>();
+                    foreach ((IEvent evt, string eventKey) in batch)
                     {
                         EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
-                        if (existingEvents.TryGetValue(evt.EventID.ToString(), out EPCISEventSqlDocument? existingEvent))
+                        doc.EventKey = eventKey;
+                        doc.DeploymentVersion = deploymentVersion;
+                        doc.CommonEventJson = SerializeCommonEvent(eventKey, commonEventsByKey);
+
+                        if (existingEvents.TryGetValue(eventKey, out EPCISEventSqlDocument? existingEvent))
                         {
                             // Preserve the _id field from the existing document
                             doc.ID = existingEvent.ID;
@@ -110,15 +132,19 @@ END";
                             context.EPCISEvents.Add(doc);
                             createdIds.Add(evt.EventID.ToString());
                         }
+
+                        // Build the search rows per event so each row carries the event key it belongs to.
+                        List<EventSearchSqlDocument> eventSearchRows = EventSearchSqlDocument.CreateSearchDocuments(new List<IEvent> { evt });
+                        eventSearchRows.ForEach(x => { x.EventKey = eventKey; x.DeploymentVersion = deploymentVersion; });
+                        searchDocuments.AddRange(eventSearchRows);
                     }
 
-                    // Now save the search model.
-                    List<EventSearchSqlDocument> searchDocuments = EventSearchSqlDocument.CreateSearchDocuments(batch);
-
-                    // Batch save the search documents by first deleting all existing index documents 
-                    // for the given event IDs and then adding the new ones.
+                    // Batch save the search documents by first deleting all existing index documents for
+                    // the given event keys and then adding the new ones. The delete is scoped by event key
+                    // and deployment version so stale rows pointing at a superseded event id are removed
+                    // while rows from other versions and traceback rows persist.
                     var existingSearchDocuments = await context.EventSearchDocuments
-                    .Where(x => storingEventIds.Contains(x.EventId))
+                    .Where(x => x.EventKey != null && storingEventKeys.Contains(x.EventKey) && x.DeploymentVersion == deploymentVersion)
                             .ToListAsync();
 
                     context.EventSearchDocuments.RemoveRange(existingSearchDocuments);
@@ -131,7 +157,122 @@ END";
             return new DatabaseStoreResult { CreatedIds = createdIds.ToList(), UpdatedIds = updatedIds.ToList() };
         }
 
-        public async Task<DatabaseStoreResult> StoreMasterDataAsync(List<IVocabularyElement> masterData)
+        /// <inheritdoc/>
+        public async Task<DatabaseStoreResult> StoreTracebackEventsAsync(List<IEvent> events)
+        {
+            ConcurrentBag<string> createdIds = new ConcurrentBag<string>();
+            int skippedCount = 0;
+
+            // Tracebacked events keep the event id they arrived with; one is only generated when missing.
+            foreach (IEvent evt in events)
+            {
+                if (evt.EventID == null)
+                {
+                    evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
+                }
+            }
+
+            // Deduplicate by event id so the same event appearing twice in one store is only inserted once.
+            List<IEvent> distinctEvents = events.GroupBy(e => e.EventID.ToString()).Select(g => g.First()).ToList();
+
+            List<List<IEvent>> batches = distinctEvents.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
+            await Parallel.ForEachAsync(batches, async (batch, ct) =>
+            {
+                using (var context = await _contextFactory.CreateDbContextAsync())
+                {
+                    // Traceback data is never updated: an event is skipped when its id already exists under
+                    // the current deployment version or as previously tracebacked data (null version).
+                    // Events stored only under old deployment versions do not block the save.
+                    List<string> storingEventIds = batch.Select(x => x.EventID.ToString()).ToList();
+                    IQueryable<EPCISEventSqlDocument> existingQuery = context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId));
+                    if (string.IsNullOrWhiteSpace(_deploymentVersion))
+                    {
+                        existingQuery = existingQuery.Where(x => x.DeploymentVersion == null);
+                    }
+                    else
+                    {
+                        existingQuery = existingQuery.Where(x => x.DeploymentVersion == _deploymentVersion || x.DeploymentVersion == null);
+                    }
+                    List<string> existingEventIds = await existingQuery.Select(x => x.EventId).Distinct().ToListAsync();
+
+                    List<IEvent> newEvents = batch.Where(x => !existingEventIds.Contains(x.EventID.ToString())).ToList();
+                    Interlocked.Add(ref skippedCount, batch.Count - newEvents.Count);
+
+                    foreach (IEvent evt in newEvents)
+                    {
+                        EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
+                        context.EPCISEvents.Add(doc);
+                        createdIds.Add(evt.EventID.ToString());
+                    }
+
+                    // Search rows are only inserted for the newly created events; skipped events keep the
+                    // rows of the copy that blocked them.
+                    List<EventSearchSqlDocument> searchDocuments = EventSearchSqlDocument.CreateSearchDocuments(newEvents);
+                    context.EventSearchDocuments.AddRange(searchDocuments);
+
+                    await context.SaveChangesAsync();
+                }
+            });
+
+            if (skippedCount > 0)
+            {
+                _logger.LogInformation("Skipped {SkippedCount} tracebacked event(s) that already exist in the data cache.", skippedCount);
+            }
+
+            return new DatabaseStoreResult { CreatedIds = createdIds.ToList() };
+        }
+
+        /// <inheritdoc/>
+        public async Task<Dictionary<string, CommonEvent>> GetCommonEventsAsync(List<string> eventKeys, string deploymentVersion)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var rows = await context.EPCISEvents
+                .Where(x => x.EventKey != null && eventKeys.Contains(x.EventKey) && x.DeploymentVersion == deploymentVersion)
+                .Select(x => new { x.EventKey, x.CommonEventJson })
+                .ToListAsync();
+
+            Dictionary<string, CommonEvent> results = new Dictionary<string, CommonEvent>();
+            foreach (var row in rows)
+            {
+                if (string.IsNullOrWhiteSpace(row.CommonEventJson))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    CommonEvent? commonEvent = JsonConvert.DeserializeObject<CommonEvent>(row.CommonEventJson);
+                    if (commonEvent != null)
+                    {
+                        results[row.EventKey!] = commonEvent;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to deserialize the stored common event for event key {EventKey}; the stored event will be replaced instead of merged.", row.EventKey);
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Serializes the common event for the given event key, or returns null with a logged warning
+        /// when the caller did not provide one.
+        /// </summary>
+        private string? SerializeCommonEvent(string eventKey, IReadOnlyDictionary<string, CommonEvent> commonEventsByKey)
+        {
+            if (commonEventsByKey.TryGetValue(eventKey, out CommonEvent? commonEvent))
+            {
+                return JsonConvert.SerializeObject(commonEvent);
+            }
+
+            _logger.LogWarning("No common event was provided for the event key {EventKey}; later sync runs cannot merge additional rows into the stored event.", eventKey);
+            return null;
+        }
+
+        public async Task<DatabaseStoreResult> StoreMasterDataAsync(List<IVocabularyElement> masterData, string deploymentVersion)
         {
             DatabaseStoreResult result = new DatabaseStoreResult();
 
@@ -141,12 +282,13 @@ END";
                 var masterDataDoc = new MasterDataSqlDocument
                 {
                     ElementId = element.ID,
+                    DeploymentVersion = deploymentVersion,
                     ElementType = element.GetType().AssemblyQualifiedName ?? "",
                     ElementJson = OpenTraceability.Mappers.OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(element)
                 };
 
-                // Check if master data with this ID already exists
-                var existingMasterData = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == element.ID);
+                // Check if master data with this ID already exists under the deployment version being stored.
+                var existingMasterData = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == element.ID && x.DeploymentVersion == deploymentVersion);
 
                 if (existingMasterData == null)
                 {
@@ -166,6 +308,56 @@ END";
             }
 
             await context.SaveChangesAsync();
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<DatabaseStoreResult> StoreTracebackMasterDataAsync(List<IVocabularyElement> masterData)
+        {
+            DatabaseStoreResult result = new DatabaseStoreResult();
+            int skippedCount = 0;
+
+            using var context = await _contextFactory.CreateDbContextAsync();
+            foreach (var element in masterData.GroupBy(x => x.ID).Select(g => g.First()))
+            {
+                // Traceback master data is never updated: the element is skipped when it already exists
+                // under the current deployment version or as previously tracebacked data (null version).
+                // Elements stored only under old deployment versions do not block the save.
+                IQueryable<MasterDataSqlDocument> existingQuery = context.MasterDataDocuments.Where(x => x.ElementId == element.ID);
+                if (string.IsNullOrWhiteSpace(_deploymentVersion))
+                {
+                    existingQuery = existingQuery.Where(x => x.DeploymentVersion == null);
+                }
+                else
+                {
+                    existingQuery = existingQuery.Where(x => x.DeploymentVersion == _deploymentVersion || x.DeploymentVersion == null);
+                }
+
+                if (await existingQuery.AnyAsync())
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                var masterDataDoc = new MasterDataSqlDocument
+                {
+                    ElementId = element.ID,
+                    DeploymentVersion = null,
+                    ElementType = element.GetType().AssemblyQualifiedName ?? "",
+                    ElementJson = OpenTraceability.Mappers.OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(element)
+                };
+
+                await context.AddAsync(masterDataDoc);
+                result.CreatedIds.Add(element.ID);
+            }
+
+            await context.SaveChangesAsync();
+
+            if (skippedCount > 0)
+            {
+                _logger.LogInformation("Skipped {SkippedCount} tracebacked master data element(s) that already exist in the data cache.", skippedCount);
+            }
 
             return result;
         }
@@ -247,9 +439,68 @@ END";
         {
             using var context = await _contextFactory.CreateDbContextAsync();
 
-            // First, query the search documents to find matching event IDs
-            var searchQuery = context.EventSearchDocuments.AsQueryable();
+            // Serve the synced events of the current deployment version merged with the tracebacked
+            // events (null version). Without a configured version only traceback data is served.
+            IQueryable<EventSearchSqlDocument> searchQuery;
+            IQueryable<EPCISEventSqlDocument> eventsQuery;
+            if (string.IsNullOrWhiteSpace(_deploymentVersion))
+            {
+                searchQuery = context.EventSearchDocuments.Where(e => e.DeploymentVersion == null);
+                eventsQuery = context.EPCISEvents.Where(e => e.DeploymentVersion == null);
+            }
+            else
+            {
+                searchQuery = context.EventSearchDocuments.Where(e => e.DeploymentVersion == _deploymentVersion || e.DeploymentVersion == null);
+                eventsQuery = context.EPCISEvents.Where(e => e.DeploymentVersion == _deploymentVersion || e.DeploymentVersion == null);
+            }
 
+            searchQuery = ApplyEventFilters(searchQuery, options);
+
+            // Get unique event IDs from the search results
+            var matchingEventIds = await searchQuery
+                .Select(e => e.EventId)
+                .Distinct()
+                .ToListAsync();
+
+            // Now query the actual EPCIS events using the event IDs from search. When the same event id
+            // exists both synced and tracebacked, the synced copy wins.
+            var matchingEvents = await eventsQuery
+                .Where(e => matchingEventIds.Contains(e.EventId))
+                .Select(e => new { e.EventId, e.DeploymentVersion, e.EventJson })
+                .ToListAsync();
+
+            List<string> eventJsonList = matchingEvents
+                .GroupBy(e => e.EventId)
+                .Select(g => g.OrderByDescending(e => e.DeploymentVersion != null).First().EventJson)
+                .ToList();
+
+            // Convert results back to EPCIS events
+            var doc = new EPCISQueryDocument
+            {
+                EPCISVersion = EPCISVersion.V2,
+                Events = new List<IEvent>()
+            };
+
+            ConcurrentBag<EPCISQueryDocument> queryDocs = new();
+            Parallel.ForEach(eventJsonList, (eventJson, ct) =>
+            {
+                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(eventJson);
+                queryDocs.Add(queryDoc);
+            });
+
+            foreach (var queryDoc in queryDocs)
+            {
+                doc.Merge(queryDoc);
+            }
+
+            return doc;
+        }
+
+        /// <summary>
+        /// Applies the EPCIS query filters to a search document query.
+        /// </summary>
+        private static IQueryable<EventSearchSqlDocument> ApplyEventFilters(IQueryable<EventSearchSqlDocument> searchQuery, EPCISQueryParameters options)
+        {
             // Apply query filters to the search documents
             if (options.query.MATCH_anyEPCClass.Count > 0)
             {
@@ -309,59 +560,47 @@ END";
                 searchQuery = searchQuery.Where(e => bizLocations.Contains(e.LocationGLN));
             }
 
-            // Get unique event IDs from the search results
-            var matchingEventIds = await searchQuery
-                .Select(e => e.EventId)
-                .Distinct()
-                .ToListAsync();
-
-            // Now query the actual EPCIS events using the event IDs from search
-            var events = await context.EPCISEvents
-                .Where(e => matchingEventIds.Contains(e.EventId))
-                .ToListAsync();
-
-            // Convert results back to EPCIS events
-            var doc = new EPCISQueryDocument
-            {
-                EPCISVersion = EPCISVersion.V2,
-                Events = new List<IEvent>()
-            };
-
-            ConcurrentBag<EPCISQueryDocument> queryDocs = new();
-            Parallel.ForEach(events, (eventItem, ct) =>
-            {
-                EPCISQueryDocument queryDoc = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(eventItem.EventJson);
-                queryDocs.Add(queryDoc);
-            });
-
-            foreach (var queryDoc in queryDocs)
-            {
-                doc.Merge(queryDoc);
-            }
-
-            return doc;
+            return searchQuery;
         }
 
         public async Task<IVocabularyElement?> QueryMasterData(string identifier)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
-            var masterDataDoc = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == identifier);
+
+            // The synced copy of the current deployment version wins; tracebacked master data (null
+            // version) is the fallback. Without a configured version only traceback data is served.
+            IQueryable<MasterDataSqlDocument> query = context.MasterDataDocuments.Where(x => x.ElementId == identifier);
+            if (string.IsNullOrWhiteSpace(_deploymentVersion))
+            {
+                query = query.Where(x => x.DeploymentVersion == null);
+            }
+            else
+            {
+                query = query.Where(x => x.DeploymentVersion == _deploymentVersion || x.DeploymentVersion == null);
+            }
+
+            var masterDataDoc = await query.OrderBy(x => x.DeploymentVersion == null ? 1 : 0).FirstOrDefaultAsync();
             if (masterDataDoc == null)
             {
                 return null;
             }
-            else
-            {
-                Type t = Type.GetType(masterDataDoc.ElementType)
-                        ?? throw new Exception($"Failed to get type: {masterDataDoc.ElementType}");
-                return OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(t, masterDataDoc.ElementJson);
-            }
+
+            Type t = Type.GetType(masterDataDoc.ElementType)
+                    ?? throw new Exception($"Failed to get type: {masterDataDoc.ElementType}");
+            return OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(t, masterDataDoc.ElementJson);
         }
 
         public async Task<List<SyncHistoryItem>> GetLatestSyncs(int top = 10)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
             return await context.SyncHistory.OrderByDescending(x => x.EndTime).Take(top).ToListAsync();
+        }
+
+        /// <inheritdoc/>
+        public async Task<SyncHistoryItem?> GetLatestSyncAsync(string deploymentVersion)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.SyncHistory.Where(x => x.DeploymentVersion == deploymentVersion).OrderByDescending(x => x.EndTime).FirstOrDefaultAsync();
         }
 
         public async Task<DatabaseReport> GetDatabaseReport()

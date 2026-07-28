@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Tests.Services
@@ -16,7 +17,8 @@ namespace TraceabilityDriver.Tests.Services
         /// <inheritdoc/>
         protected override IDatabaseService CreateService(IConfiguration configuration)
         {
-            return new MongoDBService(configuration);
+            ILogger<MongoDBService> logger = new LoggerFactory().CreateLogger<MongoDBService>();
+            return new MongoDBService(logger, configuration);
         }
     }
 }

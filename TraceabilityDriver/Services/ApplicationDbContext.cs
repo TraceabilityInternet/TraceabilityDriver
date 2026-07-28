@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Text.Json;
-using TraceabilityDriver.Models.MongoDB;
-using TraceabilityDriver.Models.Sql;
+using TraceabilityDriver.Models.DB;
+using TraceabilityDriver.Models.DB.Sql;
 using TraceabilityDriver.Models.Traceback;
 
 namespace TraceabilityDriver.Services
@@ -52,10 +52,28 @@ namespace TraceabilityDriver.Services
                 entity.Property(x => x.Level).HasColumnType("nvarchar(50)");
             });
 
-            // Add index for EventId on EPCISEventSqlDocument
+            // Synced events are upserted by (event key, deployment version): the event id is a content
+            // hash that changes while an event is still accumulating source rows across sync runs, so it
+            // cannot be the upsert key. Traceback rows carry a null event key and null deployment version
+            // and are excluded from the unique index by its filter.
+            modelBuilder.Entity<EPCISEventSqlDocument>()
+                .Property(e => e.DeploymentVersion)
+                .HasMaxLength(100);
+            modelBuilder.Entity<EPCISEventSqlDocument>()
+                .Property(e => e.EventKey)
+                .HasMaxLength(450);
+            modelBuilder.Entity<EPCISEventSqlDocument>()
+                .HasIndex(e => new { e.EventKey, e.DeploymentVersion })
+                .IsUnique(true)
+                .HasFilter("[EventKey] IS NOT NULL")
+                .HasDatabaseName("IX_EPCISEvents_EventKey_DeploymentVersion");
+
+            // The event id is indexed non-unique: the traceback skip check and query fetches look events
+            // up by id, and the same content hash can legitimately appear on multiple rows (a traceback
+            // copy of a synced event, or the same content synced under two deployment versions).
             modelBuilder.Entity<EPCISEventSqlDocument>()
                 .HasIndex(e => e.EventId)
-                .IsUnique(true)
+                .IsUnique(false)
                 .HasDatabaseName("IX_EPCISEvents_EventId");
 
             // Add index to EventSearchSqlDocument
@@ -96,11 +114,53 @@ namespace TraceabilityDriver.Services
                 .IsUnique(false)
                 .HasDatabaseName("IX_EventSearchDocuments_RecordTime");
 
+            // The deployment version index lets queries narrow the search rows to the currently
+            // configured deployment version efficiently (traceback rows carry a null version). The event
+            // key index scopes the delete-then-insert rebuild when a synced event is stored again.
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .Property(e => e.DeploymentVersion)
+                .HasMaxLength(100);
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .HasIndex(e => e.DeploymentVersion)
+                .IsUnique(false)
+                .HasDatabaseName("IX_EventSearchDocuments_DeploymentVersion");
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .Property(e => e.EventKey)
+                .HasMaxLength(450);
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .HasIndex(e => e.EventKey)
+                .IsUnique(false)
+                .HasDatabaseName("IX_EventSearchDocuments_EventKey");
+
+            // Master data is unique per (element id, deployment version). The element id needs an
+            // explicit max length so it can participate in the index. Traceback rows carry a null
+            // deployment version and are excluded by the null filter EF adds to the unique index;
+            // their one-row-per-element-id rule is enforced by the skip-if-exists store logic instead.
+            modelBuilder.Entity<MasterDataSqlDocument>()
+                .Property(e => e.ElementId)
+                .HasMaxLength(450);
+            modelBuilder.Entity<MasterDataSqlDocument>()
+                .Property(e => e.DeploymentVersion)
+                .HasMaxLength(100);
+            modelBuilder.Entity<MasterDataSqlDocument>()
+                .HasIndex(e => new { e.ElementId, e.DeploymentVersion })
+                .IsUnique(true)
+                .HasDatabaseName("IX_MasterDataDocuments_ElementId_DeploymentVersion");
+
             modelBuilder.Entity<SyncHistoryItem>()
                 .Property(e => e.Memory)
                 .HasConversion(
                     v => JsonSerializer.Serialize(v, _jsonOptions),
                     v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, _jsonOptions) ?? new());
+
+            // The previous-sync lookup filters by deployment version and takes the latest by end time.
+            modelBuilder.Entity<SyncHistoryItem>()
+                .Property(e => e.DeploymentVersion)
+                .HasMaxLength(100);
+            modelBuilder.Entity<SyncHistoryItem>()
+                .HasIndex(e => new { e.DeploymentVersion, e.EndTime })
+                .IsUnique(false)
+                .HasDatabaseName("IX_SyncHistory_DeploymentVersion_EndTime");
 
             // String lists on the traceback record are stored as JSON, following the SyncHistoryItem.Memory pattern.
             var stringListConverter = new ValueConverter<List<string>, string>(

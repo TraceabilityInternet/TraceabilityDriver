@@ -9,7 +9,8 @@ using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Queries;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
+using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 
 namespace TraceabilityDriver.Tests.Services
@@ -17,6 +18,8 @@ namespace TraceabilityDriver.Tests.Services
     [TestFixture]
     public class SqlServerServiceTests
     {
+        private static readonly IReadOnlyDictionary<string, CommonEvent> NoCommonEvents = new Dictionary<string, CommonEvent>();
+
         private IDatabaseService _dbService;
         private EPCISDocument _testEPCISDocument;
         private IDbContextFactory<ApplicationDbContext> _contextFactory;
@@ -56,7 +59,7 @@ namespace TraceabilityDriver.Tests.Services
 
             _contextFactory = new PooledDbContextFactory<ApplicationDbContext>(options);
             ILogger<SqlServerService> logger = new LoggerFactory().CreateLogger<SqlServerService>();
-            _dbService = new SqlServerService(logger, _contextFactory);
+            _dbService = new SqlServerService(logger, _contextFactory, testConfig);
 
             // Clear out the data.
             await _dbService.ClearDatabaseAsync();
@@ -84,11 +87,12 @@ namespace TraceabilityDriver.Tests.Services
             // deserialize the test data into an EPCISDocument
             _testEPCISDocument = OpenTraceabilityMappers.EPCISDocument.JSON.Map(jsonData);
 
-            // save all the events into the sql db service
-            await _dbService.StoreEventsAsync(_testEPCISDocument.Events);
+            // save all the events into the sql db service; the incoming event ids act as the event
+            // keys and are replaced by the generated content-hash event ids
+            await _dbService.StoreEventsAsync(_testEPCISDocument.Events, "tests", NoCommonEvents);
 
             // save all the master data into the mongo db service
-            await _dbService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
+            await _dbService.StoreMasterDataAsync(_testEPCISDocument.MasterData, "tests");
         }
 
         [Test]
@@ -181,10 +185,7 @@ namespace TraceabilityDriver.Tests.Services
                 return;
             }
 
-            // Arrange
-            await _dbService.StoreEventsAsync(_testEPCISDocument.Events);
-
-            // Get a business step from the test data
+            // Arrange - the test data is already stored by the fixture setup.
             var testBizStep = _testEPCISDocument.Events.First().BusinessStep;
 
             var queryParams = new EPCISQueryParameters
@@ -213,10 +214,7 @@ namespace TraceabilityDriver.Tests.Services
                 return;
             }
 
-            // Arrange
-            await _dbService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
-
-            // Get an ID from the test data
+            // Arrange - the test data is already stored by the fixture setup.
             var testElementId = _testEPCISDocument.MasterData.First().ID;
 
             // Act
@@ -384,20 +382,27 @@ namespace TraceabilityDriver.Tests.Services
                 }
             }
 
-            // Measure the time taken to store events
+            // Measure the time taken to store events. The store replaces each event's EventID (the
+            // event key) with the content hash, so the keys are captured for the update pass below.
+            List<Uri> eventKeys = events.Select(e => e.EventID).ToList();
             List<List<IEvent>> batches = events.Batch(100);
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             foreach(var batch in batches)
             {
-                await _dbService.StoreEventsAsync(batch);
+                await _dbService.StoreEventsAsync(batch, "tests", NoCommonEvents);
             }
             stopwatch.Stop();
             TimeSpan savetime = stopwatch.Elapsed;
 
             stopwatch.Reset();
 
-            // measure the time taken to update events
+            // measure the time taken to update events, restoring the event keys the way a resync would
+            for (int i = 0; i < events.Count; i++)
+            {
+                events[i].EventID = eventKeys[i];
+            }
+
             stopwatch.Start();
             foreach (var batch in batches)
             {
@@ -405,7 +410,7 @@ namespace TraceabilityDriver.Tests.Services
                 {
                     eventItem.EventTime = eventItem.EventTime!.Value.AddMinutes(1);
                 }
-                await _dbService.StoreEventsAsync(batch);
+                await _dbService.StoreEventsAsync(batch, "tests", NoCommonEvents);
             }
             stopwatch.Stop();
             TimeSpan updatetime = stopwatch.Elapsed;

@@ -4,7 +4,7 @@ using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
 using TraceabilityDriver.Models.Traceback;
 
 namespace TraceabilityDriver.Services
@@ -92,13 +92,13 @@ namespace TraceabilityDriver.Services
                 DatabaseStoreResult eventsResult = new DatabaseStoreResult();
                 foreach (List<IEvent> batch in fetchResult.Document.Events.Batch(StoreBatchSize))
                 {
-                    eventsResult.Merge(await _databaseService.StoreEventsAsync(batch));
+                    eventsResult.Merge(await _databaseService.StoreTracebackEventsAsync(batch));
                 }
 
                 DatabaseStoreResult masterDataResult = new DatabaseStoreResult();
                 foreach (List<IVocabularyElement> batch in fetchResult.Document.MasterData.Batch(StoreBatchSize))
                 {
-                    masterDataResult.Merge(await _databaseService.StoreMasterDataAsync(batch));
+                    masterDataResult.Merge(await _databaseService.StoreTracebackMasterDataAsync(batch));
                 }
 
                 // Record the ledger: one entry per resource this run touched, keyed to the traceback record.

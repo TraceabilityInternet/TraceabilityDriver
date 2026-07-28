@@ -12,11 +12,11 @@ namespace TraceabilityDriver.Tests.Models
             // generate a simple test id
             CommonEvent commonEvent = new CommonEvent()
             {
-                EventId = "TestEvent123"
+                EventKey = "TestEvent123"
             };
 
             // conver the test id to our hash uri
-            Uri eventUri = commonEvent.GetEpcisEventId();
+            Uri eventUri = commonEvent.GetEventKey();
             string uriString = eventUri.ToString();
 
             // break apart the different key parts to check

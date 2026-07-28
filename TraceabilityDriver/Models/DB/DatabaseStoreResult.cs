@@ -1,4 +1,4 @@
-namespace TraceabilityDriver.Models.MongoDB
+namespace TraceabilityDriver.Models.DB
 {
     /// <summary>
     /// Reports which resources a store operation inserted and which it updated, keyed by their natural ids.

@@ -53,7 +53,7 @@ namespace TraceabilityDriver.Tests.Services
                 .Options;
 
             _contextFactory = new PooledDbContextFactory<ApplicationDbContext>(options);
-            _dbService = new SqlServerService(new LoggerFactory().CreateLogger<SqlServerService>(), _contextFactory);
+            _dbService = new SqlServerService(new LoggerFactory().CreateLogger<SqlServerService>(), _contextFactory, configuration);
         }
 
         /// <summary>

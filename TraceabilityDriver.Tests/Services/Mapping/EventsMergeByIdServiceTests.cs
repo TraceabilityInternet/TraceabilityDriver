@@ -47,9 +47,9 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var events = new List<CommonEvent>
             {
-                new CommonEvent { EventId = "1", EventType = "Type1" },
-                new CommonEvent { EventId = "2", EventType = "Type2" },
-                new CommonEvent { EventId = "3", EventType = "Type3" }
+                new CommonEvent { EventKey = "1", EventType = "Type1" },
+                new CommonEvent { EventKey = "2", EventType = "Type2" },
+                new CommonEvent { EventKey = "3", EventType = "Type3" }
             };
 
             // Act
@@ -57,9 +57,9 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(3));
-            Assert.That(result[0].EventId, Is.EqualTo("1"));
-            Assert.That(result[1].EventId, Is.EqualTo("2"));
-            Assert.That(result[2].EventId, Is.EqualTo("3"));
+            Assert.That(result[0].EventKey, Is.EqualTo("1"));
+            Assert.That(result[1].EventKey, Is.EqualTo("2"));
+            Assert.That(result[2].EventKey, Is.EqualTo("3"));
         }
 
         [Test]
@@ -68,9 +68,9 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var events = new List<CommonEvent>
             {
-                new CommonEvent { EventId = "1", EventType = "Type1" },
-                new CommonEvent { EventId = "2", EventType = "Type2" },
-                new CommonEvent { EventId = "1", EventType = "Type1" }
+                new CommonEvent { EventKey = "1", EventType = "Type1" },
+                new CommonEvent { EventKey = "2", EventType = "Type2" },
+                new CommonEvent { EventKey = "1", EventType = "Type1" }
             };
 
             // Act
@@ -78,8 +78,8 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(2));
-            Assert.That(result.Count(e => e.EventId == "1"), Is.EqualTo(1));
-            Assert.That(result.Count(e => e.EventId == "2"), Is.EqualTo(1));
+            Assert.That(result.Count(e => e.EventKey == "1"), Is.EqualTo(1));
+            Assert.That(result.Count(e => e.EventKey == "2"), Is.EqualTo(1));
         }
 
         [Test]
@@ -88,14 +88,14 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var firstEvent = new CommonEvent
             {
-                EventId = "1",
+                EventKey = "1",
                 EventType = "Type1",
                 Location = new CommonLocation { Name = "ABC Inc." }
             };
 
             var secondEvent = new CommonEvent
             {
-                EventId = "1", 
+                EventKey = "1", 
                 EventType = "Type1",
                 Location = new CommonLocation { Name = "ABC" }
             };
@@ -117,7 +117,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var firstEvent = new CommonEvent
             {
-                EventId = "1",
+                EventKey = "1",
                 EventType = "Type1",
                 EventTime = new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 Location = new CommonLocation { Name = "ABC Inc." }
@@ -125,7 +125,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
 
             var secondEvent = new CommonEvent
             {
-                EventId = "1",
+                EventKey = "1",
                 EventType = "Type1",
                 Location = new CommonLocation { 
                     LocationId = "LOC123", 
@@ -142,7 +142,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(result.Count, Is.EqualTo(1));
             
             var mergedEvent = result[0];
-            Assert.That(mergedEvent.EventId, Is.EqualTo("1"));
+            Assert.That(mergedEvent.EventKey, Is.EqualTo("1"));
             Assert.That(mergedEvent.EventType, Is.EqualTo("Type1"));
             Assert.That(mergedEvent.EventTime, Is.EqualTo(new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero)));
             
@@ -158,10 +158,10 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Arrange
             var events = new List<CommonEvent>
             {
-                new CommonEvent { EventId = "1", EventType = "Type1", EventTime = new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero) },
-                new CommonEvent { EventId = "2", EventType = "Type2" },
-                new CommonEvent { EventId = "1", Location = new CommonLocation { Name = "Location1" } },
-                new CommonEvent { EventId = "2", ProductOwner = new CommonParty { Name = "Owner2" } }
+                new CommonEvent { EventKey = "1", EventType = "Type1", EventTime = new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero) },
+                new CommonEvent { EventKey = "2", EventType = "Type2" },
+                new CommonEvent { EventKey = "1", Location = new CommonLocation { Name = "Location1" } },
+                new CommonEvent { EventKey = "2", ProductOwner = new CommonParty { Name = "Owner2" } }
             };
 
             // Act
@@ -170,12 +170,12 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             // Assert
             Assert.That(result.Count, Is.EqualTo(2));
             
-            var event1 = result.First(e => e.EventId == "1");
+            var event1 = result.First(e => e.EventKey == "1");
             Assert.That(event1.EventType, Is.EqualTo("Type1"));
             Assert.That(event1.EventTime, Is.EqualTo(new DateTimeOffset(2023, 1, 1, 0, 0, 0, TimeSpan.Zero)));
             Assert.That(event1.Location?.Name, Is.EqualTo("Location1"));
 
-            var event2 = result.First(e => e.EventId == "2");
+            var event2 = result.First(e => e.EventKey == "2");
             Assert.That(event2.EventType, Is.EqualTo("Type2"));
             Assert.That(event2.ProductOwner?.Name, Is.EqualTo("Owner2"));
         }

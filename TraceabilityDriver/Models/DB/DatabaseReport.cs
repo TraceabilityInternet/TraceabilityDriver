@@ -1,4 +1,4 @@
-﻿namespace TraceabilityDriver.Models.MongoDB
+﻿namespace TraceabilityDriver.Models.DB
 {
     /// <summary>
     /// A report on the data in the database for reporting purposes.

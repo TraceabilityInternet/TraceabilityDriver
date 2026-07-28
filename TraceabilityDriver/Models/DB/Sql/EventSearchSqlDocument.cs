@@ -1,13 +1,17 @@
-﻿using OpenTraceability.GDST.Events;
+using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
-namespace TraceabilityDriver.Models.Sql
+namespace TraceabilityDriver.Models.DB.Sql
 {
     /// <summary>
-    /// A model class for entity framework for saving searchable fields into the SQL server
-    /// in a way that they can also be indexed.
+    /// A flattened, indexable event search row used to filter events in SQL server.
     /// </summary>
+    /// <remarks>
+    /// One row is created per "slot" of an event's searchable values (EPCs, GTINs, GLNs, PGLNs); unused
+    /// columns on a row are left empty. Synced rows carry the deployment version and event key of the
+    /// event that produced them so a resync can replace them; traceback rows carry neither.
+    /// </remarks>
     public class EventSearchSqlDocument
     {
         [Key]
@@ -17,6 +21,17 @@ namespace TraceabilityDriver.Models.Sql
         /// The event ID that is being indexed.
         /// </summary>
         public string EventId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The event key of the synced event the row belongs to, used to replace the rows when the
+        /// event is stored again. Null on traceback rows.
+        /// </summary>
+        public string? EventKey { get; set; } = null;
+
+        /// <summary>
+        /// The deployment version the event was synced under. Null on traceback rows.
+        /// </summary>
+        public string? DeploymentVersion { get; set; } = null;
 
         /// <summary>
         /// Represents the business step associated with a process. Initialized to an empty string.
@@ -60,6 +75,11 @@ namespace TraceabilityDriver.Models.Sql
         /// </summary>
         public string PartyPGLN { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Creates the flattened search rows for the given events, one row per searchable value slot.
+        /// </summary>
+        /// <param name="evts">The events to flatten into search rows.</param>
+        /// <returns>The search rows for all of the given events.</returns>
         public static List<EventSearchSqlDocument> CreateSearchDocuments(List<IEvent> evts)
         {
             List<EventSearchSqlDocument> searchDocument = new List<EventSearchSqlDocument>();

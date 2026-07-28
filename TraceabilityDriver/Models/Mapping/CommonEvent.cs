@@ -10,9 +10,11 @@ namespace TraceabilityDriver.Models.Mapping;
 public class CommonEvent : CommonBaseModel
 {
     /// <summary>
-    /// The id of the event. This is used for merging the events together.
+    /// The source-system key of the event. This is used for merging together events that span multiple
+    /// rows of the sync query results, and is persisted so later sync runs can merge additional rows
+    /// into the same event. Traceback events have no event key.
     /// </summary>
-    public string? EventId { get; set; } = null;
+    public string? EventKey { get; set; } = null;
 
     /// <summary>
     /// The type of the event.
@@ -300,15 +302,23 @@ public class CommonEvent : CommonBaseModel
     }
 
     /// <summary>
-    /// Generates a SHA-256 hash from the event ID and returns in the format "urn:uuid:{hash}".
+    /// Generates the deterministic event key URI by hashing the identifier domain, event type, and
+    /// source-system event key.
     /// </summary>
-    /// <returns>The event ID.</returns>
-    public Uri GetEpcisEventId()
+    /// <remarks>
+    /// This is NOT the EPCIS event id; the real event id is generated from the full event content with
+    /// the OpenTraceability EventHashGenerator when the event is saved. The key returned here identifies
+    /// the logical source event, so it stays stable while the event's content is still accumulating
+    /// across sync runs, and is what synced events are upserted by.
+    /// </remarks>
+    /// <returns>The event key URI.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <see cref="EventKey"/> is null or whitespace.</exception>
+    public Uri GetEventKey()
     {
-        ArgumentNullException.ThrowIfNullOrWhiteSpace(this.EventId);
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(this.EventKey);
 
         using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventType}:{this.EventId}"));
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventType}:{this.EventKey}"));
 
         return new Uri($"ni:///sha-256;{BitConverter.ToString(hash).Replace("-", "").ToLower()}?ver=CBV2.0");
     }

@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
+using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Services;
 using OpenTraceability.Mappers;
 
@@ -42,7 +44,7 @@ namespace TraceabilityDriver.Tests.Services
                 .Build();
 
             // Create service with test configuration
-            _mongoDBService = new MongoDBService(testConfig);
+            _mongoDBService = new MongoDBService(new LoggerFactory().CreateLogger<MongoDBService>(), testConfig);
 
             // Clear out the data.
             await _mongoDBService.ClearDatabaseAsync();
@@ -67,11 +69,12 @@ namespace TraceabilityDriver.Tests.Services
             // deserialize the test data into an EPCISDocument
             _testEPCISDocument = OpenTraceabilityMappers.EPCISDocument.JSON.Map(jsonData);
 
-            // save all the events into the mongo db service
-            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events);
+            // save all the events into the mongo db service; the incoming event ids act as the event
+            // keys and are replaced by the generated content-hash event ids
+            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events, "tests", new Dictionary<string, CommonEvent>());
 
             // save all the master data into the mongo db service
-            await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
+            await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData, "tests");
         }
 
         [Test]
@@ -164,10 +167,7 @@ namespace TraceabilityDriver.Tests.Services
                 return;
             }
 
-            // Arrange
-            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events);
-            
-            // Get a business step from the test data
+            // Arrange - the test data is already stored by the fixture setup.
             var testBizStep = _testEPCISDocument.Events.First().BusinessStep;
             
             var queryParams = new EPCISQueryParameters
@@ -196,10 +196,7 @@ namespace TraceabilityDriver.Tests.Services
                 return;
             }
 
-            // Arrange
-            await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData);
-            
-            // Get an ID from the test data
+            // Arrange - the test data is already stored by the fixture setup.
             var testElementId = _testEPCISDocument.MasterData.First().ID;
 
             // Act

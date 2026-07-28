@@ -4,7 +4,7 @@ using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Models.Events;
 
-namespace TraceabilityDriver.Models.MongoDB
+namespace TraceabilityDriver.Models.DB.MongoDB
 {
     public class EPCISEventDocument
     {
@@ -13,6 +13,23 @@ namespace TraceabilityDriver.Models.MongoDB
         public string Id { get; set; } = ObjectId.GenerateNewId().ToString();
 
         public string EventId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The deterministic source-event key synced events are upserted by. Null on traceback documents.
+        /// </summary>
+        public string? EventKey { get; set; }
+
+        /// <summary>
+        /// The deployment version the event was synced under. Null on traceback documents, which are
+        /// not versioned.
+        /// </summary>
+        public string? DeploymentVersion { get; set; }
+
+        /// <summary>
+        /// The merged common event the synced event was converted from, so later sync runs can merge
+        /// additional source rows into it. Null on traceback documents.
+        /// </summary>
+        public string? CommonEventJson { get; set; }
 
         public string EventJson { get; set; } = string.Empty;
 

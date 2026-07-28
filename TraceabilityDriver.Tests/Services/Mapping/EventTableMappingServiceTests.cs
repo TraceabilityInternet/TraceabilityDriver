@@ -36,7 +36,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 Fields = new List<TDEventMappingField>
                     {
-                        new TDEventMappingField("EventId", "$Id", typeof(CommonEvent).GetProperty("EventId")!),
+                        new TDEventMappingField("EventKey", "$Id", typeof(CommonEvent).GetProperty("EventKey")!),
                         new TDEventMappingField("Products[0].ProductType", "$ProductType", typeof(CommonProduct).GetProperty("ProductType")!),
                         new TDEventMappingField("Products[0].ProductId", "$ProductId", typeof(CommonProduct).GetProperty("ProductId")!),
                     }
@@ -67,7 +67,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 Fields = new List<TDEventMappingField>
                 {
-                    new TDEventMappingField("EventId", "$Id", typeof(CommonEvent).GetProperty("EventId")!)
+                    new TDEventMappingField("EventKey", "$Id", typeof(CommonEvent).GetProperty("EventKey")!)
                 }
             };
 
@@ -90,7 +90,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 Fields = new List<TDEventMappingField>
                 {
-                    new TDEventMappingField("EventId", "!123", typeof(CommonEvent).GetProperty("EventId")!)
+                    new TDEventMappingField("EventKey", "!123", typeof(CommonEvent).GetProperty("EventKey")!)
                 }
             };
 
@@ -102,7 +102,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             _service.MapEventFieldToCommonEvent(eventMapping.Fields.First(), dataRow, commonEvent);
 
             // Assert
-            Assert.That(commonEvent.EventId, Is.EqualTo("123"));
+            Assert.That(commonEvent.EventKey, Is.EqualTo("123"));
         }
 
         [Test]
@@ -115,7 +115,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             {
                 Fields = new List<TDEventMappingField>
                 {
-                    new TDEventMappingField("EventId", "TestFunction(FunctionResult)", typeof(CommonEvent).GetProperty("EventId")!)
+                    new TDEventMappingField("EventKey", "TestFunction(FunctionResult)", typeof(CommonEvent).GetProperty("EventKey")!)
                 }
             };
 
@@ -130,7 +130,7 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             _service.MapEventFieldToCommonEvent(eventMapping.Fields.First(), dataRow, commonEvent);
 
             // Assert
-            Assert.That(commonEvent.EventId, Is.EqualTo("FunctionResult"));
+            Assert.That(commonEvent.EventKey, Is.EqualTo("FunctionResult"));
         }
 
         [Test]
@@ -236,14 +236,14 @@ namespace TraceabilityDriver.Tests.Services.Mapping
         {
             // Arrange
             var commonEvent = new CommonEvent();
-            var propertyInfo = typeof(CommonEvent).GetProperty("EventId")!;
+            var propertyInfo = typeof(CommonEvent).GetProperty("EventKey")!;
             string value = "TestEvent";
 
             // Act
             _service.TryToSetValue(commonEvent, propertyInfo, value);
 
             // Assert
-            Assert.That(commonEvent.EventId, Is.EqualTo(value));
+            Assert.That(commonEvent.EventKey, Is.EqualTo(value));
         }
 
         [Test]

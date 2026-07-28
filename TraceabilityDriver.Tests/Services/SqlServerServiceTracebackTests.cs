@@ -26,7 +26,7 @@ namespace TraceabilityDriver.Tests.Services
 
             var contextFactory = new PooledDbContextFactory<ApplicationDbContext>(options);
             ILogger<SqlServerService> logger = new LoggerFactory().CreateLogger<SqlServerService>();
-            return new SqlServerService(logger, contextFactory);
+            return new SqlServerService(logger, contextFactory, configuration);
         }
     }
 }

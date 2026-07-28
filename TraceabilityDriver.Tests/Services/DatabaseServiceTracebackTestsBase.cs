@@ -1,7 +1,11 @@
 using Microsoft.Extensions.Configuration;
+using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
-using TraceabilityDriver.Models.MongoDB;
+using OpenTraceability.Queries;
+using OpenTraceability.Utility;
+using TraceabilityDriver.Models.DB;
+using TraceabilityDriver.Models.Mapping;
 using TraceabilityDriver.Models.Traceback;
 using TraceabilityDriver.Services;
 
@@ -11,12 +15,28 @@ namespace TraceabilityDriver.Tests.Services
     /// Shared traceback storage tests that must hold for every <see cref="IDatabaseService"/> backend.
     /// </summary>
     /// <remarks>
-    /// Both backends must satisfy the same contract: store methods report created versus updated ids,
-    /// traceback records upsert by id, ledger items upsert by their (TracebackId, ItemType, ItemId) key,
-    /// and the history queries order and filter correctly. Concrete fixtures supply the backend.
+    /// Both backends must satisfy the same contract: synced events are upserted by (event key, deployment
+    /// version) with their EventID replaced by the CBV 2.0 content hash, traceback data is stored with a
+    /// null deployment version and skipped when its id already exists under the current version or as
+    /// traceback data, traceback records upsert by id, ledger items upsert by their
+    /// (TracebackId, ItemType, ItemId) key, and the history queries order and filter correctly. Queries
+    /// serve the synced data of the configured deployment version merged with the traceback data, with
+    /// the synced copy winning on the same event id. Concrete fixtures supply the backend. Tests share
+    /// one cleared database per fixture, so each test uses its own slice of the shared test document and
+    /// asserts by event/element id rather than result counts.
     /// </remarks>
     public abstract class DatabaseServiceTracebackTestsBase
     {
+        /// <summary>
+        /// An empty common events dictionary for stores where the persisted common event is irrelevant.
+        /// </summary>
+        private static readonly IReadOnlyDictionary<string, CommonEvent> NoCommonEvents = new Dictionary<string, CommonEvent>();
+        /// <summary>
+        /// The deployment version configured in appsettings.Tests.json, which the backends under test
+        /// read for their query paths.
+        /// </summary>
+        protected const string TestDeploymentVersion = "tests";
+
         protected IDatabaseService _dbService = null!;
         protected bool _skipTests = false;
         private EPCISDocument _testDocument = null!;
@@ -74,25 +94,35 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
-        /// The first store of an event must report it as created; the second store must report it as updated.
+        /// The first store of an event must report it as created; storing the same events under the same
+        /// keys again must report them as updated. The reported ids are the generated content-hash event
+        /// ids, not the incoming event keys.
         /// </summary>
         [Test]
         public async Task StoreEventsAsync_StoredTwice_ReportsCreatedThenUpdated()
         {
             SkipIfUnavailable();
 
-            // Arrange
+            // Arrange - the incoming EventID acts as the event key and is replaced by the store, so it
+            // must be reset between stores the way the converter would stamp it on a resync.
             var events = _testDocument.Events.GroupBy(e => e.EventID.ToString()).Select(g => g.First()).Take(3).ToList();
-            List<string> eventIds = events.Select(e => e.EventID.ToString()).OrderBy(x => x).ToList();
+            List<Uri> eventKeys = events.Select(e => e.EventID).ToList();
 
             // Act
-            DatabaseStoreResult firstResult = await _dbService.StoreEventsAsync(events);
-            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(events);
+            DatabaseStoreResult firstResult = await _dbService.StoreEventsAsync(events, TestDeploymentVersion, NoCommonEvents);
+            List<string> hashEventIds = events.Select(e => e.EventID.ToString()).OrderBy(x => x).ToList();
+
+            for (int i = 0; i < events.Count; i++)
+            {
+                events[i].EventID = eventKeys[i];
+            }
+            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(events, TestDeploymentVersion, NoCommonEvents);
 
             // Assert
-            Assert.That(firstResult.CreatedIds.OrderBy(x => x), Is.EqualTo(eventIds), "The first store must report every event as created.");
+            Assert.That(hashEventIds.All(id => System.Text.RegularExpressions.Regex.IsMatch(id, @"^ni:///sha-256;[0-9a-f]{64}\?ver=CBV2\.0$")), Is.True, "The store must replace the incoming event key with the generated CBV 2.0 event hash.");
+            Assert.That(firstResult.CreatedIds.OrderBy(x => x), Is.EqualTo(hashEventIds), "The first store must report every event as created.");
             Assert.That(firstResult.UpdatedIds, Is.Empty);
-            Assert.That(secondResult.UpdatedIds.OrderBy(x => x), Is.EqualTo(eventIds), "The second store must report every event as updated.");
+            Assert.That(secondResult.UpdatedIds.OrderBy(x => x), Is.EqualTo(hashEventIds), "The second store must report every event as updated.");
             Assert.That(secondResult.CreatedIds, Is.Empty);
         }
 
@@ -109,8 +139,8 @@ namespace TraceabilityDriver.Tests.Services
             List<string> elementIds = masterData.Select(m => m.ID).OrderBy(x => x).ToList();
 
             // Act
-            DatabaseStoreResult firstResult = await _dbService.StoreMasterDataAsync(masterData);
-            DatabaseStoreResult secondResult = await _dbService.StoreMasterDataAsync(masterData);
+            DatabaseStoreResult firstResult = await _dbService.StoreMasterDataAsync(masterData, TestDeploymentVersion);
+            DatabaseStoreResult secondResult = await _dbService.StoreMasterDataAsync(masterData, TestDeploymentVersion);
 
             // Assert
             Assert.That(firstResult.CreatedIds.OrderBy(x => x), Is.EqualTo(elementIds));
@@ -251,6 +281,356 @@ namespace TraceabilityDriver.Tests.Services
 
             // Assert
             Assert.That(record, Is.Null);
+        }
+
+        /// <summary>
+        /// Returns the distinct events of the shared test document that carry at least one product EPC,
+        /// so tests can slice non-overlapping events and query them back by EPC.
+        /// </summary>
+        private List<IEvent> GetQueryableEvents()
+        {
+            return _testDocument.Events.Where(e => e.Products.Any()).GroupBy(e => e.EventID.ToString()).Select(g => g.First()).ToList();
+        }
+
+        /// <summary>
+        /// Queries events matching the first product EPC of the given event.
+        /// </summary>
+        private async Task<EPCISQueryDocument> QueryEventsByEpcAsync(IEvent evt)
+        {
+            EPCISQueryParameters queryParameters = new EPCISQueryParameters
+            {
+                query = new EPCISQuery
+                {
+                    MATCH_anyEPC = new List<string> { evt.Products.First().EPC.ToString().ToLower() }
+                }
+            };
+
+            return await _dbService.QueryEvents(queryParameters);
+        }
+
+        /// <summary>
+        /// The same event stored under two deployment versions must coexist, and queries must serve only
+        /// the copy of the currently configured deployment version.
+        /// </summary>
+        [Test]
+        public async Task StoreEventsAsync_TwoDeploymentVersions_QueryServesOnlyCurrentVersion()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            List<IEvent> events = GetQueryableEvents();
+            IEvent currentVersionEvent = events[3];
+            IEvent oldVersionOnlyEvent = events[9];
+
+            // Act - the same event under an old version and the current version, plus an event that only
+            // exists under the old version. The event key is reset between stores because the store
+            // replaces the incoming EventID with the content hash.
+            Uri currentVersionEventKey = currentVersionEvent.EventID;
+            await _dbService.StoreEventsAsync(new List<IEvent> { currentVersionEvent }, "old-version", NoCommonEvents);
+            currentVersionEvent.EventID = currentVersionEventKey;
+            await _dbService.StoreEventsAsync(new List<IEvent> { currentVersionEvent }, TestDeploymentVersion, NoCommonEvents);
+            await _dbService.StoreEventsAsync(new List<IEvent> { oldVersionOnlyEvent }, "old-version", NoCommonEvents);
+
+            EPCISQueryDocument currentResult = await QueryEventsByEpcAsync(currentVersionEvent);
+            EPCISQueryDocument oldOnlyResult = await QueryEventsByEpcAsync(oldVersionOnlyEvent);
+
+            // Assert
+            Assert.That(currentResult.Events.Count(e => e.EventID == currentVersionEvent.EventID), Is.EqualTo(1), "The copies from both versions must coexist, but only the current version's copy is served.");
+            Assert.That(oldOnlyResult.Events.Any(e => e.EventID == oldVersionOnlyEvent.EventID), Is.False, "An event synced only under an old deployment version must not be served.");
+        }
+
+        /// <summary>
+        /// A tracebacked event whose event id already exists as a synced copy under the current
+        /// deployment version must be skipped, and queries keep serving the synced copy; tracebacked
+        /// events without a synced twin must always be served.
+        /// </summary>
+        [Test]
+        public async Task StoreTracebackEventsAsync_SyncedCopyExists_SkipsTracebackCopy()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            List<IEvent> events = GetQueryableEvents();
+            IEvent overlappingEvent = events[4];
+            IEvent tracebackOnlyEvent = events[5];
+            DateTimeOffset syncedEventTime = overlappingEvent.EventTime!.Value;
+
+            // Act - store the synced copy first (this replaces the EventID with the content hash), then
+            // shift the event time so the traceback copy would be distinguishable if it were stored, and
+            // store both events as traceback data.
+            await _dbService.StoreEventsAsync(new List<IEvent> { overlappingEvent }, TestDeploymentVersion, NoCommonEvents);
+            overlappingEvent.EventTime = syncedEventTime.AddMinutes(5);
+            DatabaseStoreResult tracebackResult = await _dbService.StoreTracebackEventsAsync(new List<IEvent> { overlappingEvent, tracebackOnlyEvent });
+
+            EPCISQueryDocument overlapResult = await QueryEventsByEpcAsync(overlappingEvent);
+            EPCISQueryDocument tracebackOnlyResult = await QueryEventsByEpcAsync(tracebackOnlyEvent);
+
+            // Assert
+            Assert.That(tracebackResult.CreatedIds, Is.EqualTo(new List<string> { tracebackOnlyEvent.EventID.ToString() }), "Only the event without a synced twin may be stored.");
+            Assert.That(tracebackResult.UpdatedIds, Is.Empty, "Traceback data must never update existing records.");
+
+            List<IEvent> overlappingCopies = overlapResult.Events.Where(e => e.EventID == overlappingEvent.EventID).ToList();
+            Assert.That(overlappingCopies, Has.Count.EqualTo(1), "The overlapping event must be served exactly once.");
+            Assert.That(overlappingCopies[0].EventTime, Is.EqualTo(syncedEventTime), "The synced copy must win over the tracebacked copy.");
+            Assert.That(tracebackOnlyResult.Events.Any(e => e.EventID == tracebackOnlyEvent.EventID), Is.True, "Tracebacked events must always be served.");
+        }
+
+        /// <summary>
+        /// When a traceback copy is stored first and the same event id is later synced under the current
+        /// deployment version, both rows coexist but queries must serve only the synced copy.
+        /// </summary>
+        [Test]
+        public async Task QueryEvents_TracebackStoredBeforeSync_SyncedCopyWins()
+        {
+            SkipIfUnavailable();
+
+            // Arrange - give the traceback copy the exact event id the synced copy will be stored under
+            // (the content hash of the unmodified event), then make its content distinguishable.
+            List<IEvent> events = GetQueryableEvents();
+            IEvent evt = events[10];
+            Uri eventKey = evt.EventID;
+            DateTimeOffset syncedEventTime = evt.EventTime!.Value;
+            string expectedEventId = EventHashGenerator.GenerateHash(evt);
+
+            evt.EventID = new Uri(expectedEventId);
+            evt.EventTime = syncedEventTime.AddMinutes(5);
+            await _dbService.StoreTracebackEventsAsync(new List<IEvent> { evt });
+
+            // Act - restore the content and sync the event under the current deployment version.
+            evt.EventTime = syncedEventTime;
+            evt.EventID = eventKey;
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, NoCommonEvents);
+
+            EPCISQueryDocument result = await QueryEventsByEpcAsync(evt);
+
+            // Assert
+            Assert.That(evt.EventID.ToString(), Is.EqualTo(expectedEventId), "The synced copy must be stored under the content hash the traceback copy carried.");
+            List<IEvent> copies = result.Events.Where(e => e.EventID == evt.EventID).ToList();
+            Assert.That(copies, Has.Count.EqualTo(1), "The same event id in both stores must be served once.");
+            Assert.That(copies[0].EventTime, Is.EqualTo(syncedEventTime), "The synced copy must win over the tracebacked copy.");
+        }
+
+        /// <summary>
+        /// The first traceback store of an event must report it as created; the second store must skip
+        /// it entirely, reporting it as neither created nor updated.
+        /// </summary>
+        [Test]
+        public async Task StoreTracebackEventsAsync_StoredTwice_ReportsCreatedThenSkips()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            var events = GetQueryableEvents().Skip(6).Take(3).ToList();
+            List<string> eventIds = events.Select(e => e.EventID.ToString()).OrderBy(x => x).ToList();
+
+            // Act
+            DatabaseStoreResult firstResult = await _dbService.StoreTracebackEventsAsync(events);
+            DatabaseStoreResult secondResult = await _dbService.StoreTracebackEventsAsync(events);
+
+            // Assert
+            Assert.That(firstResult.CreatedIds.OrderBy(x => x), Is.EqualTo(eventIds), "The first store must report every event as created.");
+            Assert.That(firstResult.UpdatedIds, Is.Empty);
+            Assert.That(secondResult.CreatedIds, Is.Empty, "The second store must skip every event that already exists.");
+            Assert.That(secondResult.UpdatedIds, Is.Empty, "Traceback data must never update existing records.");
+        }
+
+        /// <summary>
+        /// An event that exists only under an old deployment version must not block a traceback store,
+        /// because data of old versions is never served.
+        /// </summary>
+        [Test]
+        public async Task StoreTracebackEventsAsync_ExistsOnlyUnderOldVersion_StoresEvent()
+        {
+            SkipIfUnavailable();
+
+            // Arrange - sync the event under an old version; the store leaves its EventID set to the
+            // content hash, which is the id the traceback copy is then checked by.
+            List<IEvent> events = GetQueryableEvents();
+            IEvent evt = events[11];
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, "old-version", NoCommonEvents);
+
+            // Act
+            DatabaseStoreResult result = await _dbService.StoreTracebackEventsAsync(new List<IEvent> { evt });
+
+            // Assert
+            Assert.That(result.CreatedIds, Is.EqualTo(new List<string> { evt.EventID.ToString() }), "An event known only under an old deployment version must not block the traceback store.");
+        }
+
+        /// <summary>
+        /// The first traceback store of a master data element must report it as created; the second store
+        /// must skip it entirely, reporting it as neither created nor updated.
+        /// </summary>
+        [Test]
+        public async Task StoreTracebackMasterDataAsync_StoredTwice_ReportsCreatedThenSkips()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            var masterData = _testDocument.MasterData.GroupBy(m => m.ID).Select(g => g.First()).Skip(3).Take(3).ToList();
+            List<string> elementIds = masterData.Select(m => m.ID).OrderBy(x => x).ToList();
+
+            // Act
+            DatabaseStoreResult firstResult = await _dbService.StoreTracebackMasterDataAsync(masterData);
+            DatabaseStoreResult secondResult = await _dbService.StoreTracebackMasterDataAsync(masterData);
+
+            // Assert
+            Assert.That(firstResult.CreatedIds.OrderBy(x => x), Is.EqualTo(elementIds));
+            Assert.That(firstResult.UpdatedIds, Is.Empty);
+            Assert.That(secondResult.CreatedIds, Is.Empty, "The second store must skip every element that already exists.");
+            Assert.That(secondResult.UpdatedIds, Is.Empty, "Traceback data must never update existing records.");
+        }
+
+        /// <summary>
+        /// An element that exists only under an old deployment version must not block a traceback store,
+        /// because data of old versions is never served.
+        /// </summary>
+        [Test]
+        public async Task StoreTracebackMasterDataAsync_ExistsOnlyUnderOldVersion_StoresElement()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            var masterData = _testDocument.MasterData.GroupBy(m => m.ID).Select(g => g.First()).ToList();
+            IVocabularyElement element = masterData[8];
+            await _dbService.StoreMasterDataAsync(new List<IVocabularyElement> { element }, "old-version");
+
+            // Act
+            DatabaseStoreResult result = await _dbService.StoreTracebackMasterDataAsync(new List<IVocabularyElement> { element });
+
+            // Assert
+            Assert.That(result.CreatedIds, Is.EqualTo(new List<string> { element.ID }), "An element known only under an old deployment version must not block the traceback store.");
+        }
+
+        /// <summary>
+        /// Master data must fall back to the traceback store when the element was not synced under the
+        /// current deployment version, and elements synced only under old versions must not be served.
+        /// </summary>
+        [Test]
+        public async Task QueryMasterData_NotSyncedUnderCurrentVersion_FallsBackToTracebackStore()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            var masterData = _testDocument.MasterData.GroupBy(m => m.ID).Select(g => g.First()).ToList();
+            var tracebackOnlyElement = masterData[6];
+            var oldVersionOnlyElement = masterData[7];
+
+            // Act
+            await _dbService.StoreTracebackMasterDataAsync(new List<IVocabularyElement> { tracebackOnlyElement });
+            await _dbService.StoreMasterDataAsync(new List<IVocabularyElement> { oldVersionOnlyElement }, "old-version");
+
+            IVocabularyElement? tracebackResult = await _dbService.QueryMasterData(tracebackOnlyElement.ID);
+            IVocabularyElement? oldVersionResult = await _dbService.QueryMasterData(oldVersionOnlyElement.ID);
+
+            // Assert
+            Assert.That(tracebackResult, Is.Not.Null, "Tracebacked master data must be served when there is no synced copy.");
+            Assert.That(tracebackResult!.ID, Is.EqualTo(tracebackOnlyElement.ID));
+            Assert.That(oldVersionResult, Is.Null, "Master data synced only under an old deployment version must not be served.");
+        }
+
+        /// <summary>
+        /// Re-storing an event under the same event key with changed content must update the existing
+        /// record in place: the stored event id switches to the new content hash and queries serve the
+        /// merged copy exactly once, with no stale copy left under the old event id.
+        /// </summary>
+        [Test]
+        public async Task StoreEventsAsync_ContentChangesUnderSameEventKey_UpsertsAndReplacesEventId()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            List<IEvent> events = GetQueryableEvents();
+            IEvent evt = events[12];
+            Uri eventKey = evt.EventID;
+            DateTimeOffset originalEventTime = evt.EventTime!.Value;
+
+            // Act - store, then change the content (which changes the content hash) and store again
+            // under the same event key.
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, NoCommonEvents);
+            string firstEventId = evt.EventID.ToString();
+
+            evt.EventTime = originalEventTime.AddMinutes(7);
+            evt.EventID = eventKey;
+            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, NoCommonEvents);
+            string secondEventId = evt.EventID.ToString();
+
+            EPCISQueryDocument result = await QueryEventsByEpcAsync(evt);
+
+            // Assert
+            Assert.That(secondEventId, Is.Not.EqualTo(firstEventId), "Changing the event content must change the content-hash event id.");
+            Assert.That(secondResult.UpdatedIds, Is.EqualTo(new List<string> { secondEventId }), "The second store must update the existing record because it shares the event key.");
+            Assert.That(secondResult.CreatedIds, Is.Empty);
+            Assert.That(result.Events.Count(e => e.EventID.ToString() == secondEventId), Is.EqualTo(1), "The updated event must be served exactly once.");
+            Assert.That(result.Events.Any(e => e.EventID.ToString() == firstEventId), Is.False, "No stale copy may remain under the superseded event id.");
+        }
+
+        /// <summary>
+        /// The common event stored alongside a synced event must round-trip through
+        /// GetCommonEventsAsync, scoped to the deployment version it was stored under.
+        /// </summary>
+        [Test]
+        public async Task GetCommonEventsAsync_StoredCommonEvent_RoundTripsByKeyAndVersion()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            List<IEvent> events = GetQueryableEvents();
+            IEvent evt = events[13];
+            string eventKey = evt.EventID.ToString();
+
+            CommonEvent commonEvent = new CommonEvent
+            {
+                EventKey = "roundtrip-key-001",
+                EventType = "shippingevent",
+                TransportNumber = "TN-42",
+                EventTime = evt.EventTime
+            };
+            IReadOnlyDictionary<string, CommonEvent> commonEventsByKey = new Dictionary<string, CommonEvent> { [eventKey] = commonEvent };
+
+            // Act
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, commonEventsByKey);
+
+            Dictionary<string, CommonEvent> stored = await _dbService.GetCommonEventsAsync(new List<string> { eventKey, "unknown-key" }, TestDeploymentVersion);
+            Dictionary<string, CommonEvent> otherVersion = await _dbService.GetCommonEventsAsync(new List<string> { eventKey }, "old-version");
+
+            // Assert
+            Assert.That(stored.ContainsKey(eventKey), Is.True, "The stored common event must be returned for its event key.");
+            Assert.That(stored[eventKey].EventKey, Is.EqualTo("roundtrip-key-001"));
+            Assert.That(stored[eventKey].EventType, Is.EqualTo("shippingevent"));
+            Assert.That(stored[eventKey].TransportNumber, Is.EqualTo("TN-42"));
+            Assert.That(stored.ContainsKey("unknown-key"), Is.False, "Keys with no stored event must be absent from the result.");
+            Assert.That(otherVersion, Is.Empty, "The lookup must be scoped to the requested deployment version.");
+        }
+
+        /// <summary>
+        /// The previous-sync lookup must return the latest sync of the requested deployment version only,
+        /// and null for a version that has never synced.
+        /// </summary>
+        [Test]
+        public async Task GetLatestSyncAsync_TwoDeploymentVersions_FiltersByVersion()
+        {
+            SkipIfUnavailable();
+
+            // Arrange
+            DateTime baseTime = DateTime.UtcNow;
+            SyncHistoryItem olderSyncVersionA = new SyncHistoryItem { DeploymentVersion = "version-a", EndTime = baseTime.AddMinutes(-30), Status = SyncStatus.Completed };
+            SyncHistoryItem latestSyncVersionA = new SyncHistoryItem { DeploymentVersion = "version-a", EndTime = baseTime.AddMinutes(-10), Status = SyncStatus.Completed };
+            SyncHistoryItem syncVersionB = new SyncHistoryItem { DeploymentVersion = "version-b", EndTime = baseTime.AddMinutes(-5), Status = SyncStatus.Completed };
+
+            // Act
+            await _dbService.StoreSyncHistory(olderSyncVersionA);
+            await _dbService.StoreSyncHistory(latestSyncVersionA);
+            await _dbService.StoreSyncHistory(syncVersionB);
+
+            SyncHistoryItem? latestA = await _dbService.GetLatestSyncAsync("version-a");
+            SyncHistoryItem? latestB = await _dbService.GetLatestSyncAsync("version-b");
+            SyncHistoryItem? unknown = await _dbService.GetLatestSyncAsync("version-that-never-synced");
+
+            // Assert
+            Assert.That(latestA, Is.Not.Null);
+            Assert.That(latestA!.Id, Is.EqualTo(latestSyncVersionA.Id), "The lookup must return the latest sync of the requested version, not a newer sync of another version.");
+            Assert.That(latestB!.Id, Is.EqualTo(syncVersionB.Id));
+            Assert.That(unknown, Is.Null, "A deployment version that has never synced must return null so memory variables start from their defaults.");
         }
     }
 }

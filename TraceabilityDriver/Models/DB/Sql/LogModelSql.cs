@@ -1,4 +1,4 @@
-﻿namespace TraceabilityDriver.Models.Sql
+﻿namespace TraceabilityDriver.Models.DB.Sql
 {
     public class LogModelSql
     {

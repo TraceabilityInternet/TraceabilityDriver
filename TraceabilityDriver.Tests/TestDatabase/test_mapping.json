@@ -34,7 +34,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "HumanWelfarePolicy": "$humanPolicyCode",
@@ -105,7 +105,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!receivingevent",
             "EventTime": "$eventTime",
             "HumanWelfarePolicy": "$humanPolicyCode",
@@ -169,7 +169,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -227,7 +227,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "ProcessingType": "$processingType",
@@ -292,7 +292,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!aggregationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -353,7 +353,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!disaggregationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -413,7 +413,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -473,7 +473,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -551,7 +551,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!receivingevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -622,7 +622,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -679,7 +679,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -736,7 +736,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -785,7 +785,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "InformationProvider": {
@@ -834,7 +834,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "InformationProvider": {

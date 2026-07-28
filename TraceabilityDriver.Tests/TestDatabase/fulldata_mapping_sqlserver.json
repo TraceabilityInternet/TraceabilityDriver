@@ -24,7 +24,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -125,7 +125,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!commissioningevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -217,7 +217,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -319,7 +319,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -399,7 +399,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!receivingevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -513,7 +513,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!receivingevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -593,7 +593,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!decommissioningevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -662,7 +662,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -762,7 +762,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "Products": [
@@ -803,7 +803,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!aggregationevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
@@ -885,7 +885,7 @@
             }
           },
           "EventMapping": {
-            "EventId": "$idEventRecord",
+            "EventKey": "$idEventRecord",
             "EventType": "!disaggregationevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",

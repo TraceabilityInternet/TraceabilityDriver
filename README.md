@@ -143,6 +143,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
         - URL=https://localhost:58950
+        - DEPLOYMENT_VERSION=1.0.0
         - MongoDB__ConnectionString=<your-connectionstring>
         - MongoDB__DatabaseName=TraceabilityDriverTests
         - DISABLE_HTTPS_REDIRECTION=TRUE
@@ -162,6 +163,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
         - URL=https://localhost:58950
+        - DEPLOYMENT_VERSION=1.0.0
         - MongoDB__ConnectionString=<your-connectionstring>
         - MongoDB__DatabaseName=TraceabilityDriverTests
         - DISABLE_HTTPS_REDIRECTION=TRUE
@@ -184,6 +186,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
         - URL=https://localhost:58950
+        - DEPLOYMENT_VERSION=1.0.0
         - MongoDB__ConnectionString=<your-connectionstring>
         - MongoDB__DatabaseName=TraceabilityDriverTests
         - DISABLE_HTTPS_REDIRECTION=TRUE
@@ -206,6 +209,7 @@ services:
         - ASPNETCORE_ENVIRONMENT=Release
         - ASPNETCORE_HTTP_PORTS=8080
         - URL=https://localhost:58950
+        - DEPLOYMENT_VERSION=1.0.0
         - SqlServer__ConnectionString=<your-connection-string>
         - DISABLE_HTTPS_REDIRECTION=TRUE
         ports:
@@ -247,6 +251,18 @@ To configure the SQL Server connection, you need to configure the connection str
 
 > The Driver will default to using MongoDB if a MongoDB connection string is provided.
 To use SQL Server, you must only provide a SQL Server connection string and not a MongoDB connection string.
+
+### Deployment Version
+
+Defines the deployment version that synced data is stamped with. It is a root-level configuration value, so it can be set directly as an environment variable.
+
+```json
+"DEPLOYMENT_VERSION": "1.0.0"
+```
+
+The deployment version is required for syncing: without it the Driver still starts and serves tracebacked data, but every sync run fails with a logged error.
+
+Change the deployment version whenever the mapping files change and the data needs a full resync. The new version starts syncing from scratch (memory variables reset), and queries only serve data synced under the current version — merged with tracebacked data, which is stored on the same tables with a null deployment version and is always served. Data synced under previous versions stays in the database but is not served, so nothing needs to be deleted.
 
 ### URL
 
@@ -408,7 +424,7 @@ Every run is recorded, along with a ledger of every event and master data elemen
 - `GET /traceback/{id}` — a single traceback record with counts and errors.
 - `GET /traceback/{id}/items` — the ledger of resources that run created/updated.
 
-The driver only ingests into its own data cache and records what was ingested — it never writes to your internal database. Use the ledger to sync ingested data back into your own systems if you wish. Ingestion is idempotent: repeating a traceback over the same products updates the cached resources in place instead of duplicating them.
+The driver only ingests into its own data cache and records what was ingested — it never writes to your internal database. Use the ledger to sync ingested data back into your own systems if you wish. Ingestion is idempotent: tracebacked data is never updated, so repeating a traceback over the same products skips resources that are already cached instead of duplicating or overwriting them.
 
 > **Note:** database schema updates are applied automatically at startup via EF Core migrations (SQL Server backend). Databases created by older versions are baselined and upgraded in place on first startup.
 
@@ -497,7 +513,7 @@ The **`CommonEvent`** model defines the standard representation of an event with
 
 The common event model is defined by the following fields:
 
-- **`EventId`** The unique identifier for the event. Used to merge or correlate events.
+- **`EventKey`** The unique source-system key for the event. Used to merge or correlate events.
 - **`EventType`** The type of the event (e.g., `CatchEvent`, `LandingEvent`, `ShippingEvent`, etc.).
 - **`EventTime`** The time of the event.
 - **`HumanWelfarePolicy`** The human welfare policy associated with the event.
@@ -574,15 +590,15 @@ The common event model is defined by the following fields:
 - **`ProductionMethod`** The production method associated with the product or species (e.g., aquaculture, wild-caught).
 - **`UnloadingPort`** The port where the products are unloaded during shipping/receiving events.
 
-#### Event ID
+#### Event Key
 
-The `EventId` field is used as a unique identifier for the event such that events are merged together on common `EventId` values. When saving to the database, the `EventId` is used as the primary key for the event.
+The `EventKey` field is the unique source-system key for the event: rows carrying the same `EventKey` are merged together into a single event. When saving to the `Traceability Data Cache`, the event key (combined with the deployment version) is what synced events are upserted by, while the actual EPCIS event id is generated from the full event content using the CBV 2.0 event hash algorithm.
 
 For instance:
-- If an existing event is found with the same `EventId`, the event is updated with the new values when saving into the `Traceability Data Cache`.
-- If the same or multiple selector(s) returns two rows with the same `EventId`, the event is merged together into a single event with the same `EventId`. Values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be prioritized for the event over the value found in future selectors for the same event.
+- If an existing event is found with the same `EventKey` under the current deployment version, the stored event is merged with the new data when saving into the `Traceability Data Cache`. This also holds across sync runs: an event whose source rows span multiple sync windows accumulates into one complete event instead of being replaced by the newest partial copy.
+- If the same or multiple selector(s) returns two rows with the same `EventKey`, the event is merged together into a single event. Values are kept in order of priority, such that if the value for a field in the Common Event Model is found in the first selector, this value will be prioritized for the event over the value found in future selectors for the same event.
 
-It is important that the `EventId` is unique for each event such that events are not duplicated in the `Traceability Data Cache`.
+It is important that the `EventKey` is unique for each event such that events are not duplicated in the `Traceability Data Cache`.
 
 ### Event Type
 
@@ -629,7 +645,7 @@ at a location classified `vessel`.
                         "Count": "SELECT COUNT(*) FROM [sample].[dbo].[EventRecords] WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE'",
                         "Selector": "SELECT evt.idRecord, evt.idEventRecord, evt.operatorId, evt.operatorFirstName, evt.operatorLastName, evt.vehicleId, evt.vehicleName, veh.Country as vehicleCountry, evt.authCode, evt.eventStart, evt.equipmentType, evt.itemName, evt.itemWeight, evt.weightUnit, evt.itemScientificName FROM [sample].[dbo].[EventRecords] evt INNER JOIN dbo.Vehicles veh ON veh.IdVehicle = evt.idVehicle WHERE weightUnit = 'kg' AND eventType = 'E' AND category = 'EXAMPLE' ORDER BY idRecord ASC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY;",
                         "EventMapping": {
-                            "EventId": "$idEventRecord",
+                            "EventKey": "$idEventRecord",
                             "EventType": "!commissioningevent",
                             "EventTime": "$eventStart",
                             "InformationProvider": {

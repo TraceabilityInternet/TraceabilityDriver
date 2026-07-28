@@ -4,7 +4,7 @@ using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
 using TraceabilityDriver.Models.Traceback;
 using TraceabilityDriver.Services;
 
@@ -64,8 +64,8 @@ namespace TraceabilityDriver.Tests.Services
             List<string> masterDataIds = _testDocument.MasterData.Select(m => m.ID).ToList();
 
             _mockTracebackService.Setup(x => x.TracebackAsync(It.IsAny<List<string>>(), It.IsAny<DigitalLinkQueryOptions>(), It.IsAny<CancellationToken>())).ReturnsAsync(fetchResult);
-            _mockDbService.Setup(x => x.StoreEventsAsync(It.IsAny<List<IEvent>>())).ReturnsAsync((List<IEvent> batch) => new DatabaseStoreResult { CreatedIds = batch.Select(e => e.EventID.ToString()).ToList() });
-            _mockDbService.Setup(x => x.StoreMasterDataAsync(It.IsAny<List<IVocabularyElement>>())).ReturnsAsync((List<IVocabularyElement> batch) => new DatabaseStoreResult { UpdatedIds = batch.Select(m => m.ID).ToList() });
+            _mockDbService.Setup(x => x.StoreTracebackEventsAsync(It.IsAny<List<IEvent>>())).ReturnsAsync((List<IEvent> batch) => new DatabaseStoreResult { CreatedIds = batch.Select(e => e.EventID.ToString()).ToList() });
+            _mockDbService.Setup(x => x.StoreTracebackMasterDataAsync(It.IsAny<List<IVocabularyElement>>())).ReturnsAsync((List<IVocabularyElement> batch) => new DatabaseStoreResult { UpdatedIds = batch.Select(m => m.ID).ToList() });
 
             List<TracebackItem> storedItems = new List<TracebackItem>();
             _mockDbService.Setup(x => x.StoreTracebackItemsAsync(It.IsAny<List<TracebackItem>>())).Callback((List<TracebackItem> items) => storedItems.AddRange(items)).Returns(Task.CompletedTask);

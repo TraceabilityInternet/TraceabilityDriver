@@ -1,14 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OpenTraceability.Models.Events;
 using TraceabilityDriver.Models.Mapping;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
 using TraceabilityDriver.Services;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services.Mapping;
@@ -168,7 +169,7 @@ namespace TraceabilityDriver.Tests.Services
                     {
                         events.Add(new CommonEvent
                         {
-                            EventId = row["Id"].ToString(),
+                            EventKey = row["Id"].ToString(),
                             EventType = row["EventType"].ToString(),
                             EventTime = (DateTime)row["EventTime"],
                             Products = new List<CommonProduct>
@@ -221,8 +222,8 @@ namespace TraceabilityDriver.Tests.Services
 
             // Setup database service
             mockDatabaseService
-                .Setup(d => d.GetLatestSyncs(It.IsAny<int>()))
-                .ReturnsAsync(syncHistory);
+                .Setup(d => d.GetLatestSyncAsync(It.IsAny<string>()))
+                .ReturnsAsync(() => syncHistory.FirstOrDefault());
 
             mockDatabaseService
                 .Setup(d => d.StoreSyncHistory(It.IsAny<SyncHistoryItem>()))
@@ -233,12 +234,20 @@ namespace TraceabilityDriver.Tests.Services
                 .Returns(Task.CompletedTask);
 
             mockDatabaseService
-                .Setup(d => d.StoreEventsAsync(It.IsAny<List<OpenTraceability.Interfaces.IEvent>>()))
+                .Setup(d => d.StoreEventsAsync(It.IsAny<List<OpenTraceability.Interfaces.IEvent>>(), It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, CommonEvent>>()))
                 .ReturnsAsync(new DatabaseStoreResult());
 
             mockDatabaseService
-                .Setup(d => d.StoreMasterDataAsync(It.IsAny<List<OpenTraceability.Interfaces.IVocabularyElement>>()))
+                .Setup(d => d.GetCommonEventsAsync(It.IsAny<List<string>>(), It.IsAny<string>()))
+                .ReturnsAsync(new Dictionary<string, CommonEvent>());
+
+            mockDatabaseService
+                .Setup(d => d.StoreMasterDataAsync(It.IsAny<List<OpenTraceability.Interfaces.IVocabularyElement>>(), It.IsAny<string>()))
                 .ReturnsAsync(new DatabaseStoreResult());
+
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["DEPLOYMENT_VERSION"] = "test-v1" })
+                .Build();
 
             var synchronizeService = new SynchronizeService(
                 mockLogger.Object,
@@ -247,7 +256,8 @@ namespace TraceabilityDriver.Tests.Services
                 mockEventsConverter.Object,
                 mockDatabaseService.Object,
                 mockMappingSource.Object,
-                syncContext
+                syncContext,
+                configuration
             );
 
             // Act - First Sync (should sync all 3 records)
@@ -287,8 +297,8 @@ namespace TraceabilityDriver.Tests.Services
 
             // Setup for third sync - return previous sync history
             mockDatabaseService
-                .Setup(d => d.GetLatestSyncs(It.IsAny<int>()))
-                .ReturnsAsync(new List<SyncHistoryItem> { syncContext.CurrentSync });
+                .Setup(d => d.GetLatestSyncAsync(It.IsAny<string>()))
+                .ReturnsAsync(syncContext.CurrentSync);
 
             // Reset sync context for third sync
             syncContext.PreviousSync = syncContext.CurrentSync;

@@ -12,7 +12,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             // Arrange
             var json = new JObject
             {
-                ["EventId"] = "123",
+                ["EventKey"] = "123",
                 ["EventType"] = "456"
             };
 
@@ -28,7 +28,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             Assert.That(result, Is.True);
             Assert.That(errors, Is.Empty);
             Assert.That(mapping.Fields, Has.Count.EqualTo(2));
-            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventId"));
+            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventKey"));
             Assert.That(mapping.Fields[0].Mapping, Is.EqualTo("123"));
             Assert.That(mapping.Fields[1].Path, Is.EqualTo("EventType"));
             Assert.That(mapping.Fields[1].Mapping, Is.EqualTo("456"));
@@ -40,7 +40,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             // Arrange
             var json = new JObject
             {
-                ["EventId"] = "123",
+                ["EventKey"] = "123",
                 ["Products"] = new JArray(
                     new JObject
                     {
@@ -65,7 +65,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             Assert.That(result, Is.True, $"Errors: {string.Join(",", errors)}");
             Assert.That(errors, Is.Empty);
             Assert.That(mapping.Fields, Has.Count.EqualTo(3));
-            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventId"));
+            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventKey"));
             Assert.That(mapping.Fields[0].Mapping, Is.EqualTo("123"));
             Assert.That(mapping.Fields[1].Path, Is.EqualTo("Products[0].LotNumber"));
             Assert.That(mapping.Fields[1].Mapping, Is.EqualTo("Product1"));
@@ -79,7 +79,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             // Arrange
             var json = new JObject
             {
-                ["EventId"] = "123",
+                ["EventKey"] = "123",
                 ["UnknownProperty"] = "value"
             };
 
@@ -104,7 +104,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             // Arrange
             var json = new JObject
             {
-                ["EventId"] = "123",
+                ["EventKey"] = "123",
                 ["Location"] = new JObject
                 {
                     ["Name"] = "Test Location"
@@ -123,7 +123,7 @@ namespace TraceabilityDriver.Tests.Models.Mapping
             Assert.That(result, Is.True);
             Assert.That(errors, Is.Empty);
             Assert.That(mapping.Fields, Has.Count.EqualTo(2));
-            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventId"));
+            Assert.That(mapping.Fields[0].Path, Is.EqualTo("EventKey"));
             Assert.That(mapping.Fields[0].Mapping, Is.EqualTo("123"));
             Assert.That(mapping.Fields[1].Path, Is.EqualTo("Location.Name"));
             Assert.That(mapping.Fields[1].Mapping, Is.EqualTo("Test Location"));

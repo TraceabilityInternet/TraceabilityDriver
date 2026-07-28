@@ -43,7 +43,7 @@ public class EventsConverterService : IEventsConverterService
             {
                 if (!IsEventValid(commonEvent, out string error))
                 {
-                    _logger.LogError("Event is not valid for conversion: {EventId} with {Error}", commonEvent.EventId, error);
+                    _logger.LogError("Event is not valid for conversion: {EventKey} with {Error}", commonEvent.EventKey, error);
                     continue;
                 }
 
@@ -67,7 +67,7 @@ public class EventsConverterService : IEventsConverterService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error converting event: {EventId}", commonEvent.EventId);
+                _logger.LogError(ex, "Error converting event: {EventKey}", commonEvent.EventKey);
             }
         }
 
@@ -84,8 +84,8 @@ public class EventsConverterService : IEventsConverterService
         GDSTCommissionEvent epcisEvent = new GDSTCommissionEvent();
         epcisEvent.ILMD = new GDSTILMD();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -130,8 +130,8 @@ public class EventsConverterService : IEventsConverterService
     {
         GDSTDecommissionEvent epcisEvent = new GDSTDecommissionEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -173,8 +173,8 @@ public class EventsConverterService : IEventsConverterService
     {
         GDSTAggregationEvent epcisEvent = new GDSTAggregationEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -216,8 +216,8 @@ public class EventsConverterService : IEventsConverterService
     {
         GDSTDisaggregationEvent epcisEvent = new GDSTDisaggregationEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -259,8 +259,8 @@ public class EventsConverterService : IEventsConverterService
     {
         GDSTShippingEvent epcisEvent = new GDSTShippingEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -310,8 +310,8 @@ public class EventsConverterService : IEventsConverterService
     {
         GDSTReceivingEvent epcisEvent = new GDSTReceivingEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -365,8 +365,8 @@ public class EventsConverterService : IEventsConverterService
         GDSTTransformationEvent epcisEvent = new GDSTTransformationEvent();
         epcisEvent.ILMD = new GDSTILMD();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -406,8 +406,8 @@ public class EventsConverterService : IEventsConverterService
     {
         MSCStorageEvent epcisEvent = new MSCStorageEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -495,8 +495,8 @@ public class EventsConverterService : IEventsConverterService
     {
         MSCReceiveEvent epcisEvent = new MSCReceiveEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -548,8 +548,8 @@ public class EventsConverterService : IEventsConverterService
     {
         MSCShippingEvent epcisEvent = new MSCShippingEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;
@@ -601,8 +601,8 @@ public class EventsConverterService : IEventsConverterService
     {
         MSCProcessingEvent epcisEvent = new MSCProcessingEvent();
 
-        // Event ID
-        epcisEvent.EventID = commonEvent.GetEpcisEventId();
+        // Event Key
+        epcisEvent.EventID = commonEvent.GetEventKey();
 
         // Event Time
         epcisEvent.EventTime = commonEvent.EventTime;

@@ -5,6 +5,7 @@ services:
         - ASPNETCORE_HTTP_PORTS=8080
         - ASPNETCORE_HTTPS_PORTS=8081
         - URL=https://127.0.0.1:5445
+        - DEPLOYMENT_VERSION=1.0.0
         # - EnableMSC=true 
         # - MongoDB__ConnectionString=mongodb://admin:password@mongodb_test:27017/TraceabilityDriverTests?authSource=admin
         - MongoDB__DatabaseName=TraceabilityDriverTests
@@ -24,7 +25,7 @@ services:
         volumes:
             - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
             - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
-            - ${TD_MAPPINGS_FOLDER}:/app/bin/Debug/net8.0/Mappings
+            - ${TD_MAPPINGS_FOLDER}:/app/bin/Debug/net10.0/Mappings
             - ${TD_KEYS_FOLDER}:/home/keys
         networks:
             - dev-network
@@ -49,7 +50,7 @@ services:
             ACCEPT_EULA: "Y"
             SA_PASSWORD: "YourStrong!Passw0rd"
         ports:
-            - "1433:1433"
+            - "2433:1433"
         volumes:
             - sqlserver_test_data:/var/opt/mssql
         networks:

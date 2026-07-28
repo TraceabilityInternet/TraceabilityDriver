@@ -5,9 +5,9 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace TraceabilityDriver.Services;
 
 /// <summary>
-/// An implementation of the events merger that merges events together by their ID. Events are assumed
-/// to come in order of priority, such that an event with EventId "1" first in the list will have it's
-/// property values prioritized over an event with EventID "1" later in the list. Such that, if the first
+/// An implementation of the events merger that merges events together by their event key. Events are assumed
+/// to come in order of priority, such that an event with EventKey "1" first in the list will have it's
+/// property values prioritized over an event with EventKey "1" later in the list. Such that, if the first
 /// event sets the "Location.Name" to "ABC Inc." and the second sets it to "ABC", the merged event will
 /// have the name "ABC Inc.".
 /// </summary>
@@ -24,8 +24,8 @@ public class EventsMergeByIdService : IEventsMergerService
     {
         List<CommonEvent> mergedEvents = new List<CommonEvent>();
 
-        // This merges events together by grouping by their "EventId"
-        foreach (var group in events.GroupBy(g => g.EventId))
+        // This merges events together by grouping by their "EventKey"
+        foreach (var group in events.GroupBy(g => g.EventKey))
         {
             // If there is only one event, then there is no need to merge it.
             if (group.Count() == 1)

@@ -1,7 +1,7 @@
 using Extensions;
 using OpenTraceability.Models.Events;
 using TraceabilityDriver.Models.Mapping;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services.Mapping;
 
@@ -18,6 +18,7 @@ public class SynchronizeService : ISynchronizeService
     private readonly IMappingSource _mappingSource;
     private readonly IDatabaseService _dbService;
     private readonly ISynchronizationContext _syncContext;
+    private readonly string? _deploymentVersion;
 
     public SynchronizeService(
         ILogger<SynchronizeService> logger,
@@ -26,7 +27,8 @@ public class SynchronizeService : ISynchronizeService
         IEventsConverterService eventsConverterService,
         IDatabaseService dbService,
         IMappingSource mappingSource,
-        ISynchronizationContext syncContext)
+        ISynchronizationContext syncContext,
+        IConfiguration configuration)
     {
         _logger = logger;
         _connectorFactory = connectorFactory;
@@ -36,6 +38,7 @@ public class SynchronizeService : ISynchronizeService
         _logger.LogDebug("SynchronizeService initialized");
         _mappingSource = mappingSource;
         _syncContext = syncContext;
+        _deploymentVersion = configuration["DEPLOYMENT_VERSION"];
     }
 
     /// <summary>
@@ -51,10 +54,27 @@ public class SynchronizeService : ISynchronizeService
         _syncContext.CurrentSync.Message = "Loading mapping files...";
         _syncContext.Updated();
 
+        // Synced data must be stamped with a deployment version, so the sync cannot run without one. The
+        // failure is logged and reflected on the sync context, but deliberately not stored to the sync
+        // history: the hosted loop retries continuously and would flood it with identical failure rows.
+        if (string.IsNullOrWhiteSpace(_deploymentVersion))
+        {
+            _syncContext.CurrentSync.Status = SyncStatus.Failed;
+            _syncContext.CurrentSync.EndTime = DateTime.UtcNow;
+            _syncContext.CurrentSync.Message = "Synchronization failed: the DEPLOYMENT_VERSION configuration value is not set.";
+            _syncContext.Updated();
+
+            _logger.LogError("Synchronization skipped because DEPLOYMENT_VERSION is not configured. Set the DEPLOYMENT_VERSION configuration value to enable syncing, and change it whenever a full resync is required.");
+            return;
+        }
+
+        _syncContext.CurrentSync.DeploymentVersion = _deploymentVersion;
+
         try
         {
-            // Load the previous sync item.
-            _syncContext.PreviousSync = (await _dbService.GetLatestSyncs(1)).FirstOrDefault();
+            // Load the previous sync of the same deployment version. A new deployment version finds no
+            // previous sync, so memory variables fall back to their defaults and a full resync happens.
+            _syncContext.PreviousSync = await _dbService.GetLatestSyncAsync(_deploymentVersion);
 
             // Read the mapping files.
             foreach (TDMappingConfiguration mapping in _mappingSource.GetMappings())
@@ -168,6 +188,22 @@ public class SynchronizeService : ISynchronizeService
                 var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
                 _logger.LogInformation("Merged into {Count} events for event type: {EventType}", mergedEvents.Count, map.EventType);
 
+                // Merge with the events already stored under this deployment version: the rows of one
+                // event can straddle sync runs (each selector reads a bounded number of rows per run) and
+                // mappings, so the stored copy must be enriched instead of replaced by a newer partial copy.
+                mergedEvents = await MergeWithStoredEventsAsync(mergedEvents);
+
+                // Key the merged events by event key so the store can persist each event's common event
+                // for future merges. The converter stamps the same key onto IEvent.EventID.
+                Dictionary<string, CommonEvent> commonEventsByKey = new Dictionary<string, CommonEvent>();
+                foreach (CommonEvent commonEvent in mergedEvents)
+                {
+                    if (!string.IsNullOrWhiteSpace(commonEvent.EventKey))
+                    {
+                        commonEventsByKey[commonEvent.GetEventKey().ToString()] = commonEvent;
+                    }
+                }
+
                 // Check for cancellation.
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -204,7 +240,7 @@ public class SynchronizeService : ISynchronizeService
 
                 foreach (var batch in doc.Events.Batch(100))
                 {
-                    await _dbService.StoreEventsAsync(batch);
+                    await _dbService.StoreEventsAsync(batch, _deploymentVersion!, commonEventsByKey);
 
                     _syncContext.CurrentSync.ItemsProcessed += batch.Count();
                     _syncContext.Updated();
@@ -218,7 +254,7 @@ public class SynchronizeService : ISynchronizeService
 
                 foreach (var batch in doc.MasterData.Batch(100))
                 {
-                    await _dbService.StoreMasterDataAsync(batch);
+                    await _dbService.StoreMasterDataAsync(batch, _deploymentVersion!);
 
                     _syncContext.CurrentSync.ItemsProcessed += batch.Count();
                     _syncContext.Updated();
@@ -234,6 +270,50 @@ public class SynchronizeService : ISynchronizeService
         }
 
         _logger.LogInformation("Completed processing all mappings from file.");
+    }
+
+    /// <summary>
+    /// Merges the incoming events with the common events already stored under the current deployment
+    /// version, so an event whose source rows span multiple sync runs accumulates into one complete
+    /// event instead of being replaced by the newest partial copy.
+    /// </summary>
+    /// <remarks>
+    /// The stored event is the merge target: its values win conflicts because they came from earlier
+    /// rows, which take priority under the first-wins merge convention, and the incoming event fills the
+    /// gaps and contributes new products.
+    /// </remarks>
+    /// <param name="events">The events merged from the current run's source rows.</param>
+    /// <returns>The events with any stored counterparts merged in.</returns>
+    public async Task<List<CommonEvent>> MergeWithStoredEventsAsync(List<CommonEvent> events)
+    {
+        List<string> eventKeys = events.Where(e => !string.IsNullOrWhiteSpace(e.EventKey)).Select(e => e.GetEventKey().ToString()).Distinct().ToList();
+        if (eventKeys.Count == 0)
+        {
+            return events;
+        }
+
+        Dictionary<string, CommonEvent> storedEvents = await _dbService.GetCommonEventsAsync(eventKeys, _deploymentVersion!);
+        if (storedEvents.Count == 0)
+        {
+            return events;
+        }
+
+        List<CommonEvent> results = new List<CommonEvent>();
+        foreach (CommonEvent evt in events)
+        {
+            if (!string.IsNullOrWhiteSpace(evt.EventKey) && storedEvents.TryGetValue(evt.GetEventKey().ToString(), out CommonEvent? stored))
+            {
+                stored.Merge(evt);
+                results.Add(stored);
+            }
+            else
+            {
+                results.Add(evt);
+            }
+        }
+
+        _logger.LogInformation("Merged {Count} event(s) with their previously stored data.", storedEvents.Count);
+        return results;
     }
 
     /// <summary>

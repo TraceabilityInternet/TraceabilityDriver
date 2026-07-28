@@ -1,18 +1,8 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
 
-namespace TraceabilityDriver.Models.MongoDB
+namespace TraceabilityDriver.Models.DB
 {
-    /// <summary>
-    /// Represents the status of a synchronization process. Possible values are InProgress, Completed, and Failed.
-    /// </summary>
-    public enum SyncStatus
-    {
-        InProgress,
-        Completed,
-        Failed
-    }
-
     /// <summary>
     /// Represents an item in the synchronization history. It likely contains details about synchronization events.
     /// </summary>
@@ -42,6 +32,12 @@ namespace TraceabilityDriver.Models.MongoDB
         /// A message that can be used to describe the sync.
         /// </summary>
         public string Message { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The deployment version the sync ran under. Memory variables only carry forward between syncs
+        /// with the same deployment version, so bumping the version triggers a full resync.
+        /// </summary>
+        public string DeploymentVersion { get; set; } = string.Empty;
 
         /// <summary>
         /// Represents information captured from the previous sync.

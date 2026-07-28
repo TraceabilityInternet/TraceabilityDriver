@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using System.Data;
 using TraceabilityDriver.Models.Mapping;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
 using TraceabilityDriver.Services.Connectors;
 using TraceabilityDriver.Services;
 using Npgsql;
@@ -198,7 +198,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             _mockSyncContext.Setup(s => s.CurrentSync).Returns(syncHistoryItem);
 
             _mockEventsTableMappingService.Setup(m => m.MapEvents(selector.EventMapping, It.IsAny<DataTable>(), It.IsAny<CancellationToken>()))
-                .Returns(new List<CommonEvent> { new CommonEvent { EventId = "123", EventType = "Fishing" } });
+                .Returns(new List<CommonEvent> { new CommonEvent { EventKey = "123", EventType = "Fishing" } });
 
             // Act
             var events = await _connector.GetEventsAsync(_configuration, selector, CancellationToken.None);
@@ -206,7 +206,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
             // Assert
             Assert.That(events, Is.Not.Null);
             Assert.That(events.Count(), Is.EqualTo(1));
-            Assert.That(events.First().EventId, Is.EqualTo("123"));
+            Assert.That(events.First().EventKey, Is.EqualTo("123"));
             Assert.That(events.First().EventType, Is.EqualTo("Fishing"));
 
             _mockSyncContext.Verify(s => s.Updated(), Times.AtLeastOnce);

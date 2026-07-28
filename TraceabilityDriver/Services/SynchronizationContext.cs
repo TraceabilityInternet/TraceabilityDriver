@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 using TraceabilityDriver.Models.Mapping;
-using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.DB;
 
 namespace TraceabilityDriver.Services
 {
