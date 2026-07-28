@@ -188,11 +188,6 @@ public class SynchronizeService : ISynchronizeService
                 var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
                 _logger.LogInformation("Merged into {Count} events for event type: {EventType}", mergedEvents.Count, map.EventType);
 
-                // Merge with the events already stored under this deployment version: the rows of one
-                // event can straddle sync runs (each selector reads a bounded number of rows per run) and
-                // mappings, so the stored copy must be enriched instead of replaced by a newer partial copy.
-                mergedEvents = await MergeWithStoredEventsAsync(mergedEvents);
-
                 // Key the merged events by event key so the store can persist each event's common event
                 // for future merges. The converter stamps the same key onto IEvent.EventID.
                 Dictionary<string, CommonEvent> commonEventsByKey = new Dictionary<string, CommonEvent>();
@@ -270,50 +265,6 @@ public class SynchronizeService : ISynchronizeService
         }
 
         _logger.LogInformation("Completed processing all mappings from file.");
-    }
-
-    /// <summary>
-    /// Merges the incoming events with the common events already stored under the current deployment
-    /// version, so an event whose source rows span multiple sync runs accumulates into one complete
-    /// event instead of being replaced by the newest partial copy.
-    /// </summary>
-    /// <remarks>
-    /// The stored event is the merge target: its values win conflicts because they came from earlier
-    /// rows, which take priority under the first-wins merge convention, and the incoming event fills the
-    /// gaps and contributes new products.
-    /// </remarks>
-    /// <param name="events">The events merged from the current run's source rows.</param>
-    /// <returns>The events with any stored counterparts merged in.</returns>
-    public async Task<List<CommonEvent>> MergeWithStoredEventsAsync(List<CommonEvent> events)
-    {
-        List<string> eventKeys = events.Where(e => !string.IsNullOrWhiteSpace(e.EventKey)).Select(e => e.GetEventKey().ToString()).Distinct().ToList();
-        if (eventKeys.Count == 0)
-        {
-            return events;
-        }
-
-        Dictionary<string, CommonEvent> storedEvents = await _dbService.GetCommonEventsAsync(eventKeys, _deploymentVersion!);
-        if (storedEvents.Count == 0)
-        {
-            return events;
-        }
-
-        List<CommonEvent> results = new List<CommonEvent>();
-        foreach (CommonEvent evt in events)
-        {
-            if (!string.IsNullOrWhiteSpace(evt.EventKey) && storedEvents.TryGetValue(evt.GetEventKey().ToString(), out CommonEvent? stored))
-            {
-                stored.Merge(evt);
-                results.Add(stored);
-            }
-            else
-            {
-                results.Add(evt);
-            }
-        }
-
-        _logger.LogInformation("Merged {Count} event(s) with their previously stored data.", storedEvents.Count);
-        return results;
     }
 
     /// <summary>
