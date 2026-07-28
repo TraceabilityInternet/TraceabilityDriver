@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using OpenTraceability.Models.Events;
+using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Queries;
 using System.Reflection;
 using System.Text;
@@ -16,7 +16,8 @@ namespace TraceabilityDriver.Services.GDST
     /// Runs the GDST capability tool's v2 flow: start the test (POST v2/process/start), trace back and
     /// ingest the tool-generated EPCs from the tool's own endpoints, advance the test
     /// (POST v2/process/next), and poll for the report (GET v2/process/report) until it leaves the
-    /// Started status.
+    /// Started status. No example data is seeded — the test runs against whatever the configured
+    /// mapping files have already synced into the traceability cache.
     /// </remarks>
     public class GDSTCapabilityTestService : IGDSTCapabilityTestService
     {
@@ -37,8 +38,29 @@ namespace TraceabilityDriver.Services.GDST
             _config = config;
         }
 
-        public async Task<GDSTCapabilityTestResults> RunTest()
+        /// <inheritdoc/>
+        public async Task<GDSTCapabilityTestResults> RunTestAsync(List<string> solutionProviderEPCs)
         {
+            // The EPCs are validated ahead of the try block so a bad argument surfaces as an
+            // ArgumentException instead of being reported as a failed capability test — the two are
+            // diagnosed very differently.
+            if (solutionProviderEPCs == null || !solutionProviderEPCs.Any(epc => !string.IsNullOrWhiteSpace(epc)))
+            {
+                throw new ArgumentException("At least one solution provider EPC is required to run the capability test.", nameof(solutionProviderEPCs));
+            }
+
+            List<string> trimmedEPCs = solutionProviderEPCs.Where(epc => !string.IsNullOrWhiteSpace(epc)).Select(epc => epc.Trim()).ToList();
+
+            // The parsed EPC is deliberately discarded: EPC.ToString() lower-cases the whole string, and
+            // the tool must receive the EPC exactly as it appears in the synced data.
+            foreach (string epc in trimmedEPCs)
+            {
+                if (!EPC.TryParse(epc, out EPC _, out string epcError))
+                {
+                    throw new ArgumentException($"The solution provider EPC '{epc}' is not a valid EPC. {epcError}", nameof(solutionProviderEPCs));
+                }
+            }
+
             try
             {
                 // Verify the capability test settings.
@@ -47,11 +69,10 @@ namespace TraceabilityDriver.Services.GDST
                     throw new NullReferenceException("GDST capability test settings are not initialized.");
                 }
 
-                // Load the test data into the database
-                await LoadTestDataIntoDatabaseAsync();
+                _logger.LogInformation("Starting a GDST capability test against the synced data for {EPCCount} solution provider EPC(s): {SolutionProviderEPCs}.", trimmedEPCs.Count, string.Join(", ", trimmedEPCs));
 
                 // Perform the test
-                return await ExecuteTestAsync();
+                return await ExecuteTestAsync(trimmedEPCs);
             }
             catch (Exception ex)
             {
@@ -61,13 +82,23 @@ namespace TraceabilityDriver.Services.GDST
                     Status = GDSTCapabilityTestStatus.Failed,
                     Errors = new List<GDSTCapabilityTestsError>()
                     {
-                        new GDSTCapabilityTestsError() { Error = "An unknown error occurred while running the capability test." }
+                        new GDSTCapabilityTestsError() { Error = $"An error occurred while running the capability test: {ex.Message}" }
                     }
                 };
             }
         }
 
-        public async Task<GDSTCapabilityTestResults> ExecuteTestAsync()
+        /// <summary>
+        /// Starts the capability test for the given EPCs, ingests the tool-generated data, advances the
+        /// test, and polls for the report.
+        /// </summary>
+        /// <param name="solutionProviderEPCs">The validated top-of-chain EPCs of the driver's synced data.</param>
+        /// <returns>The report from the capability tool.</returns>
+        /// <exception cref="Exception">
+        /// Thrown when the tool rejects the start request, when the start response carries no compliance
+        /// process UUID or no tool-generated EPCs, or when the generated data could not be ingested.
+        /// </exception>
+        public async Task<GDSTCapabilityTestResults> ExecuteTestAsync(List<string> solutionProviderEPCs)
         {
             string digitalLinkURL = _config["URL"]?.TrimEnd('/') + "/digitallink/";
 
@@ -91,7 +122,7 @@ namespace TraceabilityDriver.Services.GDST
                 Url = digitalLinkURL,
                 Pgln = _settings.Value.PGLN,
                 GdstVersion = 20,
-                SolutionProviderEPCs = new List<string>() { "urn:epc:id:sscc:08600031303.solution1" }
+                SolutionProviderEPCs = solutionProviderEPCs
             };
 
             using var client = _httpClientFactory.CreateClient();
@@ -230,44 +261,6 @@ namespace TraceabilityDriver.Services.GDST
             }
 
             return results;
-        }
-
-        public async Task LoadTestDataIntoDatabaseAsync()
-        {
-            if (_mongoDb == null)
-            {
-                throw new InvalidOperationException("MongoDB service is not initialized.");
-            }
-
-            // Generate the traceability data
-            var document = GenerateTraceabilityData();
-
-            // Seeded test data is stored as traceback data so it is always served regardless of the
-            // configured deployment version.
-            await _mongoDb.StoreTracebackEventsAsync(document.Events);
-
-            // Store master data
-            await _mongoDb.StoreTracebackMasterDataAsync(document.MasterData);
-        }
-
-        public EPCISDocument GenerateTraceabilityData()
-        {
-            // Load the EPCIS document from the embedded resource.
-            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TraceabilityDriver.Services.GDST.FullData.json");
-            if (stream == null)
-            {
-                throw new FileNotFoundException("The resource 'FullData.json' was not found.");
-            }
-
-            using var reader = new StreamReader(stream);
-
-            // Read the JSON content.
-            string json = reader.ReadToEnd();
-
-            // Deserialize the JSON content into an EPCISDocument object.
-            var document = OpenTraceability.Mappers.OpenTraceabilityMappers.EPCISDocument.JSON.Map(json);
-
-            return document;
         }
     }
 }

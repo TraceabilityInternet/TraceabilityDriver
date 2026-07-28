@@ -299,6 +299,11 @@ In order to do this, you must configure the `GDST Capability Test` section with 
 
 > You need to reach out to [info@thegdst.org](mailto:info@thegdst.org) to get your credentials for executing the capability test.
 
+The Driver does not seed any example data for the test. It runs against the data already in your traceability cache, so
+before starting a test you must have completed a successful sync, and you must supply the **top-of-chain EPCs** of that
+synced data (for example the SSCC of the final shipment) in the portal. Enter one EPC per line; the capability tool
+traces each one back through the Driver.
+
 After configuration, follow these steps to execute the capability test from inside the Driver portal:
 
 **Start Capability Test**
@@ -313,8 +318,9 @@ After configuration, follow these steps to execute the capability test from insi
 **Capability Test Success**
 ![](./img/screenshot_captest_success01.png)
 
-> The Driver can run the capability test directly from the portal, which is useful for confirming interoperability with other GDST-capable systems. Note, 
-however, that this does not mean your data is being synchronized correctly, or that it includes all the GDST CTEs and KDEs.
+> The Driver can run the capability test directly from the portal, which is useful for confirming interoperability with other GDST-capable systems. 
+Because the test runs against your synced data, a passing result does say something about your mapping configuration — but only about the part of the 
+supply chain reachable from the EPCs you supplied. Other CTEs and KDEs produced by your mappings are not exercised unless they appear in that chain.
 
 ### MSC (Marine Stewardship Council) Extensions
 

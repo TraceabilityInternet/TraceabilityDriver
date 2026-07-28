@@ -1,4 +1,5 @@
-﻿@using TraceabilityDriver.Models.GDST
+﻿@using OpenTraceability.Models.Identifiers
+@using TraceabilityDriver.Models.GDST
 @using TraceabilityDriver.Services.GDST
 
 @inject IGDSTCapabilityTestService CapabilityTestService
@@ -10,9 +11,18 @@
         <div class="card-header">
             <h4 class="mb-0">GDST Capability Test</h4>
         </div>
-        <div class="card-body text-center py-4">
-            <p>Click the button below to start the capability test</p>
+        <div class="card-body py-4">
+            <p>Enter the top-of-chain EPCs from your synced data, one per line, then start the capability test.</p>
+            <div class="form-group mb-3">
+                <label for="solutionProviderEPCs">Solution Provider EPCs (one per line)</label>
+                <textarea class="form-control" id="solutionProviderEPCs" rows="3" placeholder="urn:epc:id:sscc:0860003130.0000000001" @bind="_solutionProviderEPCs"></textarea>
+                <small class="text-muted">The capability tool traces these EPCs back through the Driver to check the data your mapping files produced. No example data is seeded, so run a sync first.</small>
+            </div>
             <button type="button" class="btn btn-primary" @onclick="StartTestAsync">Start Test</button>
+            @if (!string.IsNullOrEmpty(_validationError))
+            {
+                <div class="alert alert-danger mt-3">@_validationError</div>
+            }
         </div>
     }
     else if (_testState == TestState.Running)
@@ -91,16 +101,27 @@
 
     private TestState _testState = TestState.NotStarted;
     private GDSTCapabilityTestResults? _results = null;
+    private string _solutionProviderEPCs = string.Empty;
+    private string? _validationError = null;
 
     private async Task StartTestAsync(MouseEventArgs args)
     {
+        _validationError = null;
+
+        // A bad EPC keeps us in the NotStarted state so the user can correct it inline. Only failures
+        // reported by the capability tool itself belong in the results table.
+        if (!TryParseSolutionProviderEPCs(out List<string> epcs))
+        {
+            return;
+        }
+
         try
         {
             _testState = TestState.Running;
             StateHasChanged();
 
             // Execute the capability test
-            _results = await CapabilityTestService.RunTest();
+            _results = await CapabilityTestService.RunTestAsync(epcs);
 
             _testState = TestState.Completed;
         }
@@ -122,9 +143,43 @@
         }
     }
 
+    /// <summary>
+    /// Splits the entered text into EPCs and validates each one, setting the inline validation message
+    /// when the entry is unusable.
+    /// </summary>
+    private bool TryParseSolutionProviderEPCs(out List<string> epcs)
+    {
+        // Newline separated is what the label asks for, but commas are tolerated so a list copied out of
+        // a database client works without reformatting.
+        epcs = _solutionProviderEPCs.Split(new char[] { '\n', '\r', ',' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(epc => epc.Trim())
+            .Where(epc => !string.IsNullOrWhiteSpace(epc))
+            .ToList();
+
+        if (!epcs.Any())
+        {
+            _validationError = "Please enter at least one top-of-chain EPC from your synced data.";
+            return false;
+        }
+
+        foreach (string epc in epcs)
+        {
+            if (!EPC.TryParse(epc, out EPC _, out string error))
+            {
+                _validationError = $"'{epc}' is not a valid EPC. {error}";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private void ResetTest()
     {
+        // The entered EPCs are kept deliberately: the normal loop is to fix the mapping, resync, and run
+        // the same EPCs again.
         _testState = TestState.NotStarted;
         _results = null;
+        _validationError = null;
     }
 }

@@ -15,6 +15,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!-- The driver itself no longer reads FullData.json (the capability test no longer seeds data), but
+           TraceabilityDriver.Tests loads it from this assembly as the golden document for
+           FullDataSyncIntegrationTest. Do not remove. -->
       <EmbeddedResource Include="Services\GDST\FullData.json" />
     </ItemGroup>
 
