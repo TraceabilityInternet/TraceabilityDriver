@@ -98,7 +98,10 @@ namespace TraceabilityDriver.Extensions
                 }
             }
 
-            if (targetEvent is IGDSTILMDEvent targetGDSTILMDEvent && sourceEvent is IGDSTILMDEvent sourceGDSTILMDEvent)
+            // IGDSTILMDEvent.ILMD is read-only on the interface, so an event that arrived without an ILMD
+            // cannot be given one here. The events converter always assigns one, so this only skips events
+            // that genuinely carry no ILMD.
+            if (targetEvent is IGDSTILMDEvent targetGDSTILMDEvent && sourceEvent is IGDSTILMDEvent sourceGDSTILMDEvent && targetGDSTILMDEvent.ILMD != null)
             {
                 targetGDSTILMDEvent.ILMD.Merge(sourceGDSTILMDEvent.ILMD);
             }

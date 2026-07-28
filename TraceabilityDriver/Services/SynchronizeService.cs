@@ -188,17 +188,6 @@ public class SynchronizeService : ISynchronizeService
                 var mergedEvents = await _eventsMergerService.MergeEventsAsync(map, events);
                 _logger.LogInformation("Merged into {Count} events for event type: {EventType}", mergedEvents.Count, map.EventType);
 
-                // Key the merged events by event key so the store can persist each event's common event
-                // for future merges. The converter stamps the same key onto IEvent.EventID.
-                Dictionary<string, CommonEvent> commonEventsByKey = new Dictionary<string, CommonEvent>();
-                foreach (CommonEvent commonEvent in mergedEvents)
-                {
-                    if (!string.IsNullOrWhiteSpace(commonEvent.EventKey))
-                    {
-                        commonEventsByKey[commonEvent.GetEventKey().ToString()] = commonEvent;
-                    }
-                }
-
                 // Check for cancellation.
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -235,7 +224,7 @@ public class SynchronizeService : ISynchronizeService
 
                 foreach (var batch in doc.Events.Batch(100))
                 {
-                    await _dbService.StoreEventsAsync(batch, _deploymentVersion!, commonEventsByKey);
+                    await _dbService.StoreEventsAsync(batch, _deploymentVersion!);
 
                     _syncContext.CurrentSync.ItemsProcessed += batch.Count();
                     _syncContext.Updated();

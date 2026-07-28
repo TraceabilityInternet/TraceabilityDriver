@@ -47,26 +47,27 @@ namespace TraceabilityDriver.Services
         /// The <see cref="IEvent.EventID"/> of each incoming event must carry the event key produced by
         /// <see cref="CommonEvent.GetEventKey"/>; the method replaces it with the real CBV 2.0 event hash
         /// (generated with the OpenTraceability EventHashGenerator) before the event is persisted, and
-        /// stores the key alongside it. The merged common event of each key is persisted too, so later
-        /// sync runs can merge additional source rows into the stored event via
-        /// <see cref="GetCommonEventsAsync"/>.
+        /// stores the key alongside it. The incoming event object is left carrying that generated id.
+        ///
+        /// The rows of one event can straddle sync runs, so an event already stored under the same key is
+        /// enriched with the incoming one rather than replaced by it: the stored copy is the merge target and
+        /// its values win conflicts, because they came from earlier rows. Correcting data already synced under
+        /// a deployment version therefore means bumping the version, which forces a full resync. The stored
+        /// event id changes whenever the merge changes the event's content.
         /// </remarks>
         /// <param name="events">The converted events to store; their EventID carries the event key.</param>
         /// <param name="deploymentVersion">The deployment version to stamp on the stored events.</param>
-        /// <param name="commonEventsByKey">The merged common events keyed by event key string.</param>
-        Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events, string deploymentVersion, IReadOnlyDictionary<string, CommonEvent> commonEventsByKey);
-
-        /// <summary>
-        /// Returns the stored common events for the given event keys under the given deployment version,
-        /// keyed by event key. Keys with no stored event, or whose stored common event cannot be
-        /// deserialized, are absent from the result.
-        /// </summary>
-        Task<Dictionary<string, CommonEvent>> GetCommonEventsAsync(List<string> eventKeys, string deploymentVersion);
+        Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events, string deploymentVersion);
 
         /// <summary>
         /// Upserts the synced master data into the cache by (element id, deployment version) and reports
         /// which element ids were inserted versus updated. Elements synced under other deployment versions are untouched.
         /// </summary>
+        /// <remarks>
+        /// As with <see cref="StoreEventsAsync"/>, the rows describing one element can straddle sync runs, so
+        /// an element already stored under the same id is enriched with the incoming one rather than replaced
+        /// by it, with the stored copy's values winning conflicts.
+        /// </remarks>
         Task<DatabaseStoreResult> StoreMasterDataAsync(List<IVocabularyElement> masterData, string deploymentVersion);
 
         /// <summary>

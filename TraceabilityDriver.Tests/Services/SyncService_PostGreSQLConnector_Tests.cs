@@ -250,12 +250,8 @@ namespace TraceabilityDriver.Tests.Services
                 .Returns(Task.CompletedTask);
 
             mockDatabaseService
-                .Setup(d => d.StoreEventsAsync(It.IsAny<List<OpenTraceability.Interfaces.IEvent>>(), It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, CommonEvent>>()))
+                .Setup(d => d.StoreEventsAsync(It.IsAny<List<OpenTraceability.Interfaces.IEvent>>(), It.IsAny<string>()))
                 .ReturnsAsync(new DatabaseStoreResult());
-
-            mockDatabaseService
-                .Setup(d => d.GetCommonEventsAsync(It.IsAny<List<string>>(), It.IsAny<string>()))
-                .ReturnsAsync(new Dictionary<string, CommonEvent>());
 
             mockDatabaseService
                 .Setup(d => d.StoreMasterDataAsync(It.IsAny<List<OpenTraceability.Interfaces.IVocabularyElement>>(), It.IsAny<string>()))

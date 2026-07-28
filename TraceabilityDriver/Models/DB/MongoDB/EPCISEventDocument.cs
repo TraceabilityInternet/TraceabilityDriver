@@ -25,12 +25,6 @@ namespace TraceabilityDriver.Models.DB.MongoDB
         /// </summary>
         public string? DeploymentVersion { get; set; }
 
-        /// <summary>
-        /// The merged common event the synced event was converted from, so later sync runs can merge
-        /// additional source rows into it. Null on traceback documents.
-        /// </summary>
-        public string? CommonEventJson { get; set; }
-
         public string EventJson { get; set; } = string.Empty;
 
         public string BizStep { get; set; } = string.Empty;

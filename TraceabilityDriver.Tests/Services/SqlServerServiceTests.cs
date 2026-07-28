@@ -18,8 +18,6 @@ namespace TraceabilityDriver.Tests.Services
     [TestFixture]
     public class SqlServerServiceTests
     {
-        private static readonly IReadOnlyDictionary<string, CommonEvent> NoCommonEvents = new Dictionary<string, CommonEvent>();
-
         private IDatabaseService _dbService;
         private EPCISDocument _testEPCISDocument;
         private IDbContextFactory<ApplicationDbContext> _contextFactory;
@@ -89,7 +87,7 @@ namespace TraceabilityDriver.Tests.Services
 
             // save all the events into the sql db service; the incoming event ids act as the event
             // keys and are replaced by the generated content-hash event ids
-            await _dbService.StoreEventsAsync(_testEPCISDocument.Events, "tests", NoCommonEvents);
+            await _dbService.StoreEventsAsync(_testEPCISDocument.Events, "tests");
 
             // save all the master data into the mongo db service
             await _dbService.StoreMasterDataAsync(_testEPCISDocument.MasterData, "tests");
@@ -390,7 +388,7 @@ namespace TraceabilityDriver.Tests.Services
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             foreach(var batch in batches)
             {
-                await _dbService.StoreEventsAsync(batch, "tests", NoCommonEvents);
+                await _dbService.StoreEventsAsync(batch, "tests");
             }
             stopwatch.Stop();
             TimeSpan savetime = stopwatch.Elapsed;
@@ -410,7 +408,7 @@ namespace TraceabilityDriver.Tests.Services
                 {
                     eventItem.EventTime = eventItem.EventTime!.Value.AddMinutes(1);
                 }
-                await _dbService.StoreEventsAsync(batch, "tests", NoCommonEvents);
+                await _dbService.StoreEventsAsync(batch, "tests");
             }
             stopwatch.Stop();
             TimeSpan updatetime = stopwatch.Elapsed;

@@ -8,9 +8,8 @@ namespace TraceabilityDriver.Models.DB.Sql
     /// </summary>
     /// <remarks>
     /// Synced events carry the deployment version they were synced under and the event key they are
-    /// upserted by, plus the merged common event JSON so later sync runs can merge additional source
-    /// rows into the same event. Traceback rows carry a null deployment version and no event key, and
-    /// are never updated once stored.
+    /// upserted by. Traceback rows carry a null deployment version and no event key, and are never
+    /// updated once stored.
     /// </remarks>
     public class EPCISEventSqlDocument
     {
@@ -31,12 +30,6 @@ namespace TraceabilityDriver.Models.DB.Sql
         /// The deployment version the event was synced under. Null on traceback rows.
         /// </summary>
         public string? DeploymentVersion { get; set; } = null;
-
-        /// <summary>
-        /// The merged common event the synced event was converted from, so later sync runs can merge
-        /// additional source rows into it. Null on traceback rows.
-        /// </summary>
-        public string? CommonEventJson { get; set; } = null;
 
         public string EventJson { get; set; } = string.Empty;
 

@@ -37,9 +37,6 @@ namespace TraceabilityDriver.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CommonEventJson")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("DeploymentVersion")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");

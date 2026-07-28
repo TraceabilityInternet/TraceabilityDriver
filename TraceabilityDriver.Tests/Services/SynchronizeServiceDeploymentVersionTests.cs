@@ -11,8 +11,7 @@ using TraceabilityDriver.Services.Mapping;
 namespace TraceabilityDriver.Tests.Services
 {
     /// <summary>
-    /// Unit tests for the deployment version behavior of <see cref="SynchronizeService"/>, including the
-    /// version-scoped merge with previously stored events.
+    /// Unit tests for the deployment version behavior of <see cref="SynchronizeService"/>.
     /// </summary>
     [TestFixture]
     [Category("UnitTest")]
@@ -83,7 +82,7 @@ namespace TraceabilityDriver.Tests.Services
             _mockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("DEPLOYMENT_VERSION")), null, It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
             _mockDatabaseService.Verify(d => d.GetLatestSyncAsync(It.IsAny<string>()), Times.Never);
-            _mockDatabaseService.Verify(d => d.StoreEventsAsync(It.IsAny<List<IEvent>>(), It.IsAny<string>(), It.IsAny<IReadOnlyDictionary<string, CommonEvent>>()), Times.Never);
+            _mockDatabaseService.Verify(d => d.StoreEventsAsync(It.IsAny<List<IEvent>>(), It.IsAny<string>()), Times.Never);
             _mockDatabaseService.Verify(d => d.StoreSyncHistory(It.IsAny<SyncHistoryItem>()), Times.Never, "The failure repeats every loop iteration and must not flood the sync history.");
         }
 
@@ -114,55 +113,5 @@ namespace TraceabilityDriver.Tests.Services
             Assert.That(storedHistory!.DeploymentVersion, Is.EqualTo("v1"), "The stored sync history must carry the deployment version it ran under.");
         }
 
-        /// <summary>
-        /// When a partial copy of an event was stored by an earlier sync run, the incoming partial must
-        /// be merged into it: stored values win conflicts, incoming values fill the gaps, and events
-        /// without a stored counterpart pass through unchanged.
-        /// </summary>
-        [Test]
-        public async Task MergeWithStoredEventsAsync_StoredPartialExists_MergesIncomingIntoStoredEvent()
-        {
-            // Arrange
-            CommonEvent incoming = new CommonEvent { EventKey = "evt-1", EventType = "commissioningevent", TransportNumber = "TN-INCOMING", ProcessingType = "freezing" };
-            CommonEvent unrelated = new CommonEvent { EventKey = "evt-2", EventType = "commissioningevent" };
-            CommonEvent stored = new CommonEvent { EventKey = "evt-1", EventType = "commissioningevent", TransportNumber = "TN-STORED", EventTime = new DateTimeOffset(2026, 1, 15, 8, 0, 0, TimeSpan.Zero) };
-
-            string storedEventKey = stored.GetEventKey().ToString();
-            _mockDatabaseService.Setup(d => d.GetCommonEventsAsync(It.Is<List<string>>(keys => keys.Contains(storedEventKey)), "v1")).ReturnsAsync(new Dictionary<string, CommonEvent> { [storedEventKey] = stored });
-
-            SynchronizeService service = CreateService(new Dictionary<string, string?> { ["DEPLOYMENT_VERSION"] = "v1" });
-
-            // Act
-            List<CommonEvent> result = await service.MergeWithStoredEventsAsync(new List<CommonEvent> { incoming, unrelated });
-
-            // Assert
-            Assert.That(result, Has.Count.EqualTo(2));
-            Assert.That(result[0], Is.SameAs(stored), "The stored event must be the merge target.");
-            Assert.That(result[0].TransportNumber, Is.EqualTo("TN-STORED"), "Stored values must win conflicts because they came from earlier rows.");
-            Assert.That(result[0].ProcessingType, Is.EqualTo("freezing"), "Incoming values must fill the gaps in the stored event.");
-            Assert.That(result[0].EventTime, Is.Not.Null);
-            Assert.That(result[1], Is.SameAs(unrelated), "Events without a stored counterpart must pass through unchanged.");
-        }
-
-        /// <summary>
-        /// When no events were previously stored under the deployment version, the incoming events must
-        /// pass through unchanged.
-        /// </summary>
-        [Test]
-        public async Task MergeWithStoredEventsAsync_NoStoredEvents_ReturnsIncomingEventsUnchanged()
-        {
-            // Arrange
-            CommonEvent incoming = new CommonEvent { EventKey = "evt-1", EventType = "commissioningevent" };
-            _mockDatabaseService.Setup(d => d.GetCommonEventsAsync(It.IsAny<List<string>>(), It.IsAny<string>())).ReturnsAsync(new Dictionary<string, CommonEvent>());
-
-            SynchronizeService service = CreateService(new Dictionary<string, string?> { ["DEPLOYMENT_VERSION"] = "v1" });
-
-            // Act
-            List<CommonEvent> result = await service.MergeWithStoredEventsAsync(new List<CommonEvent> { incoming });
-
-            // Assert
-            Assert.That(result, Has.Count.EqualTo(1));
-            Assert.That(result[0], Is.SameAs(incoming));
-        }
     }
 }

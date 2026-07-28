@@ -28,10 +28,6 @@ namespace TraceabilityDriver.Tests.Services
     public abstract class DatabaseServiceTracebackTestsBase
     {
         /// <summary>
-        /// An empty common events dictionary for stores where the persisted common event is irrelevant.
-        /// </summary>
-        private static readonly IReadOnlyDictionary<string, CommonEvent> NoCommonEvents = new Dictionary<string, CommonEvent>();
-        /// <summary>
         /// The deployment version configured in appsettings.Tests.json, which the backends under test
         /// read for their query paths.
         /// </summary>
@@ -109,14 +105,14 @@ namespace TraceabilityDriver.Tests.Services
             List<Uri> eventKeys = events.Select(e => e.EventID).ToList();
 
             // Act
-            DatabaseStoreResult firstResult = await _dbService.StoreEventsAsync(events, TestDeploymentVersion, NoCommonEvents);
+            DatabaseStoreResult firstResult = await _dbService.StoreEventsAsync(events, TestDeploymentVersion);
             List<string> hashEventIds = events.Select(e => e.EventID.ToString()).OrderBy(x => x).ToList();
 
             for (int i = 0; i < events.Count; i++)
             {
                 events[i].EventID = eventKeys[i];
             }
-            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(events, TestDeploymentVersion, NoCommonEvents);
+            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(events, TestDeploymentVersion);
 
             // Assert
             Assert.That(hashEventIds.All(id => System.Text.RegularExpressions.Regex.IsMatch(id, @"^ni:///sha-256;[0-9a-f]{64}\?ver=CBV2\.0$")), Is.True, "The store must replace the incoming event key with the generated CBV 2.0 event hash.");
@@ -326,10 +322,10 @@ namespace TraceabilityDriver.Tests.Services
             // exists under the old version. The event key is reset between stores because the store
             // replaces the incoming EventID with the content hash.
             Uri currentVersionEventKey = currentVersionEvent.EventID;
-            await _dbService.StoreEventsAsync(new List<IEvent> { currentVersionEvent }, "old-version", NoCommonEvents);
+            await _dbService.StoreEventsAsync(new List<IEvent> { currentVersionEvent }, "old-version");
             currentVersionEvent.EventID = currentVersionEventKey;
-            await _dbService.StoreEventsAsync(new List<IEvent> { currentVersionEvent }, TestDeploymentVersion, NoCommonEvents);
-            await _dbService.StoreEventsAsync(new List<IEvent> { oldVersionOnlyEvent }, "old-version", NoCommonEvents);
+            await _dbService.StoreEventsAsync(new List<IEvent> { currentVersionEvent }, TestDeploymentVersion);
+            await _dbService.StoreEventsAsync(new List<IEvent> { oldVersionOnlyEvent }, "old-version");
 
             EPCISQueryDocument currentResult = await QueryEventsByEpcAsync(currentVersionEvent);
             EPCISQueryDocument oldOnlyResult = await QueryEventsByEpcAsync(oldVersionOnlyEvent);
@@ -358,7 +354,7 @@ namespace TraceabilityDriver.Tests.Services
             // Act - store the synced copy first (this replaces the EventID with the content hash), then
             // shift the event time so the traceback copy would be distinguishable if it were stored, and
             // store both events as traceback data.
-            await _dbService.StoreEventsAsync(new List<IEvent> { overlappingEvent }, TestDeploymentVersion, NoCommonEvents);
+            await _dbService.StoreEventsAsync(new List<IEvent> { overlappingEvent }, TestDeploymentVersion);
             overlappingEvent.EventTime = syncedEventTime.AddMinutes(5);
             DatabaseStoreResult tracebackResult = await _dbService.StoreTracebackEventsAsync(new List<IEvent> { overlappingEvent, tracebackOnlyEvent });
 
@@ -399,7 +395,7 @@ namespace TraceabilityDriver.Tests.Services
             // Act - restore the content and sync the event under the current deployment version.
             evt.EventTime = syncedEventTime;
             evt.EventID = eventKey;
-            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, NoCommonEvents);
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion);
 
             EPCISQueryDocument result = await QueryEventsByEpcAsync(evt);
 
@@ -447,7 +443,7 @@ namespace TraceabilityDriver.Tests.Services
             // content hash, which is the id the traceback copy is then checked by.
             List<IEvent> events = GetQueryableEvents();
             IEvent evt = events[11];
-            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, "old-version", NoCommonEvents);
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, "old-version");
 
             // Act
             DatabaseStoreResult result = await _dbService.StoreTracebackEventsAsync(new List<IEvent> { evt });
@@ -529,77 +525,75 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
-        /// Re-storing an event under the same event key with changed content must update the existing
-        /// record in place: the stored event id switches to the new content hash and queries serve the
-        /// merged copy exactly once, with no stale copy left under the old event id.
+        /// Re-storing an event under the same event key with additional content must merge into the existing
+        /// record in place: the stored event picks up the new data, its event id switches to the merged
+        /// content hash, and queries serve the merged copy exactly once with no stale copy left behind.
         /// </summary>
+        /// <remarks>
+        /// This is the straddle case the merge exists for: the rows of one event span sync runs, so a later
+        /// partial copy has to enrich the stored event rather than replace it.
+        /// </remarks>
         [Test]
-        public async Task StoreEventsAsync_ContentChangesUnderSameEventKey_UpsertsAndReplacesEventId()
+        public async Task StoreEventsAsync_AdditionalContentUnderSameEventKey_MergesAndReplacesEventId()
         {
             SkipIfUnavailable();
 
             // Arrange
-            List<IEvent> events = GetQueryableEvents();
-            IEvent evt = events[12];
+            IEvent evt = GetQueryableEvents().First(e => string.IsNullOrEmpty(e.CertificationInfo));
             Uri eventKey = evt.EventID;
-            DateTimeOffset originalEventTime = evt.EventTime!.Value;
 
-            // Act - store, then change the content (which changes the content hash) and store again
-            // under the same event key.
-            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, NoCommonEvents);
+            // Act - store, then store again under the same event key carrying a KDE the first copy lacked.
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion);
             string firstEventId = evt.EventID.ToString();
 
-            evt.EventTime = originalEventTime.AddMinutes(7);
+            evt.CertificationInfo = "https://example.org/certification/straddle-001";
             evt.EventID = eventKey;
-            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, NoCommonEvents);
+            DatabaseStoreResult secondResult = await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion);
             string secondEventId = evt.EventID.ToString();
 
             EPCISQueryDocument result = await QueryEventsByEpcAsync(evt);
 
             // Assert
-            Assert.That(secondEventId, Is.Not.EqualTo(firstEventId), "Changing the event content must change the content-hash event id.");
+            Assert.That(secondEventId, Is.Not.EqualTo(firstEventId), "Merging in new content must change the content-hash event id.");
             Assert.That(secondResult.UpdatedIds, Is.EqualTo(new List<string> { secondEventId }), "The second store must update the existing record because it shares the event key.");
             Assert.That(secondResult.CreatedIds, Is.Empty);
-            Assert.That(result.Events.Count(e => e.EventID.ToString() == secondEventId), Is.EqualTo(1), "The updated event must be served exactly once.");
+            Assert.That(result.Events.Count(e => e.EventID.ToString() == secondEventId), Is.EqualTo(1), "The merged event must be served exactly once.");
             Assert.That(result.Events.Any(e => e.EventID.ToString() == firstEventId), Is.False, "No stale copy may remain under the superseded event id.");
+            Assert.That(result.Events.Single(e => e.EventID.ToString() == secondEventId).CertificationInfo, Is.EqualTo("https://example.org/certification/straddle-001"), "The KDE that only arrived in the second store must be merged into the stored event.");
         }
 
         /// <summary>
-        /// The common event stored alongside a synced event must round-trip through
-        /// GetCommonEventsAsync, scoped to the deployment version it was stored under.
+        /// Re-storing an event under the same event key with a conflicting value must keep the stored value,
+        /// because it came from earlier rows.
         /// </summary>
+        /// <remarks>
+        /// Correcting data that has already been synced under a deployment version is done by bumping
+        /// DEPLOYMENT_VERSION, which forces a full resync, not by re-syncing into the same version.
+        /// </remarks>
         [Test]
-        public async Task GetCommonEventsAsync_StoredCommonEvent_RoundTripsByKeyAndVersion()
+        public async Task StoreEventsAsync_ConflictingContentUnderSameEventKey_KeepsTheStoredValue()
         {
             SkipIfUnavailable();
 
             // Arrange
-            List<IEvent> events = GetQueryableEvents();
-            IEvent evt = events[13];
-            string eventKey = evt.EventID.ToString();
+            IEvent evt = GetQueryableEvents()[12];
+            Uri eventKey = evt.EventID;
+            DateTimeOffset originalEventTime = evt.EventTime!.Value;
 
-            CommonEvent commonEvent = new CommonEvent
-            {
-                EventKey = "roundtrip-key-001",
-                EventType = "shippingevent",
-                TransportNumber = "TN-42",
-                EventTime = evt.EventTime
-            };
-            IReadOnlyDictionary<string, CommonEvent> commonEventsByKey = new Dictionary<string, CommonEvent> { [eventKey] = commonEvent };
+            // Act - store, then store again under the same event key with a different event time.
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion);
+            string firstEventId = evt.EventID.ToString();
 
-            // Act
-            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion, commonEventsByKey);
+            evt.EventTime = originalEventTime.AddMinutes(7);
+            evt.EventID = eventKey;
+            await _dbService.StoreEventsAsync(new List<IEvent> { evt }, TestDeploymentVersion);
 
-            Dictionary<string, CommonEvent> stored = await _dbService.GetCommonEventsAsync(new List<string> { eventKey, "unknown-key" }, TestDeploymentVersion);
-            Dictionary<string, CommonEvent> otherVersion = await _dbService.GetCommonEventsAsync(new List<string> { eventKey }, "old-version");
+            EPCISQueryDocument result = await QueryEventsByEpcAsync(evt);
 
             // Assert
-            Assert.That(stored.ContainsKey(eventKey), Is.True, "The stored common event must be returned for its event key.");
-            Assert.That(stored[eventKey].EventKey, Is.EqualTo("roundtrip-key-001"));
-            Assert.That(stored[eventKey].EventType, Is.EqualTo("shippingevent"));
-            Assert.That(stored[eventKey].TransportNumber, Is.EqualTo("TN-42"));
-            Assert.That(stored.ContainsKey("unknown-key"), Is.False, "Keys with no stored event must be absent from the result.");
-            Assert.That(otherVersion, Is.Empty, "The lookup must be scoped to the requested deployment version.");
+            IEvent? storedEvent = result.Events.FirstOrDefault(e => e.EventID.ToString() == firstEventId);
+            Assert.That(storedEvent, Is.Not.Null, "The stored event keeps its content hash because the conflicting value was not taken.");
+            Assert.That(storedEvent!.EventTime, Is.EqualTo(originalEventTime), "A value that arrived in an earlier store must win the conflict.");
         }
 
         /// <summary>

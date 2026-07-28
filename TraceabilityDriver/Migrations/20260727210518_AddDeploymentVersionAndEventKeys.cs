@@ -53,12 +53,6 @@ namespace TraceabilityDriver.Migrations
                 nullable: true);
 
             migrationBuilder.AddColumn<string>(
-                name: "CommonEventJson",
-                table: "EPCISEvents",
-                type: "nvarchar(max)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
                 name: "DeploymentVersion",
                 table: "EPCISEvents",
                 type: "nvarchar(100)",
@@ -149,10 +143,6 @@ namespace TraceabilityDriver.Migrations
             migrationBuilder.DropColumn(
                 name: "EventKey",
                 table: "EventSearchDocuments");
-
-            migrationBuilder.DropColumn(
-                name: "CommonEventJson",
-                table: "EPCISEvents");
 
             migrationBuilder.DropColumn(
                 name: "DeploymentVersion",

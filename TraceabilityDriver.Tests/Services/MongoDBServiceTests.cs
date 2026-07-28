@@ -71,7 +71,7 @@ namespace TraceabilityDriver.Tests.Services
 
             // save all the events into the mongo db service; the incoming event ids act as the event
             // keys and are replaced by the generated content-hash event ids
-            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events, "tests", new Dictionary<string, CommonEvent>());
+            await _mongoDBService.StoreEventsAsync(_testEPCISDocument.Events, "tests");
 
             // save all the master data into the mongo db service
             await _mongoDBService.StoreMasterDataAsync(_testEPCISDocument.MasterData, "tests");

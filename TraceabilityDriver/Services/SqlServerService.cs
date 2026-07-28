@@ -7,6 +7,7 @@ using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using OpenTraceability.Utility;
 using System.Collections.Concurrent;
+using TraceabilityDriver.Extensions;
 using TraceabilityDriver.Models.DB;
 using TraceabilityDriver.Models.DB.Sql;
 using TraceabilityDriver.Models.Mapping;
@@ -85,19 +86,18 @@ END";
         }
 
         /// <inheritdoc/>
-        public async Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events, string deploymentVersion, IReadOnlyDictionary<string, CommonEvent> commonEventsByKey)
+        public async Task<DatabaseStoreResult> StoreEventsAsync(List<IEvent> events, string deploymentVersion)
         {
             ConcurrentBag<string> createdIds = new ConcurrentBag<string>();
             ConcurrentBag<string> updatedIds = new ConcurrentBag<string>();
 
-            // The incoming EventID carries the event key (set by the converter). Capture it, then replace
-            // the EventID with the real CBV 2.0 content hash before the event is serialized for storage.
+            // The incoming EventID carries the event key (set by the converter). Capture it before the
+            // EventID is replaced with the real CBV 2.0 content hash, which can only be generated once the
+            // event has been merged with its stored copy.
             List<(IEvent Event, string EventKey)> keyedEvents = new List<(IEvent, string)>();
             foreach (IEvent evt in events)
             {
-                string eventKey = evt.EventID.ToString();
-                evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
-                keyedEvents.Add((evt, eventKey));
+                keyedEvents.Add((evt, evt.EventID.ToString()));
             }
 
             List<List<(IEvent Event, string EventKey)>> batches = keyedEvents.Batch(42); // 42 is a magic number for performance when adding entities using ef core.
@@ -113,14 +113,34 @@ END";
                     var existingEvents = await context.EPCISEvents.Where(x => x.EventKey != null && storingEventKeys.Contains(x.EventKey) && x.DeploymentVersion == deploymentVersion).ToDictionaryAsync(x => x.EventKey!, y => y);
 
                     List<EventSearchSqlDocument> searchDocuments = new List<EventSearchSqlDocument>();
-                    foreach ((IEvent evt, string eventKey) in batch)
+                    foreach ((IEvent incomingEvent, string eventKey) in batch)
                     {
+                        existingEvents.TryGetValue(eventKey, out EPCISEventSqlDocument? existingEvent);
+
+                        // The rows of one event can straddle sync runs, so the stored copy is enriched with
+                        // the incoming one rather than replaced by it. The stored copy is the merge target
+                        // because its values came from earlier rows, which take priority under the first-wins
+                        // merge convention.
+                        IEvent evt = incomingEvent;
+                        if (existingEvent != null)
+                        {
+                            IEvent? storedEvent = DeserializeStoredEvent(existingEvent.EventJson, eventKey);
+                            if (storedEvent != null)
+                            {
+                                storedEvent.Merge(incomingEvent);
+                                evt = storedEvent;
+                            }
+                        }
+
+                        // The event id must be generated from the merged content, so it is only assigned once
+                        // the merge is done.
+                        evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
+
                         EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
                         doc.EventKey = eventKey;
                         doc.DeploymentVersion = deploymentVersion;
-                        doc.CommonEventJson = SerializeCommonEvent(eventKey, commonEventsByKey);
 
-                        if (existingEvents.TryGetValue(eventKey, out EPCISEventSqlDocument? existingEvent))
+                        if (existingEvent != null)
                         {
                             // Preserve the _id field from the existing document
                             doc.ID = existingEvent.ID;
@@ -137,6 +157,10 @@ END";
                         List<EventSearchSqlDocument> eventSearchRows = EventSearchSqlDocument.CreateSearchDocuments(new List<IEvent> { evt });
                         eventSearchRows.ForEach(x => { x.EventKey = eventKey; x.DeploymentVersion = deploymentVersion; });
                         searchDocuments.AddRange(eventSearchRows);
+
+                        // The caller keeps a reference to the incoming event, so it must end up carrying the
+                        // id the merged event was stored under.
+                        incomingEvent.EventID = evt.EventID;
                     }
 
                     // Batch save the search documents by first deleting all existing index documents for
@@ -223,62 +247,30 @@ END";
         }
 
         /// <inheritdoc/>
-        public async Task<Dictionary<string, CommonEvent>> GetCommonEventsAsync(List<string> eventKeys, string deploymentVersion)
-        {
-            using var context = await _contextFactory.CreateDbContextAsync();
-
-            var rows = await context.EPCISEvents
-                .Where(x => x.EventKey != null && eventKeys.Contains(x.EventKey) && x.DeploymentVersion == deploymentVersion)
-                .Select(x => new { x.EventKey, x.CommonEventJson })
-                .ToListAsync();
-
-            Dictionary<string, CommonEvent> results = new Dictionary<string, CommonEvent>();
-            foreach (var row in rows)
-            {
-                if (string.IsNullOrWhiteSpace(row.CommonEventJson))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    CommonEvent? commonEvent = JsonConvert.DeserializeObject<CommonEvent>(row.CommonEventJson);
-                    if (commonEvent != null)
-                    {
-                        results[row.EventKey!] = commonEvent;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to deserialize the stored common event for event key {EventKey}; the stored event will be replaced instead of merged.", row.EventKey);
-                }
-            }
-
-            return results;
-        }
-
-        /// <summary>
-        /// Serializes the common event for the given event key, or returns null with a logged warning
-        /// when the caller did not provide one.
-        /// </summary>
-        private string? SerializeCommonEvent(string eventKey, IReadOnlyDictionary<string, CommonEvent> commonEventsByKey)
-        {
-            if (commonEventsByKey.TryGetValue(eventKey, out CommonEvent? commonEvent))
-            {
-                return JsonConvert.SerializeObject(commonEvent);
-            }
-
-            _logger.LogWarning("No common event was provided for the event key {EventKey}; later sync runs cannot merge additional rows into the stored event.", eventKey);
-            return null;
-        }
-
         public async Task<DatabaseStoreResult> StoreMasterDataAsync(List<IVocabularyElement> masterData, string deploymentVersion)
         {
             DatabaseStoreResult result = new DatabaseStoreResult();
 
             using var context = await _contextFactory.CreateDbContextAsync();
-            foreach (var element in masterData)
+            foreach (var incomingElement in masterData)
             {
+                // Check if master data with this ID already exists under the deployment version being stored.
+                var existingMasterData = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == incomingElement.ID && x.DeploymentVersion == deploymentVersion);
+
+                // The rows describing one element can straddle sync runs, so the stored copy is enriched with
+                // the incoming one rather than replaced by it. The stored copy is the merge target because its
+                // values came from earlier rows, which take priority under the first-wins merge convention.
+                IVocabularyElement element = incomingElement;
+                if (existingMasterData != null)
+                {
+                    IVocabularyElement? storedElement = DeserializeStoredMasterData(existingMasterData.ElementType, existingMasterData.ElementJson, existingMasterData.ElementId);
+                    if (storedElement != null)
+                    {
+                        storedElement.Merge(incomingElement);
+                        element = storedElement;
+                    }
+                }
+
                 var masterDataDoc = new MasterDataSqlDocument
                 {
                     ElementId = element.ID,
@@ -286,9 +278,6 @@ END";
                     ElementType = element.GetType().AssemblyQualifiedName ?? "",
                     ElementJson = OpenTraceability.Mappers.OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(element)
                 };
-
-                // Check if master data with this ID already exists under the deployment version being stored.
-                var existingMasterData = await context.MasterDataDocuments.FirstOrDefaultAsync(x => x.ElementId == element.ID && x.DeploymentVersion == deploymentVersion);
 
                 if (existingMasterData == null)
                 {
@@ -310,6 +299,72 @@ END";
             await context.SaveChangesAsync();
 
             return result;
+        }
+
+        /// <summary>
+        /// Deserializes a stored event back into an <see cref="IEvent"/> so an incoming partial copy can be
+        /// merged into it, or returns null with a logged warning when it cannot be read.
+        /// </summary>
+        /// <remarks>
+        /// A stored event that cannot be deserialized is replaced rather than merged. That loses the earlier
+        /// rows' data, but it is the only way forward and a hard failure would stall every later sync run.
+        /// </remarks>
+        private IEvent? DeserializeStoredEvent(string eventJson, string eventKey)
+        {
+            if (string.IsNullOrWhiteSpace(eventJson))
+            {
+                return null;
+            }
+
+            try
+            {
+                EPCISQueryDocument storedDocument = OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(eventJson);
+                IEvent? storedEvent = storedDocument.Events.FirstOrDefault();
+                if (storedEvent == null)
+                {
+                    _logger.LogWarning("The stored event for event key {EventKey} held no event; the stored event will be replaced instead of merged.", eventKey);
+                }
+
+                return storedEvent;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to deserialize the stored event for event key {EventKey}; the stored event will be replaced instead of merged.", eventKey);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Deserializes a stored master data element so an incoming partial copy can be merged into it, or
+        /// returns null with a logged warning when it cannot be read.
+        /// </summary>
+        /// <remarks>
+        /// A stored element that cannot be deserialized is replaced rather than merged. That loses the earlier
+        /// rows' data, but it is the only way forward and a hard failure would stall every later sync run.
+        /// </remarks>
+        private IVocabularyElement? DeserializeStoredMasterData(string elementType, string elementJson, string elementId)
+        {
+            if (string.IsNullOrWhiteSpace(elementJson) || string.IsNullOrWhiteSpace(elementType))
+            {
+                return null;
+            }
+
+            try
+            {
+                Type? resolvedType = Type.GetType(elementType);
+                if (resolvedType == null)
+                {
+                    _logger.LogWarning("Failed to resolve the stored element type {ElementType} for element {ElementId}; the stored element will be replaced instead of merged.", elementType, elementId);
+                    return null;
+                }
+
+                return OpenTraceabilityMappers.MasterData.GS1WebVocab.Map(resolvedType, elementJson);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to deserialize the stored master data for element {ElementId}; the stored element will be replaced instead of merged.", elementId);
+                return null;
+            }
         }
 
         /// <inheritdoc/>
