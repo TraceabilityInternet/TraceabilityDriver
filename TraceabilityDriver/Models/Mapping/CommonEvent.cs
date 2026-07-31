@@ -29,7 +29,7 @@ public class CommonEvent : CommonBaseModel
     /// <summary>
     /// The disposition of the event.
     /// </summary>
-    public string? Dispostion { get; set; } = null;
+    public string? Disposition { get; set; } = null;
 
     /// <summary>
     /// The action of the event.
@@ -125,9 +125,9 @@ public class CommonEvent : CommonBaseModel
         }
 
         // Disposition
-        if (this.Dispostion == null && source.Dispostion != null)
+        if (this.Disposition == null && source.Disposition != null)
         {
-            this.Dispostion = source.Dispostion;
+            this.Disposition = source.Disposition;
         }
 
         // Read Point
@@ -302,7 +302,7 @@ public class CommonEvent : CommonBaseModel
     }
 
     /// <summary>
-    /// Generates the deterministic event key URI by hashing the identifier domain, event type, and
+    /// Generates the deterministic event key URI by concatenating the event type and
     /// source-system event key.
     /// </summary>
     /// <remarks>
@@ -316,11 +316,9 @@ public class CommonEvent : CommonBaseModel
     public Uri GetEventKey()
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(this.EventKey);
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(this.EventType);
 
-        using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{GDST_IDENTIFIERS_DOMAIN}:{this.EventType}:{this.EventKey}"));
-
-        return new Uri($"ni:///sha-256;{BitConverter.ToString(hash).Replace("-", "").ToLower()}?ver=CBV2.0");
+        return new Uri($"urn:td:event:{this.EventType}:{this.EventKey}");
     }
 }
 

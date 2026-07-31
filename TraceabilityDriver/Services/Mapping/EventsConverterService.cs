@@ -788,9 +788,9 @@ public class EventsConverterService : IEventsConverterService
             epcisEvent.ReadPoint = new EventReadPoint() { ID = new Uri(commonEvent.ReadPoint) };
         }
 
-        if (commonEvent.Dispostion != null)
+        if (commonEvent.Disposition != null)
         {
-            epcisEvent.Disposition = new Uri(commonEvent.Dispostion, UriKind.RelativeOrAbsolute);
+            epcisEvent.Disposition = new Uri(commonEvent.Disposition, UriKind.RelativeOrAbsolute);
         }
     }
 

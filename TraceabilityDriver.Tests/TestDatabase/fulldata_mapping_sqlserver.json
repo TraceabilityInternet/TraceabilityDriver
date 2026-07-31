@@ -221,7 +221,7 @@
             "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
-            "Dispostion": "$disposition",
+            "Disposition": "$disposition",
             "UnloadingPort": "$unloadingPort",
             "InformationProvider": {
               "OwnerId": "$infoPgln",
@@ -323,7 +323,7 @@
             "EventType": "!shippingevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
-            "Dispostion": "$disposition",
+            "Disposition": "$disposition",
             "UnloadingPort": "$unloadingPort",
             "InformationProvider": {
               "OwnerId": "$infoPgln",
@@ -597,7 +597,7 @@
             "EventType": "!decommissioningevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
-            "Dispostion": "$disposition",
+            "Disposition": "$disposition",
             "InformationProvider": {
               "OwnerId": "$infoPgln",
               "Name": "$infoName"
@@ -666,7 +666,7 @@
             "EventType": "!transformationevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
-            "Dispostion": "$disposition",
+            "Disposition": "$disposition",
             "HumanWelfarePolicy": "$humanWelfarePolicy",
             "CountryOfOrigin": "$countryOfOrigin",
             "ProteinSource": "$proteinSource",
@@ -807,7 +807,7 @@
             "EventType": "!aggregationevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
-            "Dispostion": "$disposition",
+            "Disposition": "$disposition",
             "InformationProvider": {
               "OwnerId": "$infoPgln",
               "Name": "$infoName"
@@ -889,7 +889,7 @@
             "EventType": "!disaggregationevent",
             "EventTime": "$eventTime",
             "ReadPoint": "$readPoint",
-            "Dispostion": "$disposition",
+            "Disposition": "$disposition",
             "InformationProvider": {
               "OwnerId": "$infoPgln",
               "Name": "$infoName"
