@@ -62,7 +62,7 @@ namespace TraceabilityDriver.Services.Mapping
 
 #if DEBUG
             string? filePath = Environment.GetEnvironmentVariable("TD_MAPPINGS_FOLDER");
-            if (!mappings.Any() && !string.IsNullOrEmpty(filePath))
+            if ((!mappings.Any() || !mappings.SelectMany(m => m.Mappings).Any()) && !string.IsNullOrEmpty(filePath))
             {
                 if (!string.IsNullOrWhiteSpace(filePath))
                 {
@@ -70,7 +70,7 @@ namespace TraceabilityDriver.Services.Mapping
                     if (Directory.Exists(filePath))
                     {
                         // Look for all .JSON files in the mappings folder.
-                        var mappingFiles = Directory.GetFiles(mappingsFolder, "*.json");
+                        var mappingFiles = Directory.GetFiles(filePath, "*.json");
 
                         // Load the mappings.
                         foreach(var mappingFile in mappingFiles)

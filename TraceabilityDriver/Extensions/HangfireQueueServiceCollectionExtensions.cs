@@ -63,6 +63,7 @@ namespace TraceabilityDriver.Extensions
                             ?? throw new ArgumentException("A Mongo database name is required for the Hangfire queue store.", nameof(config));
                         configuration.UseMongoStorage(config.ConnectionString, databaseName, new MongoStorageOptions
                         {
+                            CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
                             MigrationOptions = new MongoMigrationOptions
                             {
                                 MigrationStrategy = new MigrateMongoMigrationStrategy(),
