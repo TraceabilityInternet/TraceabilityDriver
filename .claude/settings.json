@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "PowerShell(dotnet test \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.Tests\\\\TraceabilityDriver.Tests.csproj\" --filter \"FullyQualifiedName!~TDSqlServerConnectorTests\" -v q --nologo --no-build)",
-      "PowerShell(dotnet test \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.sln\" --no-build --nologo --filter \"FullyQualifiedName~SynchronizeServiceStraddleTests\" 2>&1)"
+      "PowerShell(dotnet test \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.sln\" --no-build --nologo --filter \"FullyQualifiedName~SynchronizeServiceStraddleTests\" 2>&1)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.sln\" --nologo -v q)"
     ]
   }
 }

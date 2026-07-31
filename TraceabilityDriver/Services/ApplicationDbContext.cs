@@ -134,8 +134,9 @@ namespace TraceabilityDriver.Services
 
             // Master data is unique per (element id, deployment version). The element id needs an
             // explicit max length so it can participate in the index. Traceback rows carry a null
-            // deployment version and are excluded by the null filter EF adds to the unique index;
-            // their one-row-per-element-id rule is enforced by the skip-if-exists store logic instead.
+            // deployment version and are excluded by the null filter EF adds to the unique index; instead,
+            // the traceback store skips any element id already present under any deployment version, so a
+            // tracebacked element never adds a second row for an id the cache already holds.
             modelBuilder.Entity<MasterDataSqlDocument>()
                 .Property(e => e.ElementId)
                 .HasMaxLength(450);

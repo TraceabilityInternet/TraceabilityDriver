@@ -72,18 +72,27 @@ namespace TraceabilityDriver.Services
 
         /// <summary>
         /// Stores tracebacked events with a null deployment version and no event key. Traceback data is
-        /// never updated: an event is skipped when its event id already exists under the current
-        /// deployment version or as previously tracebacked data; skipped ids are reported in neither
-        /// CreatedIds nor UpdatedIds. Events without an event id get one generated from their content.
+        /// never updated: an event is skipped when a record with its event id already exists in the cache,
+        /// regardless of deployment version; skipped ids are reported in neither CreatedIds nor
+        /// UpdatedIds. Events without an event id get one generated from their content.
         /// </summary>
+        /// <remarks>
+        /// The existence check deliberately ignores the deployment version. Data the driver synced under an
+        /// old version may have been pulled into another solution; when that solution is tracebacked, the
+        /// superseded copy comes back and must not be written into the cache as traceback data.
+        /// </remarks>
         Task<DatabaseStoreResult> StoreTracebackEventsAsync(List<IEvent> events);
 
         /// <summary>
         /// Stores tracebacked master data with a null deployment version. Traceback data is never
-        /// updated: an element is skipped when its element id already exists under the current deployment
-        /// version or as previously tracebacked data; skipped ids are reported in neither CreatedIds nor
+        /// updated: an element is skipped when a record with its element id already exists in the cache,
+        /// regardless of deployment version; skipped ids are reported in neither CreatedIds nor
         /// UpdatedIds.
         /// </summary>
+        /// <remarks>
+        /// As with <see cref="StoreTracebackEventsAsync"/>, the existence check ignores the deployment
+        /// version so a superseded copy that was tracebacked back to us is never re-saved.
+        /// </remarks>
         Task<DatabaseStoreResult> StoreTracebackMasterDataAsync(List<IVocabularyElement> masterData);
 
         Task StoreSyncHistory(SyncHistoryItem syncHistory);

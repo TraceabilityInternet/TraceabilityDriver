@@ -17,8 +17,8 @@ namespace TraceabilityDriver.Tests.Services
     /// <remarks>
     /// Both backends must satisfy the same contract: synced events are upserted by (event key, deployment
     /// version) with their EventID replaced by the CBV 2.0 content hash, traceback data is stored with a
-    /// null deployment version and skipped when its id already exists under the current version or as
-    /// traceback data, traceback records upsert by id, ledger items upsert by their
+    /// null deployment version and skipped when a record with its id is already in the cache under any
+    /// deployment version, traceback records upsert by id, ledger items upsert by their
     /// (TracebackId, ItemType, ItemId) key, and the history queries order and filter correctly. Queries
     /// serve the synced data of the configured deployment version merged with the traceback data, with
     /// the synced copy winning on the same event id. Concrete fixtures supply the backend. Tests share
@@ -431,11 +431,12 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
-        /// An event that exists only under an old deployment version must not block a traceback store,
-        /// because data of old versions is never served.
+        /// An event that exists only under an old deployment version must still block a traceback store,
+        /// because the incoming copy is superseded data that was pulled out of this cache in the first
+        /// place and tracebacked back to us through another solution.
         /// </summary>
         [Test]
-        public async Task StoreTracebackEventsAsync_ExistsOnlyUnderOldVersion_StoresEvent()
+        public async Task StoreTracebackEventsAsync_ExistsOnlyUnderOldVersion_SkipsEvent()
         {
             SkipIfUnavailable();
 
@@ -449,7 +450,8 @@ namespace TraceabilityDriver.Tests.Services
             DatabaseStoreResult result = await _dbService.StoreTracebackEventsAsync(new List<IEvent> { evt });
 
             // Assert
-            Assert.That(result.CreatedIds, Is.EqualTo(new List<string> { evt.EventID.ToString() }), "An event known only under an old deployment version must not block the traceback store.");
+            Assert.That(result.CreatedIds, Is.Empty, "Any record with the same event id must block the traceback store, whatever deployment version it was stored under.");
+            Assert.That(result.UpdatedIds, Is.Empty, "Traceback data must never update existing records.");
         }
 
         /// <summary>
@@ -477,11 +479,11 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
-        /// An element that exists only under an old deployment version must not block a traceback store,
-        /// because data of old versions is never served.
+        /// An element that exists only under an old deployment version must still block a traceback store,
+        /// for the same reason as its event counterpart.
         /// </summary>
         [Test]
-        public async Task StoreTracebackMasterDataAsync_ExistsOnlyUnderOldVersion_StoresElement()
+        public async Task StoreTracebackMasterDataAsync_ExistsOnlyUnderOldVersion_SkipsElement()
         {
             SkipIfUnavailable();
 
@@ -494,7 +496,8 @@ namespace TraceabilityDriver.Tests.Services
             DatabaseStoreResult result = await _dbService.StoreTracebackMasterDataAsync(new List<IVocabularyElement> { element });
 
             // Assert
-            Assert.That(result.CreatedIds, Is.EqualTo(new List<string> { element.ID }), "An element known only under an old deployment version must not block the traceback store.");
+            Assert.That(result.CreatedIds, Is.Empty, "Any record with the same element id must block the traceback store, whatever deployment version it was stored under.");
+            Assert.That(result.UpdatedIds, Is.Empty, "Traceback data must never update existing records.");
         }
 
         /// <summary>

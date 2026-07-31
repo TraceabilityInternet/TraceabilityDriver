@@ -135,6 +135,7 @@ END";
                         // The event id must be generated from the merged content, so it is only assigned once
                         // the merge is done.
                         evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
+                        evt.RecordTime = DateTime.UtcNow;
 
                         EPCISEventSqlDocument doc = new EPCISEventSqlDocument(evt);
                         doc.EventKey = eventKey;
@@ -161,6 +162,7 @@ END";
                         // The caller keeps a reference to the incoming event, so it must end up carrying the
                         // id the merged event was stored under.
                         incomingEvent.EventID = evt.EventID;
+                        incomingEvent.RecordTime = evt.RecordTime;
                     }
 
                     // Batch save the search documents by first deleting all existing index documents for
@@ -194,6 +196,7 @@ END";
                 {
                     evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
                 }
+                evt.RecordTime = DateTime.UtcNow;
             }
 
             // Deduplicate by event id so the same event appearing twice in one store is only inserted once.
@@ -204,20 +207,12 @@ END";
             {
                 using (var context = await _contextFactory.CreateDbContextAsync())
                 {
-                    // Traceback data is never updated: an event is skipped when its id already exists under
-                    // the current deployment version or as previously tracebacked data (null version).
-                    // Events stored only under old deployment versions do not block the save.
+                    // Traceback data is never updated: an event is skipped when a record with its id already
+                    // exists in the data cache, regardless of deployment version. Data synced under an old
+                    // version that was pulled into another solution must not be re-saved when we traceback
+                    // that solution and it comes back to us.
                     List<string> storingEventIds = batch.Select(x => x.EventID.ToString()).ToList();
-                    IQueryable<EPCISEventSqlDocument> existingQuery = context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId));
-                    if (string.IsNullOrWhiteSpace(_deploymentVersion))
-                    {
-                        existingQuery = existingQuery.Where(x => x.DeploymentVersion == null);
-                    }
-                    else
-                    {
-                        existingQuery = existingQuery.Where(x => x.DeploymentVersion == _deploymentVersion || x.DeploymentVersion == null);
-                    }
-                    List<string> existingEventIds = await existingQuery.Select(x => x.EventId).Distinct().ToListAsync();
+                    List<string> existingEventIds = await context.EPCISEvents.Where(x => storingEventIds.Contains(x.EventId)).Select(x => x.EventId).Distinct().ToListAsync();
 
                     List<IEvent> newEvents = batch.Where(x => !existingEventIds.Contains(x.EventID.ToString())).ToList();
                     Interlocked.Add(ref skippedCount, batch.Count - newEvents.Count);
@@ -376,20 +371,11 @@ END";
             using var context = await _contextFactory.CreateDbContextAsync();
             foreach (var element in masterData.GroupBy(x => x.ID).Select(g => g.First()))
             {
-                // Traceback master data is never updated: the element is skipped when it already exists
-                // under the current deployment version or as previously tracebacked data (null version).
-                // Elements stored only under old deployment versions do not block the save.
-                IQueryable<MasterDataSqlDocument> existingQuery = context.MasterDataDocuments.Where(x => x.ElementId == element.ID);
-                if (string.IsNullOrWhiteSpace(_deploymentVersion))
-                {
-                    existingQuery = existingQuery.Where(x => x.DeploymentVersion == null);
-                }
-                else
-                {
-                    existingQuery = existingQuery.Where(x => x.DeploymentVersion == _deploymentVersion || x.DeploymentVersion == null);
-                }
-
-                if (await existingQuery.AnyAsync())
+                // Traceback master data is never updated: the element is skipped when a record with its
+                // element id already exists in the data cache, regardless of deployment version. Data
+                // synced under an old version that was pulled into another solution must not be re-saved
+                // when we traceback that solution and it comes back to us.
+                if (await context.MasterDataDocuments.AnyAsync(x => x.ElementId == element.ID))
                 {
                     skippedCount++;
                     continue;

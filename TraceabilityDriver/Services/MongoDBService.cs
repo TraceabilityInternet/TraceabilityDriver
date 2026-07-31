@@ -188,11 +188,12 @@ namespace TraceabilityDriver.Services
 
             foreach (var evt in events.GroupBy(e => e.EventID.ToString()).Select(g => g.First()))
             {
-                // Traceback data is never updated: an event is skipped when its id already exists under
-                // the current deployment version or as previously tracebacked data (null version). Events
-                // stored only under old deployment versions do not block the save.
+                // Traceback data is never updated: an event is skipped when a record with its id already
+                // exists in the data cache, regardless of deployment version. Data synced under an old
+                // version that was pulled into another solution must not be re-saved when we traceback
+                // that solution and it comes back to us.
                 var filterBuilder = Builders<EPCISEventDocument>.Filter;
-                var existingFilter = filterBuilder.Eq(e => e.EventId, evt.EventID.ToString()) & BuildCurrentOrTracebackVersionFilter();
+                var existingFilter = filterBuilder.Eq(e => e.EventId, evt.EventID.ToString());
                 if (await _eventsCollection.Find(existingFilter).AnyAsync())
                 {
                     skippedCount++;
@@ -217,7 +218,7 @@ namespace TraceabilityDriver.Services
 
         /// <summary>
         /// Builds the filter matching documents of the current deployment version or traceback documents
-        /// (null version), which is the set of documents that queries serve and traceback stores dedupe against.
+        /// (null version), which is the set of documents that queries serve.
         /// </summary>
         private FilterDefinition<EPCISEventDocument> BuildCurrentOrTracebackVersionFilter()
         {
@@ -335,20 +336,11 @@ namespace TraceabilityDriver.Services
             var filterBuilder = Builders<MasterDataDocument>.Filter;
             foreach (var element in masterData.GroupBy(x => x.ID).Select(g => g.First()))
             {
-                // Traceback master data is never updated: the element is skipped when it already exists
-                // under the current deployment version or as previously tracebacked data (null version).
-                // Elements stored only under old deployment versions do not block the save.
-                FilterDefinition<MasterDataDocument> versionFilter;
-                if (string.IsNullOrWhiteSpace(_deploymentVersion))
-                {
-                    versionFilter = filterBuilder.Eq(m => m.DeploymentVersion, null);
-                }
-                else
-                {
-                    versionFilter = filterBuilder.Or(filterBuilder.Eq(m => m.DeploymentVersion, _deploymentVersion), filterBuilder.Eq(m => m.DeploymentVersion, null));
-                }
-
-                var existingFilter = filterBuilder.Eq(m => m.ElementId, element.ID) & versionFilter;
+                // Traceback master data is never updated: the element is skipped when a record with its
+                // element id already exists in the data cache, regardless of deployment version. Data
+                // synced under an old version that was pulled into another solution must not be re-saved
+                // when we traceback that solution and it comes back to us.
+                var existingFilter = filterBuilder.Eq(m => m.ElementId, element.ID);
                 if (await _masterDataCollection.Find(existingFilter).AnyAsync())
                 {
                     skippedCount++;
