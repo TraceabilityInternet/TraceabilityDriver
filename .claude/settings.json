@@ -3,7 +3,13 @@
     "allow": [
       "PowerShell(dotnet test \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.Tests\\\\TraceabilityDriver.Tests.csproj\" --filter \"FullyQualifiedName!~TDSqlServerConnectorTests\" -v q --nologo --no-build)",
       "PowerShell(dotnet test \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.sln\" --no-build --nologo --filter \"FullyQualifiedName~SynchronizeServiceStraddleTests\" 2>&1)",
-      "PowerShell(dotnet build \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.sln\" --nologo -v q)"
+      "PowerShell(dotnet build \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.sln\" --nologo -v q)",
+      "Read(//c/Users/john/source/repos/traceability/opentraceability/CSharp/OpenTraceability/**)",
+      "Read(//c/Users/john/source/repos/traceability/opentraceability/CSharp/OpenTraceability/Interfaces/**)",
+      "PowerShell(dotnet build \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver\\\\TraceabilityDriver.csproj\" -v q --nologo)",
+      "PowerShell(Test-NetConnection -ComputerName 127.0.0.1 -Port 37017 -InformationLevel Quiet -WarningAction SilentlyContinue)",
+      "PowerShell(Test-NetConnection -ComputerName 127.0.0.1 -Port 3433 -InformationLevel Quiet -WarningAction SilentlyContinue)",
+      "PowerShell(dotnet test \"c:\\\\Users\\\\john\\\\source\\\\repos\\\\traceability\\\\TraceabilityDriver\\\\TraceabilityDriver.Tests\\\\TraceabilityDriver.Tests.csproj\" --filter \"FullyQualifiedName~ServiceQueryTests\" --nologo -v q 2>&1)"
     ]
   }
 }

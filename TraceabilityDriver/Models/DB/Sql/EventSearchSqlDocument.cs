@@ -1,5 +1,6 @@
 using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
+using OpenTraceability.Models.Events;
 using System.ComponentModel.DataAnnotations;
 
 namespace TraceabilityDriver.Models.DB.Sql
@@ -44,6 +45,17 @@ namespace TraceabilityDriver.Models.DB.Sql
         public string Action { get; set; } = string.Empty;
 
         /// <summary>
+        /// The lowercased EPCIS event type (e.g. "objectevent"), matched by the eventTypes query parameter.
+        /// </summary>
+        public string EventType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The lowercased transformation id, matched by the EQ_transformationID query parameter.
+        /// Empty on every event that is not a transformation event.
+        /// </summary>
+        public string TransformationId { get; set; } = string.Empty;
+
+        /// <summary>
         /// Represents the time when an event occurred, stored as a nullable DateTimeOffset. If no event time is set, it
         /// can be null.
         /// </summary>
@@ -59,6 +71,13 @@ namespace TraceabilityDriver.Models.DB.Sql
         /// empty string.
         /// </summary>
         public string EPC { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Whether <see cref="EPC"/> came from a reference or child product. The MATCH_epc and
+        /// MATCH_epcClass query parameters only match reference and child EPCs, while MATCH_anyEPC and
+        /// MATCH_anyEPCClass match every product EPC.
+        /// </summary>
+        public bool EPCIsReferenceOrChild { get; set; }
 
         /// <summary>
         /// Represents the Global Trade Item Number (GTIN) of a product. Initialized to an empty string by default.
@@ -88,8 +107,20 @@ namespace TraceabilityDriver.Models.DB.Sql
             {
                 string bizStep = evt.BusinessStep.ToString().ToLower();
                 string action = evt.Action.ToString()?.ToLower() ?? "";
+                string eventType = evt.EventType.ToString().ToLower();
                 DateTimeOffset? eventTime = evt.EventTime;
-                List<string> epcs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList();
+
+                // The record time was stamped by the store right before the rows are built; copying it
+                // keeps the queryable rows in exact agreement with the record time serialized into the
+                // stored event JSON.
+                DateTime recordTime = evt.RecordTime?.UtcDateTime ?? DateTime.UtcNow;
+
+                // Only transformation events carry a transformation id.
+                string transformationId = evt is ITransformationEvent transformationEvent && !string.IsNullOrWhiteSpace(transformationEvent.TransformationID) ? transformationEvent.TransformationID.ToLower() : string.Empty;
+
+                // Each EPC keeps whether it came from a reference or child product, because the
+                // MATCH_epc/MATCH_epcClass parameters only match those product types.
+                List<(string Value, bool IsReferenceOrChild)> epcs = evt.Products.Select(p => (p.EPC.ToString().ToLower(), p.Type == EventProductType.Reference || p.Type == EventProductType.Child)).ToList();
                 List<string> productGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString().ToLower()).Where(g => g != null).Select(g => g!).ToList();
                 List<string> locationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>();
                 List<string> partyPGLNs = new List<string>();
@@ -148,8 +179,12 @@ namespace TraceabilityDriver.Models.DB.Sql
                         EventId = evt.EventID.ToString(),
                         BizStep = bizStep,
                         Action = action,
+                        EventType = eventType,
+                        TransformationId = transformationId,
                         EventTime = eventTime,
-                        EPC = i < epcs.Count ? epcs[i] : string.Empty,
+                        RecordTime = recordTime,
+                        EPC = i < epcs.Count ? epcs[i].Value : string.Empty,
+                        EPCIsReferenceOrChild = i < epcs.Count && epcs[i].IsReferenceOrChild,
                         ProductGTIN = i < productGTINs.Count ? productGTINs[i] : string.Empty,
                         LocationGLN = i < locationGLNs.Count ? locationGLNs[i] : string.Empty,
                         PartyPGLN = i < partyPGLNs.Count ? partyPGLNs[i] : string.Empty

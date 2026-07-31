@@ -122,7 +122,9 @@ namespace TraceabilityDriver.Tests.Services
                 return;
             }
 
-            // Determine start and end times via the _testEPCISDocument.
+            // Determine start and end times via the _testEPCISDocument. The deprecated LE_ parameters
+            // are not supported by the database services, so the exclusive LT_ bound sits just past
+            // the latest event time.
             var startTime = _testEPCISDocument.Events.Min(e => e.EventTime);
             var endTime = _testEPCISDocument.Events.Max(e => e.EventTime);
 
@@ -131,7 +133,7 @@ namespace TraceabilityDriver.Tests.Services
                 query = new EPCISQuery
                 {
                     GE_eventTime = startTime,
-                    LE_eventTime = endTime
+                    LT_eventTime = endTime!.Value.AddSeconds(1)
                 }
             };
 

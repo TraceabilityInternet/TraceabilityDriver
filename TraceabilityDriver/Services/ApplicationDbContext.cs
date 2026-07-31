@@ -113,6 +113,14 @@ namespace TraceabilityDriver.Services
                 .HasIndex(e => e.RecordTime)
                 .IsUnique(false)
                 .HasDatabaseName("IX_EventSearchDocuments_RecordTime");
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .HasIndex(e => e.EventType)
+                .IsUnique(false)
+                .HasDatabaseName("IX_EventSearchDocuments_EventType");
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .HasIndex(e => e.TransformationId)
+                .IsUnique(false)
+                .HasDatabaseName("IX_EventSearchDocuments_TransformationId");
 
             // The deployment version index lets queries narrow the search rows to the currently
             // configured deployment version efficiently (traceback rows carry a null version). The event

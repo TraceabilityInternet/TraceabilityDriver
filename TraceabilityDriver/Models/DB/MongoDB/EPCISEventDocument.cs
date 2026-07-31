@@ -31,6 +31,27 @@ namespace TraceabilityDriver.Models.DB.MongoDB
 
         public string Action { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The lowercased EPCIS event type (e.g. "objectevent"), matched by the eventTypes query parameter.
+        /// </summary>
+        public string EventType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The lowercased transformation id, matched by the EQ_transformationID query parameter.
+        /// Null on every event that is not a transformation event.
+        /// </summary>
+        public string? TransformationId { get; set; }
+
+        /// <summary>
+        /// The time the event occurred, stored as a UTC BSON date so range filters compare instants.
+        /// </summary>
+        /// <remarks>
+        /// The driver's default DateTimeOffset representation is a [local ticks, offset] array, which
+        /// makes range queries compare local clock ticks and return wrong results for events with
+        /// different UTC offsets. The offset itself is not needed here because the event is always
+        /// rehydrated from <see cref="EventJson"/>; this field only exists for filtering.
+        /// </remarks>
+        [BsonRepresentation(BsonType.DateTime)]
         public DateTimeOffset? EventTime { get; set; }
 
         public DateTime RecordTime { get; set; } = DateTime.UtcNow;
@@ -38,6 +59,13 @@ namespace TraceabilityDriver.Models.DB.MongoDB
         public DateTime AuditTime { get; set; } = DateTime.UtcNow;
 
         public List<string> EPCs { get; set; } = new List<string>();
+
+        /// <summary>
+        /// The lowercased EPCs of the reference and child products only, matched by the MATCH_epc and
+        /// MATCH_epcClass query parameters. <see cref="EPCs"/> keeps the EPCs of all products for the
+        /// MATCH_anyEPC and MATCH_anyEPCClass parameters.
+        /// </summary>
+        public List<string> MatchEPCs { get; set; } = new List<string>();
 
         public List<string> ProductGTINs { get; set; } = new List<string>();
 
@@ -61,8 +89,21 @@ namespace TraceabilityDriver.Models.DB.MongoDB
             EventJson = json;
             BizStep = evt.BusinessStep.ToString().ToLower();
             Action = evt.Action.ToString()?.ToLower() ?? "";
+            EventType = evt.EventType.ToString().ToLower();
             EventTime = evt.EventTime;
+
+            // The record time was stamped by the store right before this document is built; it is the
+            // moment the event is saved into this repository, never a value carried in by the event.
+            RecordTime = evt.RecordTime?.UtcDateTime ?? DateTime.UtcNow;
+
+            // Only transformation events carry a transformation id.
+            if (evt is ITransformationEvent transformationEvent && !string.IsNullOrWhiteSpace(transformationEvent.TransformationID))
+            {
+                TransformationId = transformationEvent.TransformationID.ToLower();
+            }
+
             EPCs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList();
+            MatchEPCs = evt.Products.Where(p => p.Type == EventProductType.Reference || p.Type == EventProductType.Child).Select(p => p.EPC.ToString().ToLower()).ToList();
             ProductGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString().ToLower()).Where(g => g != null).Select(g => g!).ToList();
             LocationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>();
             PartyPGLNs = new List<string>();

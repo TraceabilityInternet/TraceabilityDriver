@@ -1,0 +1,134 @@
+{
+  "@context": [
+    "https://ref.gs1.org/standards/epcis/epcis-context.jsonld"
+  ],
+  "type": "EPCISDocument",
+  "creationDate": "2026-05-01T00:00:00.0000000+00:00",
+  "schemaVersion": "2.0",
+  "epcisBody": {
+    "eventList": [
+      {
+        "type": "ObjectEvent",
+        "eventTime": "2026-05-01T10:00:00.0000000+00:00",
+        "eventTimeZoneOffset": "+00:00",
+        "eventID": "urn:uuid:11111111-1111-1111-1111-111111111111",
+        "epcList": [],
+        "action": "ADD",
+        "bizStep": "commissioning",
+        "disposition": "active",
+        "readPoint": {
+          "id": "geo:37.7749,-122.4194"
+        },
+        "bizLocation": {
+          "id": "urn:gdst:example.org:location:loc:qftest.vessel1"
+        },
+        "quantityList": [
+          {
+            "epcClass": "urn:gdst:example.org:product:lot:class:qftest.wild.lot1",
+            "quantity": 10000.0,
+            "uom": "KGM"
+          }
+        ]
+      },
+      {
+        "type": "ObjectEvent",
+        "eventTime": "2026-05-01T08:00:00.0000000-05:00",
+        "eventTimeZoneOffset": "-05:00",
+        "eventID": "urn:uuid:22222222-2222-2222-2222-222222222222",
+        "epcList": [],
+        "action": "OBSERVE",
+        "bizStep": "shipping",
+        "disposition": "in_transit",
+        "readPoint": {
+          "id": "geo:37.7749,-122.4194"
+        },
+        "bizLocation": {
+          "id": "urn:gdst:example.org:location:loc:qftest.vessel2"
+        },
+        "quantityList": [
+          {
+            "epcClass": "urn:gdst:example.org:product:lot:class:qftest.wild.lot2",
+            "quantity": 9500.0,
+            "uom": "KGM"
+          }
+        ]
+      },
+      {
+        "type": "TransformationEvent",
+        "eventTime": "2026-05-01T16:00:00.0000000+02:00",
+        "eventTimeZoneOffset": "+02:00",
+        "eventID": "urn:uuid:33333333-3333-3333-3333-333333333333",
+        "transformationID": "urn:gdst:example.org:transformation:qftest.transform1",
+        "inputQuantityList": [
+          {
+            "epcClass": "urn:gdst:example.org:product:lot:class:qftest.wild.lot1",
+            "quantity": 10000.0,
+            "uom": "KGM"
+          }
+        ],
+        "outputQuantityList": [
+          {
+            "epcClass": "urn:gdst:example.org:product:lot:class:qftest.farm.lot1",
+            "quantity": 9000.0,
+            "uom": "KGM"
+          }
+        ],
+        "bizStep": "commissioning",
+        "disposition": "active",
+        "readPoint": {
+          "id": "geo:37.7749,-122.4194"
+        },
+        "bizLocation": {
+          "id": "urn:gdst:example.org:location:loc:qftest.plant"
+        }
+      },
+      {
+        "type": "AggregationEvent",
+        "eventTime": "2026-05-01T08:00:00.0000000-07:00",
+        "eventTimeZoneOffset": "-07:00",
+        "eventID": "urn:uuid:44444444-4444-4444-4444-444444444444",
+        "parentID": "urn:epc:id:sscc:08600031303.qftest1",
+        "childEPCs": [],
+        "action": "ADD",
+        "bizStep": "packing",
+        "disposition": "active",
+        "readPoint": {
+          "id": "geo:37.7749,-122.4194"
+        },
+        "bizLocation": {
+          "id": "urn:gdst:example.org:location:loc:qftest.port"
+        },
+        "childQuantityList": [
+          {
+            "epcClass": "urn:gdst:example.org:product:lot:class:qftest.farm.lot1",
+            "quantity": 9000.0,
+            "uom": "KGM"
+          }
+        ]
+      },
+      {
+        "type": "ObjectEvent",
+        "eventTime": "2026-05-01T16:00:00.0000000+00:00",
+        "eventTimeZoneOffset": "+00:00",
+        "eventID": "urn:uuid:55555555-5555-5555-5555-555555555555",
+        "epcList": [],
+        "action": "DELETE",
+        "bizStep": "destroying",
+        "disposition": "inactive",
+        "readPoint": {
+          "id": "geo:37.7749,-122.4194"
+        },
+        "bizLocation": {
+          "id": "urn:gdst:example.org:location:loc:qftest.port"
+        },
+        "quantityList": [
+          {
+            "epcClass": "urn:gdst:example.org:product:lot:class:qftest.farm.lot2",
+            "quantity": 100.0,
+            "uom": "KGM"
+          }
+        ]
+      }
+    ]
+  }
+}

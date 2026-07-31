@@ -540,65 +540,102 @@ END";
         /// <summary>
         /// Applies the EPCIS query filters to a search document query.
         /// </summary>
+        /// <remarks>
+        /// The parameters are normalized through <see cref="EventQueryFilterValues"/> so both database
+        /// backends apply the same semantics: lowercased values matching the lowercased search columns,
+        /// a trailing * wildcard on every MATCH_* parameter, business steps accepted in every CBV form,
+        /// and record time bounds compared as UTC <see cref="DateTime"/> values.
+        /// </remarks>
         private static IQueryable<EventSearchSqlDocument> ApplyEventFilters(IQueryable<EventSearchSqlDocument> searchQuery, EPCISQueryParameters options)
         {
-            // Apply query filters to the search documents
-            if (options.query.MATCH_anyEPCClass.Count > 0)
-            {
-                List<string> prefixes = options.query.MATCH_anyEPCClass
-                    .Where(epc => epc.EndsWith('*'))
-                    .Select(epc => epc.Substring(0, epc.IndexOf('*')).ToLower())
-                    .ToList();
+            EventQueryFilterValues values = EventQueryFilterValues.Create(options);
 
-                searchQuery = searchQuery.Where(e =>
-                    prefixes.Any(prefix => e.EPC.StartsWith(prefix)) ||
-                    options.query.MATCH_anyEPCClass.Contains(e.EPC));
+            // EPC match filters. The any* parameters match the EPCs of all products; the epc/epcClass
+            // parameters match only the reference and child product EPCs.
+            searchQuery = ApplyEpcMatchFilter(searchQuery, values.MatchAnyEpc, requireReferenceOrChild: false);
+            searchQuery = ApplyEpcMatchFilter(searchQuery, values.MatchAnyEpcClass, requireReferenceOrChild: false);
+            searchQuery = ApplyEpcMatchFilter(searchQuery, values.MatchEpc, requireReferenceOrChild: true);
+            searchQuery = ApplyEpcMatchFilter(searchQuery, values.MatchEpcClass, requireReferenceOrChild: true);
+
+            // Add event time range filters. The datetimeoffset column compares instants regardless of
+            // the offsets the events were reported with.
+            if (values.GE_EventTime.HasValue)
+            {
+                searchQuery = searchQuery.Where(e => e.EventTime >= values.GE_EventTime.Value);
             }
 
-            if (options.query.MATCH_anyEPC.Count > 0)
+            if (values.LT_EventTime.HasValue)
             {
-                searchQuery = searchQuery.Where(e => options.query.MATCH_anyEPC.Contains(e.EPC.ToLower()));
+                searchQuery = searchQuery.Where(e => e.EventTime < values.LT_EventTime.Value);
             }
 
-            // Add time range filters
-            if (options.query.GE_eventTime.HasValue)
+            // Add record time range filters.
+            if (values.GE_RecordTimeUtc.HasValue)
             {
-                searchQuery = searchQuery.Where(e => e.EventTime >= options.query.GE_eventTime.Value);
+                searchQuery = searchQuery.Where(e => e.RecordTime >= values.GE_RecordTimeUtc.Value);
             }
 
-            if (options.query.LE_eventTime.HasValue)
+            if (values.LT_RecordTimeUtc.HasValue)
             {
-                searchQuery = searchQuery.Where(e => e.EventTime <= options.query.LE_eventTime.Value);
+                searchQuery = searchQuery.Where(e => e.RecordTime < values.LT_RecordTimeUtc.Value);
             }
 
-            // Add record time range filters
-            if (options.query.GE_recordTime.HasValue)
+            // Add event type filters.
+            if (values.EventTypes.Count > 0)
             {
-                searchQuery = searchQuery.Where(e => e.RecordTime >= options.query.GE_recordTime.Value);
+                searchQuery = searchQuery.Where(e => values.EventTypes.Contains(e.EventType));
             }
 
-            if (options.query.LE_recordTime.HasValue)
+            // Add bizStep filters. The normalized values already carry every accepted CBV form.
+            if (values.BizSteps.Count > 0)
             {
-                searchQuery = searchQuery.Where(e => e.RecordTime <= options.query.LE_recordTime.Value);
+                searchQuery = searchQuery.Where(e => values.BizSteps.Contains(e.BizStep));
             }
 
-            // Add bizStep filters
-            if (options.query.EQ_bizStep?.Count > 0)
+            // Add action filters.
+            if (values.Actions.Count > 0)
             {
-                searchQuery = searchQuery.Where(e => options.query.EQ_bizStep.Contains(e.BizStep));
+                searchQuery = searchQuery.Where(e => values.Actions.Contains(e.Action));
             }
 
-            // Add action filters
-            if (options.query.EQ_action?.Count > 0)
+            // Add location filters.
+            if (values.BizLocations.Count > 0)
             {
-                searchQuery = searchQuery.Where(e => options.query.EQ_action.Contains(e.Action));
+                searchQuery = searchQuery.Where(e => values.BizLocations.Contains(e.LocationGLN));
             }
 
-            // Add location filters
-            if (options.query.EQ_bizLocation.Count > 0)
+            // Add transformation id filters. Events without a transformation id carry an empty string
+            // and are naturally excluded.
+            if (values.TransformationIds.Count > 0)
             {
-                List<string> bizLocations = options.query.EQ_bizLocation.Select(loc => loc.ToString().ToLower()).ToList();
-                searchQuery = searchQuery.Where(e => bizLocations.Contains(e.LocationGLN));
+                searchQuery = searchQuery.Where(e => values.TransformationIds.Contains(e.TransformationId));
+            }
+
+            return searchQuery;
+        }
+
+        /// <summary>
+        /// Applies the filter for one MATCH_* parameter to the search query, or returns the query
+        /// unchanged when the parameter carried no values.
+        /// </summary>
+        /// <param name="searchQuery">The search query built so far.</param>
+        /// <param name="matchValues">The normalized values of the MATCH_* parameter.</param>
+        /// <param name="requireReferenceOrChild">Whether the parameter only matches reference and child product EPCs.</param>
+        private static IQueryable<EventSearchSqlDocument> ApplyEpcMatchFilter(IQueryable<EventSearchSqlDocument> searchQuery, EpcMatchValues matchValues, bool requireReferenceOrChild)
+        {
+            if (!matchValues.HasValues)
+            {
+                return searchQuery;
+            }
+
+            List<string> exactValues = matchValues.ExactValues;
+            List<string> prefixes = matchValues.Prefixes;
+
+            searchQuery = searchQuery.Where(e => exactValues.Contains(e.EPC) || prefixes.Any(prefix => e.EPC.StartsWith(prefix)));
+
+            if (requireReferenceOrChild)
+            {
+                searchQuery = searchQuery.Where(e => e.EPCIsReferenceOrChild);
             }
 
             return searchQuery;

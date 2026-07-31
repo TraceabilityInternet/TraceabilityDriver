@@ -106,8 +106,10 @@ namespace TraceabilityDriver.Services
                 }
 
                 // The event id must be generated from the merged content, so it is only assigned once the
-                // merge is done.
+                // merge is done. The record time is always the moment the event is saved into this
+                // repository, so it is stamped fresh on every store.
                 evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
+                evt.RecordTime = DateTime.UtcNow;
 
                 var eventDoc = new EPCISEventDocument(evt);
                 eventDoc.EventKey = eventKey;
@@ -177,13 +179,15 @@ namespace TraceabilityDriver.Services
             int skippedCount = 0;
 
             // Tracebacked events keep the event id they arrived with; one is only generated when missing.
-            // The same event appearing twice in one store is only inserted once.
+            // The record time is always the moment the event is saved into this repository. The same
+            // event appearing twice in one store is only inserted once.
             foreach (var evt in events)
             {
                 if (evt.EventID == null)
                 {
                     evt.EventID = new Uri(EventHashGenerator.GenerateHash(evt));
                 }
+                evt.RecordTime = DateTime.UtcNow;
             }
 
             foreach (var evt in events.GroupBy(e => e.EventID.ToString()).Select(g => g.First()))
@@ -467,91 +471,113 @@ namespace TraceabilityDriver.Services
         /// <summary>
         /// Builds the event filter for the given EPCIS query parameters.
         /// </summary>
+        /// <remarks>
+        /// The parameters are normalized through <see cref="EventQueryFilterValues"/> so both database
+        /// backends apply the same semantics. Record time bounds are compared as UTC
+        /// <see cref="DateTime"/> values; comparing the stored DateTime field against a DateTimeOffset
+        /// bound produced a Convert expression the driver cannot translate.
+        /// </remarks>
         private static FilterDefinition<EPCISEventDocument> BuildEventQueryFilter(EPCISQueryParameters options)
         {
+            EventQueryFilterValues values = EventQueryFilterValues.Create(options);
+
             var filterBuilder = Builders<EPCISEventDocument>.Filter;
             var filter = filterBuilder.Empty;
 
-            // Apply query filters
-            if (options.query.MATCH_anyEPCClass.Count > 0)
+            // EPC match filters. The any* parameters match the EPCs of all products; the epc/epcClass
+            // parameters match only the reference and child product EPCs.
+            filter = AndEpcMatchFilter(filter, values.MatchAnyEpc, nameof(EPCISEventDocument.EPCs));
+            filter = AndEpcMatchFilter(filter, values.MatchAnyEpcClass, nameof(EPCISEventDocument.EPCs));
+            filter = AndEpcMatchFilter(filter, values.MatchEpc, nameof(EPCISEventDocument.MatchEPCs));
+            filter = AndEpcMatchFilter(filter, values.MatchEpcClass, nameof(EPCISEventDocument.MatchEPCs));
+
+            // Add event time range filters. The stored field is a UTC BSON date, so the bounds compare
+            // instants regardless of the offsets the events were reported with.
+            if (values.GE_EventTime.HasValue)
             {
-                var epcFilters = new List<FilterDefinition<EPCISEventDocument>>();
-
-                foreach (var epc in options.query.MATCH_anyEPCClass)
-                {
-                    if (epc.EndsWith('*'))
-                    {
-                        string prefix = epc.Substring(0, epc.IndexOf('*'));
-                        epcFilters.Add(filterBuilder.Regex(e => e.EPCs, new BsonRegularExpression($"^{prefix.ToLower()}", "i")));
-                    }
-                    else
-                    {
-                        epcFilters.Add(filterBuilder.AnyEq(e => e.EPCs, epc.ToLower()));
-                    }
-                }
-
-                filter = filter & filterBuilder.Or(epcFilters);
+                filter = filter & filterBuilder.Gte(e => e.EventTime, values.GE_EventTime.Value);
             }
 
-            if (options.query.MATCH_anyEPC.Count > 0)
+            if (values.LT_EventTime.HasValue)
             {
-                var epcFilters = new List<FilterDefinition<EPCISEventDocument>>();
-
-                foreach (var epc in options.query.MATCH_anyEPC)
-                {
-                    epcFilters.Add(filterBuilder.AnyEq(e => e.EPCs, epc.ToLower()));
-                }
-
-                filter = filter & filterBuilder.Or(epcFilters);
+                filter = filter & filterBuilder.Lt(e => e.EventTime, values.LT_EventTime.Value);
             }
 
-            // Add time range filters
-            if (options.query.GE_eventTime.HasValue)
+            // Add record time range filters.
+            if (values.GE_RecordTimeUtc.HasValue)
             {
-                filter = filter & filterBuilder.Gte(e => e.EventTime, options.query.GE_eventTime.Value);
+                filter = filter & filterBuilder.Gte(e => e.RecordTime, values.GE_RecordTimeUtc.Value);
             }
 
-            if (options.query.LE_eventTime.HasValue)
+            if (values.LT_RecordTimeUtc.HasValue)
             {
-                filter = filter & filterBuilder.Lt(e => e.EventTime, options.query.LE_eventTime.Value);
+                filter = filter & filterBuilder.Lt(e => e.RecordTime, values.LT_RecordTimeUtc.Value);
             }
 
-            // Add record time range filters
-            if (options.query.GE_recordTime.HasValue)
+            // Add event type filters.
+            if (values.EventTypes.Count > 0)
             {
-                filter = filter & filterBuilder.Gte(e => e.RecordTime, options.query.GE_recordTime.Value);
+                filter = filter & filterBuilder.In(e => e.EventType, values.EventTypes);
             }
 
-            if (options.query.LE_recordTime.HasValue)
+            // Add bizStep filters. The normalized values already carry every accepted CBV form.
+            if (values.BizSteps.Count > 0)
             {
-                filter = filter & filterBuilder.Lt(e => e.RecordTime, options.query.LE_recordTime.Value);
+                filter = filter & filterBuilder.In(e => e.BizStep, values.BizSteps);
             }
 
-            // Add bizStep filters
-            if (options.query.EQ_bizStep?.Count > 0)
+            // Add action filters.
+            if (values.Actions.Count > 0)
             {
-                var eventTypeFilters = options.query.EQ_bizStep.Select(et =>
-                    filterBuilder.Eq(e => e.BizStep, et.ToString().ToLower())).ToList();
-                filter = filter & filterBuilder.Or(eventTypeFilters);
+                filter = filter & filterBuilder.In(e => e.Action, values.Actions);
             }
 
-            // Add action filters
-            if (options.query.EQ_action?.Count > 0)
+            // Add location filters.
+            if (values.BizLocations.Count > 0)
             {
-                var actionFilters = options.query.EQ_action.Select(a =>
-                    filterBuilder.Eq(e => e.Action, a.ToString().ToLower())).ToList();
-                filter = filter & filterBuilder.Or(actionFilters);
+                filter = filter & filterBuilder.AnyIn(e => e.LocationGLNs, values.BizLocations);
             }
 
-            // Add location filters
-            if (options.query.EQ_bizLocation.Count > 0)
+            // Add transformation id filters. Events without a transformation id carry null and are
+            // naturally excluded.
+            if (values.TransformationIds.Count > 0)
             {
-                var locationFilters = options.query.EQ_bizLocation.Select(loc =>
-                    filterBuilder.AnyEq(e => e.LocationGLNs, loc.ToString().ToLower())).ToList();
-                filter = filter & filterBuilder.Or(locationFilters);
+                filter = filter & filterBuilder.In(e => e.TransformationId, values.TransformationIds);
             }
 
             return filter;
+        }
+
+        /// <summary>
+        /// Ands the filter for one MATCH_* parameter onto the given filter, or returns the filter
+        /// unchanged when the parameter carried no values.
+        /// </summary>
+        /// <param name="filter">The filter built so far.</param>
+        /// <param name="matchValues">The normalized values of the MATCH_* parameter.</param>
+        /// <param name="fieldName">The document field holding the EPC set the parameter matches against.</param>
+        private static FilterDefinition<EPCISEventDocument> AndEpcMatchFilter(FilterDefinition<EPCISEventDocument> filter, EpcMatchValues matchValues, string fieldName)
+        {
+            if (!matchValues.HasValues)
+            {
+                return filter;
+            }
+
+            var filterBuilder = Builders<EPCISEventDocument>.Filter;
+            var epcFilters = new List<FilterDefinition<EPCISEventDocument>>();
+
+            foreach (string epc in matchValues.ExactValues)
+            {
+                epcFilters.Add(filterBuilder.AnyEq(fieldName, epc));
+            }
+
+            // A trailing * wildcard becomes an anchored prefix regex; both sides are lowercased, so no
+            // case-insensitive option is needed.
+            foreach (string prefix in matchValues.Prefixes)
+            {
+                epcFilters.Add(filterBuilder.Regex(fieldName, new BsonRegularExpression("^" + System.Text.RegularExpressions.Regex.Escape(prefix))));
+            }
+
+            return filter & filterBuilder.Or(epcFilters);
         }
 
         /// <summary>
@@ -736,7 +762,13 @@ namespace TraceabilityDriver.Services
                 new CreateIndexModel<EPCISEventDocument>(
                     Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.BizStep)),
                 new CreateIndexModel<EPCISEventDocument>(
-                    Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.Action))
+                    Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.Action)),
+                new CreateIndexModel<EPCISEventDocument>(
+                    Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.EventType)),
+                new CreateIndexModel<EPCISEventDocument>(
+                    Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.TransformationId)),
+                new CreateIndexModel<EPCISEventDocument>(
+                    Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.MatchEPCs))
             };
 
             await _eventsCollection.Indexes.CreateManyAsync(eventIndexes);
