@@ -30,3 +30,5 @@ README.md
 !.git/refs/heads/**
 **/appsettings.Development.json
 **/mapping.json
+**/gdst-2-0-0-updates.md
+**/BuildInstructions.md
