@@ -64,8 +64,24 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                     string executingAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location!;
                     string backupPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(executingAssemblyPath)!, "Data", "TestEventsDatabase.bak");
 
+                    // The backup and data folders belong to the instance, and their paths carry the
+                    // SQL Server major version — MSSQL16 for 2022, MSSQL17 for 2025. Ask the server
+                    // instead of hard-coding one version.
+                    string backupFolder;
+                    string dataFolder;
+                    using (var pathCommand = connection.CreateCommand())
+                    {
+                        pathCommand.CommandText = @"
+                                SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000)),
+                                       CAST(SERVERPROPERTY('InstanceDefaultDataPath')   AS nvarchar(4000))";
+                        using var reader = pathCommand.ExecuteReader();
+                        reader.Read();
+                        backupFolder = reader.GetString(0);
+                        dataFolder = reader.GetString(1);
+                    }
+
                     // Copy the backup to the SQL Server backup folder
-                    string tempBackupPath = @"C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\Backup\TestEventsDatabase.bak";
+                    string tempBackupPath = System.IO.Path.Combine(backupFolder, "TestEventsDatabase.bak");
                     System.IO.File.Copy(backupPath, tempBackupPath, true);
 
                     // First force close all existing connections to the TestEventsDatabase
@@ -90,10 +106,18 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                         dropCommand.ExecuteNonQuery();
                     }
 
-                    // Restore the database from backup
+                    // Restore the database from backup. The backup records the data file paths of the
+                    // machine it was taken on, so the restore has to relocate them to this instance.
                     using (var restoreCommand = connection.CreateCommand())
                     {
-                        restoreCommand.CommandText = $@"RESTORE DATABASE TestEventsDatabase FROM DISK = '{tempBackupPath}' WITH REPLACE";
+                        string mdfPath = System.IO.Path.Combine(dataFolder, "TestEventsDatabase.mdf");
+                        string ldfPath = System.IO.Path.Combine(dataFolder, "TestEventsDatabase_log.ldf");
+
+                        restoreCommand.CommandText = $@"
+                                RESTORE DATABASE TestEventsDatabase FROM DISK = '{tempBackupPath}'
+                                WITH REPLACE,
+                                     MOVE 'TestEventsDatabase'     TO '{mdfPath}',
+                                     MOVE 'TestEventsDatabase_log' TO '{ldfPath}'";
                         restoreCommand.ExecuteNonQuery();
                     }
 
@@ -111,6 +135,7 @@ namespace TraceabilityDriver.Tests.Services.Connectors
                 }
             }
         }
+
 
         [Test]
         public async Task TestConnectionAsync_ShouldReturnTrue_WhenConnectionIsSuccessful()
