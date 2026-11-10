@@ -719,6 +719,23 @@ namespace TraceabilityDriver.Tests.Services.Mapping
             Assert.That(processingEvent.HumanWelfarePolicy, Is.Not.Null);
             Assert.That(processingEvent.HumanWelfarePolicy, Is.EqualTo(commonEvent.HumanWelfarePolicy));
 
+            // A processing event is a transformation: its products must land in the input and output
+            // lists. Before OpenTraceability 2.0.0-beta.120 the MSC processing event derived from
+            // ObjectEvent, so inputs and outputs were dropped in silence and the served event carried
+            // no products at all.
+            var input = processingEvent.Products.SingleOrDefault(p => p.Type == EventProductType.Input);
+            var output = processingEvent.Products.SingleOrDefault(p => p.Type == EventProductType.Output);
+
+            Assert.That(input, Is.Not.Null, "The processing event lost its input product.");
+            Assert.That(output, Is.Not.Null, "The processing event lost its output product.");
+            Assert.That(input!.Quantity!.Value, Is.EqualTo(100));
+            Assert.That(output!.Quantity!.Value, Is.EqualTo(50));
+
+            // The product owner only reaches the search documents through IGDSTProductOwnerEvent. The
+            // MSC classes carried the KDE without implementing the interface until beta.119, so the
+            // driver indexed no owner for any MSC event.
+            Assert.That(processingEvent, Is.InstanceOf<IGDSTProductOwnerEvent>());
+
             string json = OpenTraceabilityMappers.EPCISDocument.JSON.Map(_document);
         }
 
