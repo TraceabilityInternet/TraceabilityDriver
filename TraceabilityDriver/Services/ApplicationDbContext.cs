@@ -23,6 +23,11 @@ namespace TraceabilityDriver.Services
 
         public DbSet<LogModelSql> Logs { get; set; }
 
+        /// <summary>
+        /// The name of the index on <see cref="EventSearchSqlDocument.BizLocationGLN"/>, shared with the schema upgrade in <see cref="SqlServerService"/>.
+        /// </summary>
+        public const string BizLocationGLNIndexName = "IX_EventSearchDocuments_BizLocationGLN";
+
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = false
@@ -74,6 +79,10 @@ namespace TraceabilityDriver.Services
                 .HasIndex(e => e.LocationGLN)
                 .IsUnique(false)
                 .HasDatabaseName("IX_EventSearchDocuments_LocationGLN");
+            modelBuilder.Entity<EventSearchSqlDocument>()
+                .HasIndex(e => e.BizLocationGLN)
+                .IsUnique(false)
+                .HasDatabaseName(BizLocationGLNIndexName);
             modelBuilder.Entity<EventSearchSqlDocument>()
                 .HasIndex(e => e.PartyPGLN)
                 .IsUnique(false)

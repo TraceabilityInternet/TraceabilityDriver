@@ -35,6 +35,14 @@ to use MSSQL Server.
 
 > Support for other database types can be added by implementing the `IDatabaseService` interface.
 
+### Location Queries
+
+The `EQ_bizLocation` query parameter matches only an event's business location (`bizLocation`), as defined by EPCIS. An event whose source or destination location has
+the requested GLN, but whose business location does not, is not returned.
+
+> Earlier versions also returned events whose source or destination location matched. On the first startup after upgrading, the Driver automatically indexes the business
+location of events already in the cache, for both MongoDB and SQL Server. This runs once, takes time proportional to the number of stored events, and does not require a re-sync.
+
 ## Synchronization
 
 The Driver keeps the cache up to date by syncing from your database using an `ITDConnector` database connection. The process runs on a loop:
