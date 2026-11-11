@@ -42,6 +42,8 @@ the requested GLN, but whose business location does not, is not returned.
 
 > Earlier versions also returned events whose source or destination location matched. On the first startup after upgrading, the Driver automatically indexes the business
 location of events already in the cache, for both MongoDB and SQL Server. This runs once, takes time proportional to the number of stored events, and does not require a re-sync.
+On SQL Server the upgrade adds a `BizLocationGLN` column and index to the `EventSearchDocuments` table, so the driver's login needs ALTER permission on that table. If it
+does not, startup stops with an error that contains the SQL for a database administrator to run; run it, then restart the driver.
 
 ## Synchronization
 

@@ -20,6 +20,16 @@ namespace TraceabilityDriver.Services
         private readonly ILogger<SqlServerService> _logger;
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
+        /// <summary>
+        /// Idempotently adds the BizLocationGLN column to search tables created before it existed.
+        /// </summary>
+        private const string AddBizLocationColumnSql = "IF COL_LENGTH(N'EventSearchDocuments', N'BizLocationGLN') IS NULL ALTER TABLE EventSearchDocuments ADD BizLocationGLN nvarchar(450) NULL;";
+
+        /// <summary>
+        /// Idempotently creates the index on the BizLocationGLN column; must run in a later batch than <see cref="AddBizLocationColumnSql"/>.
+        /// </summary>
+        private const string CreateBizLocationIndexSql = $"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'{ApplicationDbContext.BizLocationGLNIndexName}' AND object_id = OBJECT_ID(N'EventSearchDocuments')) CREATE INDEX {ApplicationDbContext.BizLocationGLNIndexName} ON EventSearchDocuments (BizLocationGLN);";
+
         public SqlServerService(ILogger<SqlServerService> logger, IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _logger = logger;
@@ -61,14 +71,26 @@ namespace TraceabilityDriver.Services
         /// making this a no-op. The index is created in a separate batch because SQL Server resolves column names per batch.
         /// </remarks>
         /// <param name="context">An open context on the GDST cache database.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when the schema cannot be upgraded, typically because the database login lacks ALTER permission on the table.
+        /// The message contains the SQL a database administrator can run to apply the upgrade manually.
+        /// </exception>
         private async Task EnsureBizLocationColumnAsync(ApplicationDbContext context)
         {
-            await context.Database.ExecuteSqlRawAsync(
-                "IF COL_LENGTH(N'EventSearchDocuments', N'BizLocationGLN') IS NULL ALTER TABLE EventSearchDocuments ADD BizLocationGLN nvarchar(450) NULL;");
-
-            await context.Database.ExecuteSqlRawAsync(
-                $"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'{ApplicationDbContext.BizLocationGLNIndexName}' AND object_id = OBJECT_ID(N'EventSearchDocuments')) " +
-                $"CREATE INDEX {ApplicationDbContext.BizLocationGLNIndexName} ON EventSearchDocuments (BizLocationGLN);");
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(AddBizLocationColumnSql);
+                await context.Database.ExecuteSqlRawAsync(CreateBizLocationIndexSql);
+            }
+            catch (Exception ex)
+            {
+                // Note - Claude - 11/10/2026: Failing startup is deliberate. Without the column every search-row insert fails, and
+                // keeping the service up would need a second EF model; the login created this schema via EnsureCreated, so this only
+                // happens when its permissions were reduced afterwards.
+                string manualSql = $"{AddBizLocationColumnSql}\nGO\n{CreateBizLocationIndexSql}\nGO";
+                _logger.LogError(ex, "[CRITICAL ERROR]: Could not add the BizLocationGLN column to the EventSearchDocuments table, which this version of the driver requires. Grant the login ALTER permission on the table, or have a database administrator run the following SQL, then restart the driver:\n{ManualSql}", manualSql);
+                throw new InvalidOperationException($"The SQL Server schema upgrade for the BizLocationGLN column failed. Run the following SQL as a database administrator, then restart the driver:\n{manualSql}", ex);
+            }
 
             _logger.LogDebug("Ensured the BizLocationGLN search column and index exist.");
         }
