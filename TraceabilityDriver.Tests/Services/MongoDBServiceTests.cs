@@ -264,6 +264,126 @@ namespace TraceabilityDriver.Tests.Services
         }
 
         /// <summary>
+        /// Legacy documents whose bizLocation cannot be extracted, spread over several pages, must not stall the backfill:
+        /// it finishes, marks each of them processed with a null value, and still backfills the valid document on the last page.
+        /// </summary>
+        [Test]
+        public async Task InitializeDatabase_WithUnextractableBizLocationsAcrossPages_CompletesAndBackfillsTheRest()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            IMongoCollection<BsonDocument> rawEvents = GetRawEventsCollection();
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent validEvent = BizLocationTestEventBuilder.CreateEvent(targetGLN);
+            BsonDocument validDocument = CreateLegacyDocument(validEvent);
+
+            // Two full pages plus one more, so the backfill has to page past failures more than once.
+            int unextractableCount = (MongoDBService.BackfillBatchSize * 2) + 1;
+            List<BsonDocument> unextractableDocuments = new List<BsonDocument>();
+            for (int i = 0; i < unextractableCount; i++)
+            {
+                BsonDocument document = validDocument.DeepClone().AsBsonDocument;
+                document["_id"] = ObjectId.GenerateNewId();
+                document[nameof(EPCISEventDocument.EventId)] = $"urn:uuid:{Guid.NewGuid()}";
+                document[nameof(EPCISEventDocument.EventJson)] = "this is not event JSON";
+                unextractableDocuments.Add(document);
+            }
+
+            // The valid document is inserted last so it has the highest key and lands on the final page.
+            await rawEvents.InsertManyAsync(unextractableDocuments);
+            await rawEvents.InsertOneAsync(validDocument);
+
+            List<BsonValue> insertedIds = unextractableDocuments.Select(d => d["_id"]).Append(validDocument["_id"]).ToList();
+            FilterDefinition<BsonDocument> insertedFilter = Builders<BsonDocument>.Filter.In("_id", insertedIds);
+
+            try
+            {
+                // Act
+                await AssertCompletesWithinAsync(_mongoDBService.InitializeDatabase(), TimeSpan.FromSeconds(60));
+
+                // Assert
+                FilterDefinition<BsonDocument> unextractableFilter = Builders<BsonDocument>.Filter.In("_id", unextractableDocuments.Select(d => d["_id"]));
+                List<BsonDocument> unextractableAfter = await rawEvents.Find(unextractableFilter).ToListAsync();
+                Assert.That(unextractableAfter, Has.Count.EqualTo(unextractableCount));
+                Assert.That(unextractableAfter.All(d => d.Contains(nameof(EPCISEventDocument.BizLocationGLN)) && d[nameof(EPCISEventDocument.BizLocationGLN)].IsBsonNull), Is.True, "Every document whose bizLocation could not be extracted should be marked processed with a null value.");
+
+                BsonDocument validAfter = await rawEvents.Find(Builders<BsonDocument>.Filter.Eq("_id", validDocument["_id"])).FirstAsync();
+                Assert.That(validAfter[nameof(EPCISEventDocument.BizLocationGLN)].AsString, Is.EqualTo(targetGLN.ToLower()), "The valid document after the failures should still be backfilled.");
+            }
+            finally
+            {
+                // The unparseable documents would break other tests that read every stored event.
+                await rawEvents.DeleteManyAsync(insertedFilter);
+            }
+        }
+
+        /// <summary>
+        /// A legacy document the backfill update can never match must not trap the backfill in a loop.
+        /// </summary>
+        /// <remarks>
+        /// The document's key is a 24-character hex string rather than an ObjectId. The model reads it back as a string but
+        /// writes filters on it as an ObjectId, so an update by key matches nothing and the document keeps missing the field.
+        /// Before keyset paging, the backfill fetched this document again on every pass and never terminated.
+        /// </remarks>
+        [Test]
+        public async Task InitializeDatabase_WithDocumentTheUpdateCannotMatch_CompletesAndLeavesItForLater()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            IMongoCollection<BsonDocument> rawEvents = GetRawEventsCollection();
+            BsonDocument unmatchableDocument = CreateLegacyDocument(BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN()));
+            unmatchableDocument["_id"] = ObjectId.GenerateNewId().ToString();
+            await rawEvents.InsertOneAsync(unmatchableDocument);
+
+            FilterDefinition<BsonDocument> byId = Builders<BsonDocument>.Filter.Eq("_id", unmatchableDocument["_id"]);
+
+            try
+            {
+                // Act
+                await AssertCompletesWithinAsync(_mongoDBService.InitializeDatabase(), TimeSpan.FromSeconds(60));
+
+                // Assert
+                BsonDocument stored = await rawEvents.Find(byId).FirstAsync();
+                Assert.That(stored.Contains(nameof(EPCISEventDocument.BizLocationGLN)), Is.False, "The document cannot be updated, so it should be left for a later startup rather than retried.");
+            }
+            finally
+            {
+                // Other tests assert that no document is left missing the field.
+                await rawEvents.DeleteOneAsync(byId);
+            }
+        }
+
+        /// <summary>
+        /// Serializes the event as a document stored before the BizLocationGLN field existed.
+        /// </summary>
+        private static BsonDocument CreateLegacyDocument(IEvent evt)
+        {
+            BsonDocument document = new EPCISEventDocument(evt).ToBsonDocument();
+            document.Remove(nameof(EPCISEventDocument.BizLocationGLN));
+            return document;
+        }
+
+        /// <summary>
+        /// Fails the test if the task does not finish within the limit, which is how these tests detect a backfill stuck in a loop.
+        /// </summary>
+        private static async Task AssertCompletesWithinAsync(Task task, TimeSpan limit)
+        {
+            Task finished = await Task.WhenAny(task, Task.Delay(limit));
+            Assert.That(finished, Is.SameAs(task), $"The backfill did not finish within {limit.TotalSeconds} seconds; it is likely stuck in a loop.");
+            await task;
+        }
+
+        /// <summary>
         /// Opens the events collection as raw BSON so tests can write documents in the legacy shape.
         /// </summary>
         private static IMongoCollection<BsonDocument> GetRawEventsCollection()

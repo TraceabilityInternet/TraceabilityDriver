@@ -21,6 +21,11 @@ namespace TraceabilityDriver.Services
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
         /// <summary>
+        /// The number of legacy event search rows backfilled per round trip during startup.
+        /// </summary>
+        public const int BackfillBatchSize = 500;
+
+        /// <summary>
         /// Idempotently adds the BizLocationGLN column to search tables created before it existed.
         /// </summary>
         private const string AddBizLocationColumnSql = "IF COL_LENGTH(N'EventSearchDocuments', N'BizLocationGLN') IS NULL ALTER TABLE EventSearchDocuments ADD BizLocationGLN nvarchar(450) NULL;";
@@ -103,28 +108,38 @@ namespace TraceabilityDriver.Services
         /// source and destination locations, so the value is recovered by parsing each event's stored JSON. Events are
         /// processed in batches, and within a batch events sharing a business location are updated in one statement.
         /// Every processed row receives a non-null value (empty when the event has no business location, its JSON cannot be
-        /// parsed, or the event row is missing), which guarantees the loop terminates and makes later startups a single
-        /// indexed lookup. No explicit transaction is used: each update is idempotent and any rows left unprocessed by an
-        /// interruption are picked up on the next startup.
+        /// parsed, or the event row is missing), which makes later startups a single indexed lookup. No explicit
+        /// transaction is used: each update is idempotent and any rows left unprocessed by an interruption are picked up
+        /// on the next startup.
+        /// <para>
+        /// Rows are paged by ascending primary key (keyset paging) rather than by re-running the "column is NULL" query,
+        /// so the loop is guaranteed to terminate after one forward pass even if an update fails to clear a row. Anything
+        /// still NULL after the pass is reported as a warning instead of being retried.
+        /// </para>
         /// </remarks>
         private async Task BackfillBizLocationAsync()
         {
-            const int batchSize = 500;
-
             _logger.LogDebug("Checking for event search rows that need the bizLocation backfill.");
 
             int updatedEventCount = 0;
             List<string> failedEventIds = new List<string>();
             Exception? firstFailure = null;
+            long lastRowId = long.MinValue;
             while (true)
             {
                 using ApplicationDbContext context = await _contextFactory.CreateDbContextAsync();
 
-                List<string> eventIds = await context.EventSearchDocuments.Where(x => x.BizLocationGLN == null).Select(x => x.EventId).Distinct().Take(batchSize).ToListAsync();
-                if (eventIds.Count == 0)
+                // Each page starts strictly after the last row of the previous page. An event's other rows are updated with
+                // it by event ID, so a later page only sees rows of events that were not already handled.
+                long pageStartRowId = lastRowId;
+                var rows = await context.EventSearchDocuments.Where(x => x.BizLocationGLN == null && x.ID > pageStartRowId).OrderBy(x => x.ID).Take(BackfillBatchSize).Select(x => new { x.ID, x.EventId }).ToListAsync();
+                if (rows.Count == 0)
                 {
                     break;
                 }
+
+                lastRowId = rows[rows.Count - 1].ID;
+                List<string> eventIds = rows.Select(x => x.EventId).Distinct().ToList();
 
                 Dictionary<string, string> eventJsonById = await context.EPCISEvents.Where(e => eventIds.Contains(e.EventId)).ToDictionaryAsync(e => e.EventId, e => e.EventJson);
 
@@ -172,6 +187,16 @@ namespace TraceabilityDriver.Services
             if (failedEventIds.Count > 0)
             {
                 _logger.LogWarning(firstFailure, "Could not parse the stored JSON of {FailedCount} event(s) during the bizLocation backfill, so they will not match EQ_bizLocation queries. First event IDs: {EventIds}.", failedEventIds.Count, failedEventIds.Take(10));
+            }
+
+            // The pass above never revisits a row, so anything still NULL was not written; report it rather than loop on it.
+            using (ApplicationDbContext context = await _contextFactory.CreateDbContextAsync())
+            {
+                int remainingCount = await context.EventSearchDocuments.CountAsync(x => x.BizLocationGLN == null);
+                if (remainingCount > 0)
+                {
+                    _logger.LogWarning("{RemainingCount} event search row(s) still have a NULL BizLocationGLN after the bizLocation backfill, so they will not match EQ_bizLocation queries. They will be retried on the next startup.", remainingCount);
+                }
             }
         }
 

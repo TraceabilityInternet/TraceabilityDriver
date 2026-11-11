@@ -27,7 +27,7 @@ namespace TraceabilityDriver.Services
         /// <summary>
         /// The number of legacy event documents backfilled per round trip during startup.
         /// </summary>
-        private const int BackfillBatchSize = 500;
+        public const int BackfillBatchSize = 500;
 
         /// <summary>
         /// Creates the service, connecting to the configured Mongo database and ensuring its indexes exist.
@@ -74,25 +74,41 @@ namespace TraceabilityDriver.Services
         /// Earlier versions stored the business location only inside <see cref="EPCISEventDocument.LocationGLNs"/>, mixed
         /// with source and destination locations, so the value is recovered by parsing the stored event JSON. Every
         /// processed document gets the field written (null when the event has no business location or its JSON cannot
-        /// be parsed), which guarantees the loop terminates and makes later startups a single indexed lookup.
+        /// be parsed), which makes later startups a single indexed lookup.
+        /// <para>
+        /// Documents are paged by ascending <c>_id</c> (keyset paging) rather than by re-running the "field missing"
+        /// query, so the loop is guaranteed to terminate after one forward pass even when a write silently fails to
+        /// remove a document from the result set (an unacknowledged write concern, or an update that matches nothing).
+        /// Only ObjectId keys are paged, because <c>$gt</c> compares within a single BSON type; this driver only ever
+        /// writes ObjectId keys. Anything still missing the field after the pass is reported as a warning instead of
+        /// being retried, and is picked up again on the next startup.
+        /// </para>
         /// </remarks>
         private async Task BackfillBizLocationAsync()
         {
-            FilterDefinition<EPCISEventDocument> missingFilter = Builders<EPCISEventDocument>.Filter.Exists(e => e.BizLocationGLN, false);
+            FilterDefinitionBuilder<EPCISEventDocument> filters = Builders<EPCISEventDocument>.Filter;
+            FilterDefinition<EPCISEventDocument> missingFilter = filters.Exists(e => e.BizLocationGLN, false);
+            FilterDefinition<EPCISEventDocument> pageableFilter = missingFilter & filters.Type(e => e.Id, BsonType.ObjectId);
             ProjectionDefinition<EPCISEventDocument> projection = Builders<EPCISEventDocument>.Projection.Include(e => e.Id).Include(e => e.EventId).Include(e => e.EventJson);
+            SortDefinition<EPCISEventDocument> sortById = Builders<EPCISEventDocument>.Sort.Ascending(e => e.Id);
 
             _logger.LogDebug("Checking for event documents that need the bizLocation backfill.");
 
             int updatedCount = 0;
             List<string> failedEventIds = new List<string>();
             Exception? firstFailure = null;
+            string? lastId = null;
             while (true)
             {
-                List<EPCISEventDocument> batch = await _eventsCollection.Find(missingFilter).Project<EPCISEventDocument>(projection).Limit(BackfillBatchSize).ToListAsync();
+                // Each page starts strictly after the last key of the previous page, so no document is fetched twice.
+                FilterDefinition<EPCISEventDocument> pageFilter = lastId == null ? pageableFilter : pageableFilter & filters.Gt(e => e.Id, lastId);
+                List<EPCISEventDocument> batch = await _eventsCollection.Find(pageFilter).Project<EPCISEventDocument>(projection).Sort(sortById).Limit(BackfillBatchSize).ToListAsync();
                 if (batch.Count == 0)
                 {
                     break;
                 }
+
+                lastId = batch[batch.Count - 1].Id;
 
                 List<WriteModel<EPCISEventDocument>> updates = new List<WriteModel<EPCISEventDocument>>();
                 foreach (EPCISEventDocument document in batch)
@@ -125,6 +141,13 @@ namespace TraceabilityDriver.Services
             if (failedEventIds.Count > 0)
             {
                 _logger.LogWarning(firstFailure, "Could not parse the stored JSON of {FailedCount} event(s) during the bizLocation backfill, so they will not match EQ_bizLocation queries. First event IDs: {EventIds}.", failedEventIds.Count, failedEventIds.Take(10));
+            }
+
+            // The pass above never revisits a document, so anything still missing the field was not written; report it rather than loop on it.
+            long remainingCount = await _eventsCollection.CountDocumentsAsync(missingFilter);
+            if (remainingCount > 0)
+            {
+                _logger.LogWarning("{RemainingCount} event document(s) still have no BizLocationGLN after the bizLocation backfill, so they will not match EQ_bizLocation queries. They will be retried on the next startup.", remainingCount);
             }
         }
 
