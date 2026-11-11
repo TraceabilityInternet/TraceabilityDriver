@@ -1,9 +1,14 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using OpenTraceability.Interfaces;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using TraceabilityDriver.Services;
 using OpenTraceability.Mappers;
+using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Tests.Models;
 
 namespace TraceabilityDriver.Tests.Services
 {
@@ -42,7 +47,7 @@ namespace TraceabilityDriver.Tests.Services
                 .Build();
 
             // Create service with test configuration
-            _mongoDBService = new MongoDBService(testConfig);
+            _mongoDBService = new MongoDBService(testConfig, NullLogger<MongoDBService>.Instance);
 
             // Clear out the data.
             await _mongoDBService.ClearDatabaseAsync();
@@ -185,6 +190,207 @@ namespace TraceabilityDriver.Tests.Services
             Assert.That(result.Events, Is.Not.Null);
             Assert.That(result.Events, Is.Not.Empty);
             Assert.That(result.Events.All(e => e.BusinessStep.ToString() == testBizStep.ToString()), Is.True);
+        }
+
+        /// <summary>
+        /// EQ_bizLocation must match only the business location, never a source or destination location with the same GLN.
+        /// </summary>
+        [Test]
+        public async Task QueryEvents_WithBizLocation_ReturnsOnlyEventsAtThatBizLocation()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent atBizLocation = BizLocationTestEventBuilder.CreateEvent(targetGLN);
+            IEvent fromSourceLocation = BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN(), sourceLocationGLN: targetGLN);
+            IEvent toDestinationLocation = BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN(), destinationLocationGLN: targetGLN);
+            await _mongoDBService.StoreEventsAsync(new List<IEvent> { atBizLocation, fromSourceLocation, toDestinationLocation });
+
+            EPCISQueryParameters queryParams = new EPCISQueryParameters
+            {
+                query = new EPCISQuery
+                {
+                    EQ_bizLocation = new List<Uri> { new Uri(targetGLN) }
+                }
+            };
+
+            // Act
+            EPCISQueryDocument result = await _mongoDBService.QueryEvents(queryParams);
+
+            // Assert
+            Assert.That(result.Events.Select(e => e.EventID?.ToString()), Is.EquivalentTo(new[] { atBizLocation.EventID!.ToString() }), "Only the event whose bizLocation is the GLN should match; source/destination matches are excluded.");
+        }
+
+        /// <summary>
+        /// Documents stored before BizLocationGLN existed are backfilled at startup and then match EQ_bizLocation.
+        /// </summary>
+        [Test]
+        public async Task InitializeDatabase_WithLegacyDocumentsMissingBizLocation_BackfillsAndQueryMatches()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            IMongoCollection<BsonDocument> rawEvents = GetRawEventsCollection();
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent legacyEvent = BizLocationTestEventBuilder.CreateEvent(targetGLN, sourceLocationGLN: BizLocationTestEventBuilder.CreateUniqueGLN());
+            BsonDocument legacyDocument = new EPCISEventDocument(legacyEvent).ToBsonDocument();
+            legacyDocument.Remove(nameof(EPCISEventDocument.BizLocationGLN));
+            await rawEvents.InsertOneAsync(legacyDocument);
+
+            FilterDefinition<BsonDocument> byEventId = Builders<BsonDocument>.Filter.Eq(nameof(EPCISEventDocument.EventId), legacyEvent.EventID!.ToString());
+
+            // Act
+            await _mongoDBService.InitializeDatabase();
+
+            // Assert
+            BsonDocument stored = await rawEvents.Find(byEventId).FirstAsync();
+            Assert.That(stored.Contains(nameof(EPCISEventDocument.BizLocationGLN)), Is.True, "The backfill should add the BizLocationGLN field.");
+            Assert.That(stored[nameof(EPCISEventDocument.BizLocationGLN)].AsString, Is.EqualTo(targetGLN.ToLower()));
+
+            EPCISQueryDocument result = await _mongoDBService.QueryEvents(new EPCISQueryParameters { query = new EPCISQuery { EQ_bizLocation = new List<Uri> { new Uri(targetGLN) } } });
+            Assert.That(result.Events.Select(e => e.EventID?.ToString()), Is.EquivalentTo(new[] { legacyEvent.EventID.ToString() }));
+
+            long remainingLegacy = await rawEvents.CountDocumentsAsync(Builders<BsonDocument>.Filter.Exists(nameof(EPCISEventDocument.BizLocationGLN), false));
+            Assert.That(remainingLegacy, Is.EqualTo(0), "No documents should be left without the BizLocationGLN field.");
+        }
+
+        /// <summary>
+        /// Legacy documents whose bizLocation cannot be extracted, spread over several pages, must not stall the backfill:
+        /// it finishes, marks each of them processed with a null value, and still backfills the valid document on the last page.
+        /// </summary>
+        [Test]
+        public async Task InitializeDatabase_WithUnextractableBizLocationsAcrossPages_CompletesAndBackfillsTheRest()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            IMongoCollection<BsonDocument> rawEvents = GetRawEventsCollection();
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent validEvent = BizLocationTestEventBuilder.CreateEvent(targetGLN);
+            BsonDocument validDocument = CreateLegacyDocument(validEvent);
+
+            // Two full pages plus one more, so the backfill has to page past failures more than once.
+            int unextractableCount = (MongoDBService.BackfillBatchSize * 2) + 1;
+            List<BsonDocument> unextractableDocuments = new List<BsonDocument>();
+            for (int i = 0; i < unextractableCount; i++)
+            {
+                BsonDocument document = validDocument.DeepClone().AsBsonDocument;
+                document["_id"] = ObjectId.GenerateNewId();
+                document[nameof(EPCISEventDocument.EventId)] = $"urn:uuid:{Guid.NewGuid()}";
+                document[nameof(EPCISEventDocument.EventJson)] = "this is not event JSON";
+                unextractableDocuments.Add(document);
+            }
+
+            // The valid document is inserted last so it has the highest key and lands on the final page.
+            await rawEvents.InsertManyAsync(unextractableDocuments);
+            await rawEvents.InsertOneAsync(validDocument);
+
+            List<BsonValue> insertedIds = unextractableDocuments.Select(d => d["_id"]).Append(validDocument["_id"]).ToList();
+            FilterDefinition<BsonDocument> insertedFilter = Builders<BsonDocument>.Filter.In("_id", insertedIds);
+
+            try
+            {
+                // Act
+                await AssertCompletesWithinAsync(_mongoDBService.InitializeDatabase(), TimeSpan.FromSeconds(60));
+
+                // Assert
+                FilterDefinition<BsonDocument> unextractableFilter = Builders<BsonDocument>.Filter.In("_id", unextractableDocuments.Select(d => d["_id"]));
+                List<BsonDocument> unextractableAfter = await rawEvents.Find(unextractableFilter).ToListAsync();
+                Assert.That(unextractableAfter, Has.Count.EqualTo(unextractableCount));
+                Assert.That(unextractableAfter.All(d => d.Contains(nameof(EPCISEventDocument.BizLocationGLN)) && d[nameof(EPCISEventDocument.BizLocationGLN)].IsBsonNull), Is.True, "Every document whose bizLocation could not be extracted should be marked processed with a null value.");
+
+                BsonDocument validAfter = await rawEvents.Find(Builders<BsonDocument>.Filter.Eq("_id", validDocument["_id"])).FirstAsync();
+                Assert.That(validAfter[nameof(EPCISEventDocument.BizLocationGLN)].AsString, Is.EqualTo(targetGLN.ToLower()), "The valid document after the failures should still be backfilled.");
+            }
+            finally
+            {
+                // The unparseable documents would break other tests that read every stored event.
+                await rawEvents.DeleteManyAsync(insertedFilter);
+            }
+        }
+
+        /// <summary>
+        /// A legacy document the backfill update can never match must not trap the backfill in a loop.
+        /// </summary>
+        /// <remarks>
+        /// The document's key is a 24-character hex string rather than an ObjectId. The model reads it back as a string but
+        /// writes filters on it as an ObjectId, so an update by key matches nothing and the document keeps missing the field.
+        /// Before keyset paging, the backfill fetched this document again on every pass and never terminated.
+        /// </remarks>
+        [Test]
+        public async Task InitializeDatabase_WithDocumentTheUpdateCannotMatch_CompletesAndLeavesItForLater()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_MONGO_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            IMongoCollection<BsonDocument> rawEvents = GetRawEventsCollection();
+            BsonDocument unmatchableDocument = CreateLegacyDocument(BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN()));
+            unmatchableDocument["_id"] = ObjectId.GenerateNewId().ToString();
+            await rawEvents.InsertOneAsync(unmatchableDocument);
+
+            FilterDefinition<BsonDocument> byId = Builders<BsonDocument>.Filter.Eq("_id", unmatchableDocument["_id"]);
+
+            try
+            {
+                // Act
+                await AssertCompletesWithinAsync(_mongoDBService.InitializeDatabase(), TimeSpan.FromSeconds(60));
+
+                // Assert
+                BsonDocument stored = await rawEvents.Find(byId).FirstAsync();
+                Assert.That(stored.Contains(nameof(EPCISEventDocument.BizLocationGLN)), Is.False, "The document cannot be updated, so it should be left for a later startup rather than retried.");
+            }
+            finally
+            {
+                // Other tests assert that no document is left missing the field.
+                await rawEvents.DeleteOneAsync(byId);
+            }
+        }
+
+        /// <summary>
+        /// Serializes the event as a document stored before the BizLocationGLN field existed.
+        /// </summary>
+        private static BsonDocument CreateLegacyDocument(IEvent evt)
+        {
+            BsonDocument document = new EPCISEventDocument(evt).ToBsonDocument();
+            document.Remove(nameof(EPCISEventDocument.BizLocationGLN));
+            return document;
+        }
+
+        /// <summary>
+        /// Fails the test if the task does not finish within the limit, which is how these tests detect a backfill stuck in a loop.
+        /// </summary>
+        private static async Task AssertCompletesWithinAsync(Task task, TimeSpan limit)
+        {
+            Task finished = await Task.WhenAny(task, Task.Delay(limit));
+            Assert.That(finished, Is.SameAs(task), $"The backfill did not finish within {limit.TotalSeconds} seconds; it is likely stuck in a loop.");
+            await task;
+        }
+
+        /// <summary>
+        /// Opens the events collection as raw BSON so tests can write documents in the legacy shape.
+        /// </summary>
+        private static IMongoCollection<BsonDocument> GetRawEventsCollection()
+        {
+            IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.Tests.json").Build();
+            MongoClient client = new MongoClient(config["MongoDB:ConnectionString"]);
+            return client.GetDatabase(config["MongoDB:DatabaseName"]).GetCollection<BsonDocument>(config["MongoDB:EventsCollectionName"]);
         }
 
         [Test]

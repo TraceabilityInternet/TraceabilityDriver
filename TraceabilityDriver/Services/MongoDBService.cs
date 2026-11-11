@@ -1,12 +1,12 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
-using OpenTraceability.GDST.Events;
 using OpenTraceability.Interfaces;
 using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using System.Collections.Concurrent;
+using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 
 namespace TraceabilityDriver.Services
@@ -22,9 +22,22 @@ namespace TraceabilityDriver.Services
         private readonly IMongoCollection<LogModel> _logCollection;
         private readonly IEPCISQueryDocumentMapper _jsonMapper;
         private readonly IEPCISQueryDocumentMapper _xmlMapper;
+        private readonly ILogger<MongoDBService> _logger;
 
-        public MongoDBService(IConfiguration configuration)
+        /// <summary>
+        /// The number of legacy event documents backfilled per round trip during startup.
+        /// </summary>
+        public const int BackfillBatchSize = 500;
+
+        /// <summary>
+        /// Creates the service, connecting to the configured Mongo database and ensuring its indexes exist.
+        /// </summary>
+        /// <param name="configuration">The configuration holding the MongoDB connection settings and collection names.</param>
+        /// <param name="logger">The logger used for database diagnostics.</param>
+        public MongoDBService(IConfiguration configuration, ILogger<MongoDBService> logger)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
             var conventionPack = new ConventionPack
             {
                 new IgnoreExtraElementsConvention(true)
@@ -46,15 +59,95 @@ namespace TraceabilityDriver.Services
         }
 
         /// <summary>
-        /// Initializes the database if it hasn't been initialized yet. Checks if the events collection is empty before
-        /// proceeding.
+        /// Prepares the database for use, upgrading event documents stored by earlier versions of the driver.
         /// </summary>
-        /// <returns>Returns a Task that completes when the database initialization check is done.</returns>
+        /// <returns>A task that completes when the database is ready.</returns>
         public async Task InitializeDatabase()
         {
-            if (await _eventsCollection.CountDocumentsAsync(new BsonDocument()) > 0)
+            await BackfillBizLocationAsync();
+        }
+
+        /// <summary>
+        /// Sets <see cref="EPCISEventDocument.BizLocationGLN"/> on event documents stored before that field existed.
+        /// </summary>
+        /// <remarks>
+        /// Earlier versions stored the business location only inside <see cref="EPCISEventDocument.LocationGLNs"/>, mixed
+        /// with source and destination locations, so the value is recovered by parsing the stored event JSON. Every
+        /// processed document gets the field written (null when the event has no business location or its JSON cannot
+        /// be parsed), which makes later startups a single indexed lookup.
+        /// <para>
+        /// Documents are paged by ascending <c>_id</c> (keyset paging) rather than by re-running the "field missing"
+        /// query, so the loop is guaranteed to terminate after one forward pass even when a write silently fails to
+        /// remove a document from the result set (an unacknowledged write concern, or an update that matches nothing).
+        /// Only ObjectId keys are paged, because <c>$gt</c> compares within a single BSON type; this driver only ever
+        /// writes ObjectId keys. Anything still missing the field after the pass is reported as a warning instead of
+        /// being retried, and is picked up again on the next startup.
+        /// </para>
+        /// </remarks>
+        private async Task BackfillBizLocationAsync()
+        {
+            FilterDefinitionBuilder<EPCISEventDocument> filters = Builders<EPCISEventDocument>.Filter;
+            FilterDefinition<EPCISEventDocument> missingFilter = filters.Exists(e => e.BizLocationGLN, false);
+            FilterDefinition<EPCISEventDocument> pageableFilter = missingFilter & filters.Type(e => e.Id, BsonType.ObjectId);
+            ProjectionDefinition<EPCISEventDocument> projection = Builders<EPCISEventDocument>.Projection.Include(e => e.Id).Include(e => e.EventId).Include(e => e.EventJson);
+            SortDefinition<EPCISEventDocument> sortById = Builders<EPCISEventDocument>.Sort.Ascending(e => e.Id);
+
+            _logger.LogDebug("Checking for event documents that need the bizLocation backfill.");
+
+            int updatedCount = 0;
+            List<string> failedEventIds = new List<string>();
+            Exception? firstFailure = null;
+            string? lastId = null;
+            while (true)
             {
-                return; // Database already initialized
+                // Each page starts strictly after the last key of the previous page, so no document is fetched twice.
+                FilterDefinition<EPCISEventDocument> pageFilter = lastId == null ? pageableFilter : pageableFilter & filters.Gt(e => e.Id, lastId);
+                List<EPCISEventDocument> batch = await _eventsCollection.Find(pageFilter).Project<EPCISEventDocument>(projection).Sort(sortById).Limit(BackfillBatchSize).ToListAsync();
+                if (batch.Count == 0)
+                {
+                    break;
+                }
+
+                lastId = batch[batch.Count - 1].Id;
+
+                List<WriteModel<EPCISEventDocument>> updates = new List<WriteModel<EPCISEventDocument>>();
+                foreach (EPCISEventDocument document in batch)
+                {
+                    string? bizLocationGLN = null;
+                    try
+                    {
+                        bizLocationGLN = EventSearchFields.ExtractBizLocationGLN(document.EventJson);
+                    }
+                    catch (Exception ex)
+                    {
+                        firstFailure ??= ex;
+                        failedEventIds.Add(document.EventId);
+                    }
+
+                    FilterDefinition<EPCISEventDocument> idFilter = Builders<EPCISEventDocument>.Filter.Eq(e => e.Id, document.Id);
+                    UpdateDefinition<EPCISEventDocument> update = Builders<EPCISEventDocument>.Update.Set(e => e.BizLocationGLN, bizLocationGLN);
+                    updates.Add(new UpdateOneModel<EPCISEventDocument>(idFilter, update));
+                }
+
+                await _eventsCollection.BulkWriteAsync(updates);
+                updatedCount += updates.Count;
+            }
+
+            if (updatedCount > 0)
+            {
+                _logger.LogInformation("Backfilled bizLocation for {UpdatedCount} legacy event document(s).", updatedCount);
+            }
+
+            if (failedEventIds.Count > 0)
+            {
+                _logger.LogWarning(firstFailure, "Could not parse the stored JSON of {FailedCount} event(s) during the bizLocation backfill, so they will not match EQ_bizLocation queries. First event IDs: {EventIds}.", failedEventIds.Count, failedEventIds.Take(10));
+            }
+
+            // The pass above never revisits a document, so anything still missing the field was not written; report it rather than loop on it.
+            long remainingCount = await _eventsCollection.CountDocumentsAsync(missingFilter);
+            if (remainingCount > 0)
+            {
+                _logger.LogWarning("{RemainingCount} event document(s) still have no BizLocationGLN after the bizLocation backfill, so they will not match EQ_bizLocation queries. They will be retried on the next startup.", remainingCount);
             }
         }
 
@@ -69,70 +162,7 @@ namespace TraceabilityDriver.Services
             // Store events
             foreach (var evt in events)
             {
-                EPCISQueryDocument doc = new EPCISQueryDocument();
-                doc.EPCISVersion = EPCISVersion.V2;
-                doc.Header = OpenTraceability.Models.Common.StandardBusinessDocumentHeader.DummyHeader;
-                doc.Events.Add(evt);
-                string json = OpenTraceability.Mappers.OpenTraceabilityMappers.EPCISQueryDocument.JSON.Map(doc);
-
-                var eventDoc = new EPCISEventDocument
-                {
-                    EventId = evt.EventID.ToString(),
-                    EventJson = json,
-                    BizStep = evt.BusinessStep.ToString().ToLower(),
-                    Action = evt.Action.ToString()?.ToLower() ?? "",
-                    EventTime = evt.EventTime,
-                    EPCs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList(),
-                    ProductGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString().ToLower()).Where(g => g != null).Select(g => g!).ToList(),
-                    LocationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>(),
-                    PartyPGLNs = new List<string>()
-                };
-
-                // Add trading party PGLNs if it's a GDST event
-                if (evt is IGDSTEvent gdstEvent)
-                {
-                    if (gdstEvent.ProductOwner != null)
-                    {
-                        eventDoc.PartyPGLNs.Add(gdstEvent.ProductOwner.ToString());
-                    }
-                    if (gdstEvent.InformationProvider != null)
-                    {
-                        eventDoc.PartyPGLNs.Add(gdstEvent.InformationProvider.ToString());
-                    }
-                }
-
-                // Add source and destination PGLNs/GLNs
-                foreach (var source in evt.SourceList)
-                {
-                    if (!string.IsNullOrWhiteSpace(source.Value))
-                    {
-                        if (source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor ||
-                            source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Owner)
-                        {
-                            eventDoc.PartyPGLNs.Add(source.Value);
-                        }
-                        else if (source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Location)
-                        {
-                            eventDoc.LocationGLNs.Add(source.Value);
-                        }
-                    }
-                }
-
-                foreach (var dest in evt.DestinationList)
-                {
-                    if (!string.IsNullOrWhiteSpace(dest.Value))
-                    {
-                        if (dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor ||
-                            dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Owner)
-                        {
-                            eventDoc.PartyPGLNs.Add(dest.Value);
-                        }
-                        else if (dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Location)
-                        {
-                            eventDoc.LocationGLNs.Add(dest.Value);
-                        }
-                    }
-                }
+                EPCISEventDocument eventDoc = new EPCISEventDocument(evt);
 
                 // Check if event with this ID already exists
                 var filterBuilder = Builders<EPCISEventDocument>.Filter;
@@ -285,12 +315,11 @@ namespace TraceabilityDriver.Services
                 filter = filter & filterBuilder.Or(actionFilters);
             }
 
-            // Add location filters
+            // Match the business location only; source and destination locations must not satisfy EQ_bizLocation.
             if (options.query.EQ_bizLocation.Count > 0)
             {
-                var locationFilters = options.query.EQ_bizLocation.Select(loc =>
-                    filterBuilder.AnyEq(e => e.LocationGLNs, loc.ToString().ToLower())).ToList();
-                filter = filter & filterBuilder.Or(locationFilters);
+                List<string> bizLocations = options.query.EQ_bizLocation.Select(loc => loc.ToString().ToLower()).ToList();
+                filter = filter & filterBuilder.In(e => e.BizLocationGLN, bizLocations);
             }
 
             // Execute query
@@ -445,6 +474,8 @@ namespace TraceabilityDriver.Services
                     Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.ProductGTINs)),
                 new CreateIndexModel<EPCISEventDocument>(
                     Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.LocationGLNs)),
+                new CreateIndexModel<EPCISEventDocument>(
+                    Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.BizLocationGLN)),
                 new CreateIndexModel<EPCISEventDocument>(
                     Builders<EPCISEventDocument>.IndexKeys.Ascending(e => e.PartyPGLNs)),
                 new CreateIndexModel<EPCISEventDocument>(

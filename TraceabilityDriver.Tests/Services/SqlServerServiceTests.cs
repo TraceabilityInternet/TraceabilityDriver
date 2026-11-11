@@ -10,7 +10,9 @@ using OpenTraceability.Models.Events;
 using OpenTraceability.Models.Identifiers;
 using OpenTraceability.Queries;
 using TraceabilityDriver.Models.MongoDB;
+using TraceabilityDriver.Models.Sql;
 using TraceabilityDriver.Services;
+using TraceabilityDriver.Tests.Models;
 
 namespace TraceabilityDriver.Tests.Services
 {
@@ -202,6 +204,183 @@ namespace TraceabilityDriver.Tests.Services
             Assert.That(result.Events, Is.Not.Null);
             Assert.That(result.Events, Is.Not.Empty);
             Assert.That(result.Events.All(e => e.BusinessStep.ToString() == testBizStep.ToString()), Is.True);
+        }
+
+        /// <summary>
+        /// EQ_bizLocation must match only the business location, never a source or destination location with the same GLN.
+        /// </summary>
+        [Test]
+        public async Task QueryEvents_WithBizLocation_ReturnsOnlyEventsAtThatBizLocation()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent atBizLocation = BizLocationTestEventBuilder.CreateEvent(targetGLN);
+            IEvent fromSourceLocation = BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN(), sourceLocationGLN: targetGLN);
+            IEvent toDestinationLocation = BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN(), destinationLocationGLN: targetGLN);
+            await _dbService.StoreEventsAsync(new List<IEvent> { atBizLocation, fromSourceLocation, toDestinationLocation });
+
+            EPCISQueryParameters queryParams = new EPCISQueryParameters
+            {
+                query = new EPCISQuery
+                {
+                    EQ_bizLocation = new List<Uri> { new Uri(targetGLN) }
+                }
+            };
+
+            // Act
+            EPCISQueryDocument result = await _dbService.QueryEvents(queryParams);
+
+            // Assert
+            Assert.That(result.Events.Select(e => e.EventID?.ToString()), Is.EquivalentTo(new[] { atBizLocation.EventID!.ToString() }), "Only the event whose bizLocation is the GLN should match; source/destination matches are excluded.");
+        }
+
+        /// <summary>
+        /// Search rows written before BizLocationGLN existed (NULL) are backfilled at startup and then match EQ_bizLocation.
+        /// </summary>
+        [Test]
+        public async Task InitializeDatabase_WithLegacyRowsMissingBizLocation_BackfillsAndQueryMatches()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent legacyEvent = BizLocationTestEventBuilder.CreateEvent(targetGLN, sourceLocationGLN: BizLocationTestEventBuilder.CreateUniqueGLN());
+            await _dbService.StoreEventsAsync(new List<IEvent> { legacyEvent });
+            string legacyEventId = legacyEvent.EventID!.ToString();
+            await SetBizLocationToNullAsync(legacyEventId);
+
+            // Act
+            await _dbService.InitializeDatabase();
+
+            // Assert
+            await AssertBackfilledAsync(legacyEventId, targetGLN);
+        }
+
+        /// <summary>
+        /// A database created before the BizLocationGLN column existed is upgraded in place and its rows backfilled.
+        /// </summary>
+        [Test]
+        public async Task InitializeDatabase_WithSchemaMissingBizLocationColumn_AddsColumnAndBackfills()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent legacyEvent = BizLocationTestEventBuilder.CreateEvent(targetGLN, destinationLocationGLN: BizLocationTestEventBuilder.CreateUniqueGLN());
+            await _dbService.StoreEventsAsync(new List<IEvent> { legacyEvent });
+            using (ApplicationDbContext context = await _contextFactory.CreateDbContextAsync())
+            {
+                await context.Database.ExecuteSqlRawAsync($"DROP INDEX {ApplicationDbContext.BizLocationGLNIndexName} ON EventSearchDocuments;");
+                await context.Database.ExecuteSqlRawAsync("ALTER TABLE EventSearchDocuments DROP COLUMN BizLocationGLN;");
+            }
+
+            // Act
+            await _dbService.InitializeDatabase();
+
+            // Assert
+            await AssertBackfilledAsync(legacyEvent.EventID!.ToString(), targetGLN);
+        }
+
+        /// <summary>
+        /// Legacy rows whose bizLocation cannot be extracted, spread over several pages, must not stall the backfill: it
+        /// finishes, marks each of them processed with an empty value, and still backfills the valid event on the last page.
+        /// </summary>
+        [Test]
+        public async Task InitializeDatabase_WithUnextractableBizLocationsAcrossPages_CompletesAndBackfillsTheRest()
+        {
+            if (_skipTests)
+            {
+                Assert.Ignore("Test skipped due to NO_SQL_DB environment variable set to TRUE");
+                return;
+            }
+
+            // Arrange: two full pages plus one more, so the backfill has to page past failures more than once.
+            int unextractableCount = (SqlServerService.BackfillBatchSize * 2) + 1;
+            List<IEvent> unextractableEvents = Enumerable.Range(0, unextractableCount).Select(_ => BizLocationTestEventBuilder.CreateEvent(BizLocationTestEventBuilder.CreateUniqueGLN())).ToList();
+            List<string> unextractableEventIds = unextractableEvents.Select(e => e.EventID!.ToString()).ToList();
+            await _dbService.StoreEventsAsync(unextractableEvents);
+
+            // The valid event is stored last so its search rows have the highest keys and land on the final page.
+            string targetGLN = BizLocationTestEventBuilder.CreateUniqueGLN();
+            IEvent validEvent = BizLocationTestEventBuilder.CreateEvent(targetGLN);
+            string validEventId = validEvent.EventID!.ToString();
+            await _dbService.StoreEventsAsync(new List<IEvent> { validEvent });
+
+            List<string> insertedEventIds = unextractableEventIds.Append(validEventId).ToList();
+            using (ApplicationDbContext context = await _contextFactory.CreateDbContextAsync())
+            {
+                await context.EventSearchDocuments.Where(x => insertedEventIds.Contains(x.EventId)).ExecuteUpdateAsync(s => s.SetProperty(x => x.BizLocationGLN, (string?)null));
+                await context.EPCISEvents.Where(x => unextractableEventIds.Contains(x.EventId)).ExecuteUpdateAsync(s => s.SetProperty(x => x.EventJson, "this is not event JSON"));
+            }
+
+            try
+            {
+                // Act
+                Task backfill = _dbService.InitializeDatabase();
+                Task finished = await Task.WhenAny(backfill, Task.Delay(TimeSpan.FromSeconds(60)));
+                Assert.That(finished, Is.SameAs(backfill), "The backfill did not finish within 60 seconds; it is likely stuck in a loop.");
+                await backfill;
+
+                // Assert
+                using ApplicationDbContext context = await _contextFactory.CreateDbContextAsync();
+                List<string?> unextractableValues = await context.EventSearchDocuments.Where(x => unextractableEventIds.Contains(x.EventId)).Select(x => x.BizLocationGLN).ToListAsync();
+                Assert.That(unextractableValues, Is.Not.Empty);
+                Assert.That(unextractableValues, Is.All.EqualTo(string.Empty), "Every row whose bizLocation could not be extracted should be marked processed with an empty value.");
+
+                List<string?> validValues = await context.EventSearchDocuments.Where(x => x.EventId == validEventId).Select(x => x.BizLocationGLN).ToListAsync();
+                Assert.That(validValues, Is.Not.Empty);
+                Assert.That(validValues, Is.All.EqualTo(targetGLN.ToLower()), "The valid event after the failures should still be backfilled.");
+
+                int remainingLegacy = await context.EventSearchDocuments.CountAsync(x => x.BizLocationGLN == null);
+                Assert.That(remainingLegacy, Is.EqualTo(0), "No search rows should be left with a NULL BizLocationGLN.");
+            }
+            finally
+            {
+                // The unparseable events would break other tests that read every stored event.
+                using ApplicationDbContext context = await _contextFactory.CreateDbContextAsync();
+                await context.EventSearchDocuments.Where(x => insertedEventIds.Contains(x.EventId)).ExecuteDeleteAsync();
+                await context.EPCISEvents.Where(x => insertedEventIds.Contains(x.EventId)).ExecuteDeleteAsync();
+            }
+        }
+
+        /// <summary>
+        /// Puts the event's search rows back into the legacy, not-yet-backfilled state.
+        /// </summary>
+        private async Task SetBizLocationToNullAsync(string eventId)
+        {
+            using ApplicationDbContext context = await _contextFactory.CreateDbContextAsync();
+            await context.EventSearchDocuments.Where(x => x.EventId == eventId).ExecuteUpdateAsync(s => s.SetProperty(x => x.BizLocationGLN, (string?)null));
+        }
+
+        /// <summary>
+        /// Asserts that every search row of the event carries the business location, that no NULL rows remain, and that the query finds it.
+        /// </summary>
+        private async Task AssertBackfilledAsync(string eventId, string expectedGLN)
+        {
+            using ApplicationDbContext context = await _contextFactory.CreateDbContextAsync();
+            List<string?> values = await context.EventSearchDocuments.Where(x => x.EventId == eventId).Select(x => x.BizLocationGLN).ToListAsync();
+            Assert.That(values, Is.Not.Empty);
+            Assert.That(values, Is.All.EqualTo(expectedGLN.ToLower()), "Every search row of the event should carry its business location.");
+
+            int remainingLegacy = await context.EventSearchDocuments.CountAsync(x => x.BizLocationGLN == null);
+            Assert.That(remainingLegacy, Is.EqualTo(0), "No search rows should be left with a NULL BizLocationGLN.");
+
+            EPCISQueryDocument result = await _dbService.QueryEvents(new EPCISQueryParameters { query = new EPCISQuery { EQ_bizLocation = new List<Uri> { new Uri(expectedGLN) } } });
+            Assert.That(result.Events.Select(e => e.EventID?.ToString()), Is.EquivalentTo(new[] { eventId }));
         }
 
         [Test]

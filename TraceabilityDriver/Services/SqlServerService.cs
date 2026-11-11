@@ -6,6 +6,7 @@ using OpenTraceability.Mappers;
 using OpenTraceability.Models.Events;
 using OpenTraceability.Queries;
 using System.Collections.Concurrent;
+using TraceabilityDriver.Models;
 using TraceabilityDriver.Models.MongoDB;
 using TraceabilityDriver.Models.Sql;
 
@@ -18,6 +19,21 @@ namespace TraceabilityDriver.Services
     {
         private readonly ILogger<SqlServerService> _logger;
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+
+        /// <summary>
+        /// The number of legacy event search rows backfilled per round trip during startup.
+        /// </summary>
+        public const int BackfillBatchSize = 500;
+
+        /// <summary>
+        /// Idempotently adds the BizLocationGLN column to search tables created before it existed.
+        /// </summary>
+        private const string AddBizLocationColumnSql = "IF COL_LENGTH(N'EventSearchDocuments', N'BizLocationGLN') IS NULL ALTER TABLE EventSearchDocuments ADD BizLocationGLN nvarchar(450) NULL;";
+
+        /// <summary>
+        /// Idempotently creates the index on the BizLocationGLN column; must run in a later batch than <see cref="AddBizLocationColumnSql"/>.
+        /// </summary>
+        private const string CreateBizLocationIndexSql = $"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'{ApplicationDbContext.BizLocationGLNIndexName}' AND object_id = OBJECT_ID(N'EventSearchDocuments')) CREATE INDEX {ApplicationDbContext.BizLocationGLNIndexName} ON EventSearchDocuments (BizLocationGLN);";
 
         public SqlServerService(ILogger<SqlServerService> logger, IDbContextFactory<ApplicationDbContext> contextFactory)
         {
@@ -41,11 +57,146 @@ namespace TraceabilityDriver.Services
                     _logger.LogInformation("Database already exists.");
                 }
 
+                await EnsureBizLocationColumnAsync(context);
+                await BackfillBizLocationAsync();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error initializing database");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Adds the <see cref="EventSearchSqlDocument.BizLocationGLN"/> column and its index to databases created before they existed.
+        /// </summary>
+        /// <remarks>
+        /// The database is created with <c>EnsureCreated</c> rather than EF migrations, and <c>EnsureCreated</c> never alters an
+        /// existing schema, so the upgrade is applied with idempotent DDL. New databases already have both from the model,
+        /// making this a no-op. The index is created in a separate batch because SQL Server resolves column names per batch.
+        /// </remarks>
+        /// <param name="context">An open context on the GDST cache database.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when the schema cannot be upgraded, typically because the database login lacks ALTER permission on the table.
+        /// The message contains the SQL a database administrator can run to apply the upgrade manually.
+        /// </exception>
+        private async Task EnsureBizLocationColumnAsync(ApplicationDbContext context)
+        {
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(AddBizLocationColumnSql);
+                await context.Database.ExecuteSqlRawAsync(CreateBizLocationIndexSql);
+            }
+            catch (Exception ex)
+            {
+                // Note - Claude - 11/10/2026: Failing startup is deliberate. Without the column every search-row insert fails, and
+                // keeping the service up would need a second EF model; the login created this schema via EnsureCreated, so this only
+                // happens when its permissions were reduced afterwards.
+                string manualSql = $"{AddBizLocationColumnSql}\nGO\n{CreateBizLocationIndexSql}\nGO";
+                _logger.LogError(ex, "[CRITICAL ERROR]: Could not add the BizLocationGLN column to the EventSearchDocuments table, which this version of the driver requires. Grant the login ALTER permission on the table, or have a database administrator run the following SQL, then restart the driver:\n{ManualSql}", manualSql);
+                throw new InvalidOperationException($"The SQL Server schema upgrade for the BizLocationGLN column failed. Run the following SQL as a database administrator, then restart the driver:\n{manualSql}", ex);
+            }
+
+            _logger.LogDebug("Ensured the BizLocationGLN search column and index exist.");
+        }
+
+        /// <summary>
+        /// Sets <see cref="EventSearchSqlDocument.BizLocationGLN"/> on search rows written before that column existed.
+        /// </summary>
+        /// <remarks>
+        /// Earlier versions stored the business location only in <see cref="EventSearchSqlDocument.LocationGLN"/>, mixed with
+        /// source and destination locations, so the value is recovered by parsing each event's stored JSON. Events are
+        /// processed in batches, and within a batch events sharing a business location are updated in one statement.
+        /// Every processed row receives a non-null value (empty when the event has no business location, its JSON cannot be
+        /// parsed, or the event row is missing), which makes later startups a single indexed lookup. No explicit
+        /// transaction is used: each update is idempotent and any rows left unprocessed by an interruption are picked up
+        /// on the next startup.
+        /// <para>
+        /// Rows are paged by ascending primary key (keyset paging) rather than by re-running the "column is NULL" query,
+        /// so the loop is guaranteed to terminate after one forward pass even if an update fails to clear a row. Anything
+        /// still NULL after the pass is reported as a warning instead of being retried.
+        /// </para>
+        /// </remarks>
+        private async Task BackfillBizLocationAsync()
+        {
+            _logger.LogDebug("Checking for event search rows that need the bizLocation backfill.");
+
+            int updatedEventCount = 0;
+            List<string> failedEventIds = new List<string>();
+            Exception? firstFailure = null;
+            long lastRowId = long.MinValue;
+            while (true)
+            {
+                using ApplicationDbContext context = await _contextFactory.CreateDbContextAsync();
+
+                // Each page starts strictly after the last row of the previous page. An event's other rows are updated with
+                // it by event ID, so a later page only sees rows of events that were not already handled.
+                long pageStartRowId = lastRowId;
+                var rows = await context.EventSearchDocuments.Where(x => x.BizLocationGLN == null && x.ID > pageStartRowId).OrderBy(x => x.ID).Take(BackfillBatchSize).Select(x => new { x.ID, x.EventId }).ToListAsync();
+                if (rows.Count == 0)
+                {
+                    break;
+                }
+
+                lastRowId = rows[rows.Count - 1].ID;
+                List<string> eventIds = rows.Select(x => x.EventId).Distinct().ToList();
+
+                Dictionary<string, string> eventJsonById = await context.EPCISEvents.Where(e => eventIds.Contains(e.EventId)).ToDictionaryAsync(e => e.EventId, e => e.EventJson);
+
+                // Resolve each event's business location, then group so one UPDATE covers every event at the same location.
+                Dictionary<string, List<string>> eventIdsByBizLocation = new Dictionary<string, List<string>>();
+                foreach (string eventId in eventIds)
+                {
+                    string bizLocationGLN = string.Empty;
+                    if (eventJsonById.TryGetValue(eventId, out string? eventJson))
+                    {
+                        try
+                        {
+                            bizLocationGLN = EventSearchFields.ExtractBizLocationGLN(eventJson) ?? string.Empty;
+                        }
+                        catch (Exception ex)
+                        {
+                            firstFailure ??= ex;
+                            failedEventIds.Add(eventId);
+                        }
+                    }
+
+                    if (!eventIdsByBizLocation.TryGetValue(bizLocationGLN, out List<string>? idsAtLocation))
+                    {
+                        idsAtLocation = new List<string>();
+                        eventIdsByBizLocation[bizLocationGLN] = idsAtLocation;
+                    }
+                    idsAtLocation.Add(eventId);
+                }
+
+                foreach (KeyValuePair<string, List<string>> group in eventIdsByBizLocation)
+                {
+                    List<string> idsAtLocation = group.Value;
+                    string bizLocationGLN = group.Key;
+                    await context.EventSearchDocuments.Where(x => idsAtLocation.Contains(x.EventId)).ExecuteUpdateAsync(s => s.SetProperty(x => x.BizLocationGLN, bizLocationGLN));
+                }
+
+                updatedEventCount += eventIds.Count;
+            }
+
+            if (updatedEventCount > 0)
+            {
+                _logger.LogInformation("Backfilled bizLocation for the search rows of {UpdatedCount} legacy event(s).", updatedEventCount);
+            }
+
+            if (failedEventIds.Count > 0)
+            {
+                _logger.LogWarning(firstFailure, "Could not parse the stored JSON of {FailedCount} event(s) during the bizLocation backfill, so they will not match EQ_bizLocation queries. First event IDs: {EventIds}.", failedEventIds.Count, failedEventIds.Take(10));
+            }
+
+            // The pass above never revisits a row, so anything still NULL was not written; report it rather than loop on it.
+            using (ApplicationDbContext context = await _contextFactory.CreateDbContextAsync())
+            {
+                int remainingCount = await context.EventSearchDocuments.CountAsync(x => x.BizLocationGLN == null);
+                if (remainingCount > 0)
+                {
+                    _logger.LogWarning("{RemainingCount} event search row(s) still have a NULL BizLocationGLN after the bizLocation backfill, so they will not match EQ_bizLocation queries. They will be retried on the next startup.", remainingCount);
+                }
             }
         }
 
@@ -192,11 +343,11 @@ namespace TraceabilityDriver.Services
                 searchQuery = searchQuery.Where(e => options.query.EQ_action.Contains(e.Action));
             }
 
-            // Add location filters
+            // Match the business location only; source and destination locations must not satisfy EQ_bizLocation.
             if (options.query.EQ_bizLocation.Count > 0)
             {
                 List<string> bizLocations = options.query.EQ_bizLocation.Select(loc => loc.ToString().ToLower()).ToList();
-                searchQuery = searchQuery.Where(e => bizLocations.Contains(e.LocationGLN));
+                searchQuery = searchQuery.Where(e => bizLocations.Contains(e.BizLocationGLN!));
             }
 
             // Get unique event IDs from the search results

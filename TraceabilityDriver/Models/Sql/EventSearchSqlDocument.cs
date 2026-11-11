@@ -1,5 +1,4 @@
-﻿using OpenTraceability.GDST.Events;
-using OpenTraceability.Interfaces;
+﻿using OpenTraceability.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace TraceabilityDriver.Models.Sql
@@ -60,81 +59,45 @@ namespace TraceabilityDriver.Models.Sql
         /// </summary>
         public string PartyPGLN { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The lowercased business location GLN of the event, repeated on every search row of the event; this is the
+        /// column <c>EQ_bizLocation</c> filters on.
+        /// </summary>
+        /// <remarks>
+        /// New rows store an empty string when the event has no business location. <see langword="null"/> marks a row
+        /// written before this column existed; such rows are backfilled from the stored event JSON at startup.
+        /// </remarks>
+        public string? BizLocationGLN { get; set; }
+
+        /// <summary>
+        /// Creates the search rows for the events, pivoting each event's multi-valued fields across as many rows as its longest list.
+        /// </summary>
+        /// <param name="evts">The events to index.</param>
+        /// <returns>The search rows for all of the events.</returns>
         public static List<EventSearchSqlDocument> CreateSearchDocuments(List<IEvent> evts)
         {
             List<EventSearchSqlDocument> searchDocument = new List<EventSearchSqlDocument>();
 
             foreach (IEvent evt in evts)
             {
-                string bizStep = evt.BusinessStep.ToString().ToLower();
-                string action = evt.Action.ToString()?.ToLower() ?? "";
-                DateTimeOffset? eventTime = evt.EventTime;
-                List<string> epcs = evt.Products.Select(p => p.EPC.ToString().ToLower()).ToList();
-                List<string> productGTINs = evt.Products.Select(p => p.EPC.GTIN?.ToString().ToLower()).Where(g => g != null).Select(g => g!).ToList();
-                List<string> locationGLNs = evt.Location?.GLN != null ? new List<string> { evt.Location.GLN.ToString().ToLower() } : new List<string>();
-                List<string> partyPGLNs = new List<string>();
+                EventSearchFields fields = EventSearchFields.FromEvent(evt);
 
-                // Add trading party PGLNs if it's a GDST event
-                if (evt is IGDSTEvent gdstEvent)
-                {
-                    if (gdstEvent.ProductOwner != null)
-                    {
-                        partyPGLNs.Add(gdstEvent.ProductOwner.ToString());
-                    }
-                    if (gdstEvent.InformationProvider != null)
-                    {
-                        partyPGLNs.Add(gdstEvent.InformationProvider.ToString());
-                    }
-                }
-
-                // Add source and destination PGLNs/GLNs
-                foreach (var source in evt.SourceList)
-                {
-                    if (!string.IsNullOrWhiteSpace(source.Value))
-                    {
-                        if (source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor ||
-                            source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Owner)
-                        {
-                            partyPGLNs.Add(source.Value);
-                        }
-                        else if (source.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Location)
-                        {
-                            locationGLNs.Add(source.Value);
-                        }
-                    }
-                }
-
-                foreach (var dest in evt.DestinationList)
-                {
-                    if (!string.IsNullOrWhiteSpace(dest.Value))
-                    {
-                        if (dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Possessor ||
-                            dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Owner)
-                        {
-                            partyPGLNs.Add(dest.Value);
-                        }
-                        else if (dest.Type == OpenTraceability.Constants.EPCIS.URN.SDT_Location)
-                        {
-                            locationGLNs.Add(dest.Value);
-                        }
-                    }
-                }
-
-                // Get the higest index to iterate through
-                int maxCount = Math.Max(Math.Max(Math.Max(epcs.Count, productGTINs.Count), locationGLNs.Count), partyPGLNs.Count);
+                // Get the highest index to iterate through
+                int maxCount = Math.Max(Math.Max(Math.Max(fields.EPCs.Count, fields.ProductGTINs.Count), fields.LocationGLNs.Count), fields.PartyPGLNs.Count);
 
                 for (int i = 0; i < maxCount; i++)
                 {
                     EventSearchSqlDocument searchDoc = new EventSearchSqlDocument
                     {
                         EventId = evt.EventID.ToString(),
-                        BizStep = bizStep,
-                        Action = action,
-                        EventTime = eventTime,
-                        EPC = i < epcs.Count ? epcs[i] : string.Empty,
-                        ProductGTIN = i < productGTINs.Count ? productGTINs[i] : string.Empty,
-                        LocationGLN = i < locationGLNs.Count ? locationGLNs[i] : string.Empty,
-                        PartyPGLN = i < partyPGLNs.Count ? partyPGLNs[i] : string.Empty
+                        BizStep = fields.BizStep,
+                        Action = fields.Action,
+                        EventTime = fields.EventTime,
+                        EPC = i < fields.EPCs.Count ? fields.EPCs[i] : string.Empty,
+                        ProductGTIN = i < fields.ProductGTINs.Count ? fields.ProductGTINs[i] : string.Empty,
+                        LocationGLN = i < fields.LocationGLNs.Count ? fields.LocationGLNs[i] : string.Empty,
+                        PartyPGLN = i < fields.PartyPGLNs.Count ? fields.PartyPGLNs[i] : string.Empty,
+                        BizLocationGLN = fields.BizLocationGLN ?? string.Empty
                     };
                     searchDocument.Add(searchDoc);
                 }
